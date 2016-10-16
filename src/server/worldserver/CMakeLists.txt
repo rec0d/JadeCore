@@ -202,6 +202,7 @@ target_link_libraries(worldserver
   ${OPENSSL_LIBRARIES}
   ${ZLIB_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
+  ${Boost_LIBRARIES}
 )
 
 if( WIN32 )
