@@ -789,7 +789,7 @@ public:
 
                 if (item->GetOwnerGUID() != player->GetGUID())
                 {
-                    handler->PSendSysMessage("queue(" SIZEFMTD "): For the item with guid %d, the owner's guid (%d) and the player's guid (%d) don't match!", i, item->GetGUIDLow(), GUID_LOPART(item->GetOwnerGUID()), player->GetGUIDLow());
+                    handler->PSendSysMessage("queue(%zu): For the item with guid %d, the owner's guid (%d) and the player's guid (%d) don't match!", i, item->GetGUIDLow(), GUID_LOPART(item->GetOwnerGUID()), player->GetGUIDLow());
                     error = true;
                     continue;
                 }

@@ -29,7 +29,7 @@ AppenderFile::AppenderFile(uint8 id, std::string const& name, LogLevel level, co
     fileSize(0)
 {
     dynamicName = std::string::npos != filename.find("%s");
-    backup = _flags & APPENDER_FLAGS_MAKE_FILE_BACKUP;
+    backup = (_flags & APPENDER_FLAGS_MAKE_FILE_BACKUP) != 0;
 
     logfile = !dynamicName ? OpenFile(_filename, _mode, mode == "w" && backup) : NULL;
 }

@@ -51,8 +51,9 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/common/Configuration
   ${CMAKE_SOURCE_DIR}/src/common/Logging
   ${CMAKE_SOURCE_DIR}/src/server/shared
+  ${ACE_INCLUDE_DIR}
   ${MYSQL_INCLUDE_DIR}
-  ${OPENSSL_INCLUDE_DIR} # seems needed for Windows build
+  ${OPENSSL_INCLUDE_DIR}
   ${VALGRIND_INCLUDE_DIR}
 )
 

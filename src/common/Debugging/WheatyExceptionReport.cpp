@@ -1077,7 +1077,7 @@ PVOID pAddress)
         switch (basicType)
         {
             case btChar:
-                pszCurrBuffer += sprintf(pszCurrBuffer, " = \"%s\"", pAddress);
+                pszCurrBuffer += sprintf(pszCurrBuffer, " = \"%.*s\"", pAddress);
                 break;
             case btStdString:
                 pszCurrBuffer += sprintf(pszCurrBuffer, " = \"%s\"", static_cast<std::string*>(pAddress)->c_str());

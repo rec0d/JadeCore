@@ -76,7 +76,7 @@ void SignalHandler(const boost::system::error_code& error, int signalNumber)
 		{
 		case SIGINT:
 		case SIGTERM:
-            ioService.stop();
+            _ioService.stop();
 			break;
 		}
 	}
@@ -201,7 +201,7 @@ int main(int argc, char** argv)
 
     SetProcessPriority();
 
-    dbPingInterval = sConfigMgr->GetIntDefault("MaxPingTime", 30);
+    _dbPingInterval = sConfigMgr->GetIntDefault("MaxPingTime", 30);
 
     _dbPingTimer.expires_from_now(boost::posix_time::seconds(_dbPingInterval));
     _dbPingTimer.async_wait(KeepDatabaseAliveHandler);

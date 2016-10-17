@@ -84,7 +84,6 @@ void FreezeDetectorThread(uint32 delayTime)
 {
     if (!delayTime)
         return;
-    FreezeDetectorRunnable() { _delaytime = 0; }
 
     TC_LOG_INFO("server.worldserver", "Starting up anti-freeze thread (%u seconds max stuck time)...", delayTime / 1000);
     uint32 loops = 0;

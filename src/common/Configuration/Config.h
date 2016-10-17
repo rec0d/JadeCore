@@ -50,6 +50,7 @@ public:
     std::list<std::string> GetKeysByString(std::string const& name);
 
 private:
+    std::string _filename;
     boost::property_tree::ptree _config;
     std::mutex _configLock;
 
