@@ -193,7 +193,8 @@ int Master::Run()
         cliThread = new std::thread(CliThread);
     }
 
-    std::thread rarThread(RemoteAccessThread);
+    // TODO C++11/Boost
+    // std::thread rarThread(RemoteAccessThread);
 
     ///- Handle affinity for multiple processors and process priority
     uint32 affinity = sConfigMgr->GetIntDefault("UseProcessors", 0);
