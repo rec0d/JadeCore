@@ -19,6 +19,7 @@
 /** \file
     \ingroup Trinityd
 */
+#include <thread>
 
 #include "Common.h"
 #include "ObjectAccessor.h"
@@ -40,7 +41,7 @@ extern int m_ServiceStatus;
 #endif
 
 /// Heartbeat for the World
-void WorldRunnable::run()
+void WorldThread()
 {
     uint32 realCurrTime = 0;
     uint32 realPrevTime = getMSTime();
@@ -67,7 +68,7 @@ void WorldRunnable::run()
         if (diff <= WORLD_SLEEP_CONST+prevSleepTime)
         {
             prevSleepTime = WORLD_SLEEP_CONST+prevSleepTime-diff;
-            ACE_Based::Thread::Sleep(prevSleepTime);
+            std::this_thread::sleep_for(std::chrono::milliseconds(prevSleepTime));
         }
         else
             prevSleepTime = 0;
