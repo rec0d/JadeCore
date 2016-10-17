@@ -68,7 +68,7 @@ private:
 
 void stripLineInvisibleChars(std::string &src);
 
-std::tm localtime_r(const time_t& time);
+struct tm* localtime_r(const time_t* time, struct tm *result);
 
 int64 MoneyStringToMoney(const std::string& moneyString);
 
