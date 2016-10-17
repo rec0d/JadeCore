@@ -68,6 +68,8 @@ private:
 
 void stripLineInvisibleChars(std::string &src);
 
+std::tm localtime_r(const time_t& time);
+
 int64 MoneyStringToMoney(const std::string& moneyString);
 
 std::string secsToTimeString(uint64 timeInSecs, bool shortText = false, bool hoursOnly = false);

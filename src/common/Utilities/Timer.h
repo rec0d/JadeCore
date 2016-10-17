@@ -19,13 +19,15 @@
 #ifndef TRINITY_TIMER_H
 #define TRINITY_TIMER_H
 
-#include "ace/OS_NS_sys_time.h"
-#include "Common.h"
+#include <chrono>
+
+using namespace std::chrono; 
 
 inline uint32 getMSTime()
 {
-    static const ACE_Time_Value ApplicationStartTime = ACE_OS::gettimeofday();
-    return (ACE_OS::gettimeofday() - ApplicationStartTime).msec();
+    static const system_clock::time_point ApplicationStartTime = system_clock::now();
+
+    return duration_cast<milliseconds>(system_clock::now() - ApplicationStartTime).count();
 }
 
 inline uint32 getMSTimeDiff(uint32 oldMSTime, uint32 newMSTime)
@@ -46,53 +48,53 @@ struct IntervalTimer
 {
     public:
 
-        IntervalTimer()
-            : _interval(0), _current(0)
-        {
-        }
+    IntervalTimer()
+        : _interval(0), _current(0)
+    {
+    }
 
-        void Update(time_t diff)
-        {
-            _current += diff;
-            if (_current < 0)
-                _current = 0;
-        }
+    void Update(time_t diff)
+    {
+        _current += diff;
+        if (_current < 0)
+            _current = 0;
+    }
 
-        bool Passed()
-        {
-            return _current >= _interval;
-        }
+    bool Passed()
+    {
+        return _current >= _interval;
+    }
 
-        void Reset()
-        {
-            if (_current >= _interval)
-                _current %= _interval;
-        }
+    void Reset()
+    {
+        if (_current >= _interval)
+            _current %= _interval;
+    }
 
-        void SetCurrent(time_t current)
-        {
-            _current = current;
-        }
+    void SetCurrent(time_t current)
+    {
+        _current = current;
+    }
 
-        void SetInterval(time_t interval)
-        {
-            _interval = interval;
-        }
+    void SetInterval(time_t interval)
+    {
+        _interval = interval;
+    }
 
-        time_t GetInterval() const
-        {
-            return _interval;
-        }
+    time_t GetInterval() const
+    {
+        return _interval;
+    }
 
-        time_t GetCurrent() const
-        {
-            return _current;
-        }
+    time_t GetCurrent() const
+    {
+        return _current;
+    }
 
-    private:
+private:
 
-        time_t _interval;
-        time_t _current;
+    time_t _interval;
+    time_t _current;
 };
 
 struct TimeTracker
@@ -158,7 +160,7 @@ struct TimeTrackerSmall
             return i_expiryTime;
         }
 
-    private:
+        private:
 
         int32 i_expiryTime;
 };
