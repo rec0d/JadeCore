@@ -16,13 +16,13 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <mutex>
+#include <condition_variable>
+#include <ace/Method_Request.h>
 #include "MapUpdater.h"
 #include "DelayExecutor.h"
 #include "Map.h"
 #include "DatabaseEnv.h"
-
-#include <ace/Guard_T.h>
-#include <ace/Method_Request.h>
 
 class MapUpdateRequest : public ACE_Method_Request
 {
@@ -47,8 +47,7 @@ class MapUpdateRequest : public ACE_Method_Request
         }
 };
 
-MapUpdater::MapUpdater():
-m_executor(), m_mutex(), m_condition(m_mutex), pending_requests(0) { }
+MapUpdater::MapUpdater() : m_executor(), pending_requests(0) { }
 
 MapUpdater::~MapUpdater()
 {
@@ -69,17 +68,19 @@ int MapUpdater::deactivate()
 
 int MapUpdater::wait()
 {
-    TRINITY_GUARD(ACE_Thread_Mutex, m_mutex);
+    std::unique_lock<std::mutex> lock(_lock);
 
     while (pending_requests > 0)
-        m_condition.wait();
+       _condition.wait(lock);
+
+    lock.unlock();
 
     return 0;
 }
 
 int MapUpdater::schedule_update(Map& map, ACE_UINT32 diff)
 {
-    TRINITY_GUARD(ACE_Thread_Mutex, m_mutex);
+    std::unique_lock<std::mutex> lock(_lock);
 
     ++pending_requests;
 
@@ -101,7 +102,7 @@ bool MapUpdater::activated()
 
 void MapUpdater::update_finished()
 {
-    TRINITY_GUARD(ACE_Thread_Mutex, m_mutex);
+    std::unique_lock<std::mutex> lock(_lock);
 
     if (pending_requests == 0)
     {
@@ -111,5 +112,5 @@ void MapUpdater::update_finished()
 
     --pending_requests;
 
-    m_condition.broadcast();
+    _condition.notify_all();
 }
