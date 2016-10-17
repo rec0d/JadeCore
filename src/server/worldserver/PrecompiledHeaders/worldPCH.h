@@ -16,10 +16,9 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- 
-#include "WorldSocket.h"        // must be first to make ACE happy with ACE includes in it
 
 #include "Common.h"
+#include "WorldSocket.h"
 #include "World.h"
 #include "Log.h"
 #include "Database/DatabaseEnv.h"

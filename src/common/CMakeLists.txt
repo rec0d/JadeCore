@@ -99,6 +99,8 @@ include_directories(
   ${ACE_INCLUDE_DIR}
 )
 
+GroupSources(${CMAKE_CURRENT_SOURCE_DIR})
+
 add_library(common STATIC
   ${common_STAT_SRCS}
   ${common_STAT_PCH_SRC}
