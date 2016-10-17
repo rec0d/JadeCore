@@ -28,6 +28,7 @@ before_install:
   - sudo apt-get install libncurses5-dev
   - sudo apt-get install build-essential autoconf libtool make cmake git-core patch wget links zip unzip unrar
   - sudo apt-get install openssl libssl-dev mysql-server mysql-client libmysqlclient15-dev libmysql++-dev libreadline6-dev zlib1g-dev libbz2-dev
+  - sudo apt-get -qq install libboost1.55-dev libboost-thread1.55-dev libboost-filesystem1.55-dev libboost-system1.55-dev libboost-program-options1.55-dev libboost-iostreams1.55-dev libboost-regex1.55-dev
   - if [ "$CXX" = "g++" ]; then sudo apt-get install -qq g++-4.8; fi
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
   
