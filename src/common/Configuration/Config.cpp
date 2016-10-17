@@ -33,12 +33,16 @@ bool ConfigMgr::LoadInitial(char const* file)
     std::lock_guard<std::mutex> lock(_configLock);
 
     _filename = file;
+    
     try
     {
-        ptree temp;
-        for (auto bla : temp)
+        ptree fullTree;
+        boost::property_tree::ini_parser::read_ini(file, fullTree);
+        
+        // Since we're using only one section per config file, we skip the section and have direct property access
+        for (auto section : fullTree)
         {
-            _config = bla.second;
+            _config = section.second;
             break;
         }
     }

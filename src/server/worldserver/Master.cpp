@@ -181,7 +181,7 @@ int Master::Run()
     ///- Launch WorldRunnable thread
     std::thread worldThread(WorldThread);
 
-    std::thread* cliThread = NULL;
+    std::thread* cliThread = nullptr;
 
 #ifdef _WIN32
     if (sConfigMgr->GetBoolDefault("Console.Enable", true) && (m_ServiceStatus == -1)/* need disable console in service mode*/)
