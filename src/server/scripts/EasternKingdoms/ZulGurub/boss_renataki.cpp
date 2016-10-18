@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,45 +16,26 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * ToDo: Resolve Animated Hit issues after blade storm
-*/
+/* ScriptData
+SDName: Boss_Renataki
+SD%Complete: 100
+SDComment:
+SDCategory: Zul'Gurub
+EndScriptData */
 
-#include "ObjectMgr.h"
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "zulgurub.h"
 
 enum Spells
 {
-    SPELL_AMBUSH                   = 96640,
-    SPELL_DEADLY_POISON            = 96648,
-    SPELL_FRENZY                   = 8269,
-    SPELL_THOUSAND_BLADES          = 96646,
-    SPELL_VANISH                   = 96639,
-    SPELL_CHARGE_TARGET_DEST       = 72700
+    SPELL_AMBUSH                = 34794,
+    SPELL_THOUSANDBLADES        = 34799
 };
 
-enum Events
+enum Misc
 {
-    EVENT_DEADLY_POISON            = 1,
-    EVENT_FRENZY,
-    EVENT_AMBUSH,
-    EVENT_AMBUSH_END,
-    EVENT_THOUSAND_BLADES,
-    EVENT_THOUSAND_BLADES_START,
-    EVENT_THOUSAND_BLADES_END,
-    EVENT_VANISH
-};
-
-enum Yells
-{
-    SAY_AMBUSH                    = 0,
-    SAY_THOUSAND_BLADES           = 1,
-    SAY_AGGRO                     = 2,
-    SAY_KILL_PLAYER               = 3,
-    SAY_DEATH                     = 4,
-    EMOTE_FRENZY                  = 5
+    EQUIP_ID_MAIN_HAND          = 0  //was item display id 31818, but this id does not exist
 };
 
 class boss_renataki : public CreatureScript
@@ -63,157 +45,132 @@ class boss_renataki : public CreatureScript
 
         struct boss_renatakiAI : public BossAI
         {
-            boss_renatakiAI(Creature* creature) : BossAI(creature, DATA_RENATAKI)
+            boss_renatakiAI(Creature* creature) : BossAI(creature, DATA_EDGE_OF_MADNESS)
             {
-                _baseRun = creature->GetSpeedRate(MOVE_RUN);
+                Initialize();
             }
 
-            void Reset()
+            void Initialize()
+            {
+                Invisible_Timer = urand(8000, 18000);
+                Ambush_Timer = 3000;
+                Visible_Timer = 4000;
+                Aggro_Timer = urand(15000, 25000);
+                ThousandBlades_Timer = urand(4000, 8000);
+
+                Invisible = false;
+                Ambushed = false;
+            }
+
+            uint32 Invisible_Timer;
+            uint32 Ambush_Timer;
+            uint32 Visible_Timer;
+            uint32 Aggro_Timer;
+            uint32 ThousandBlades_Timer;
+
+            bool Invisible;
+            bool Ambushed;
+
+            void Reset() override
             {
                 _Reset();
-                me->SetReactState(REACT_AGGRESSIVE);
-                enrage = false;
-                me->RemoveAllAuras();
-                if (GameObject* forcefield = me->FindNearestGameObject(GO_THE_CACHE_OF_MADNESS_DOOR, 150.0f))
-                    me->RemoveGameObject(forcefield, true);
+                Initialize();
             }
 
-            void EnterCombat(Unit* /*who*/)
-            {
-                _EnterCombat();
-                Talk(SAY_AGGRO);
-                me->SummonGameObject(GO_THE_CACHE_OF_MADNESS_DOOR, -11938.6f, -1843.32f, 61.7272f, 0.0899053f, 0, 0, 0, 0, 0);
-                events.ScheduleEvent(EVENT_DEADLY_POISON, 5000);
-                events.ScheduleEvent(EVENT_VANISH, 15000);
-                events.ScheduleEvent(EVENT_THOUSAND_BLADES, 33000);
-            }
-
-            void JustDied(Unit* /*killer*/)
+            void JustDied(Unit* /*killer*/) override
             {
                 _JustDied();
-                Talk(SAY_DEATH);
-                if (GameObject* forcefield = me->FindNearestGameObject(GO_THE_CACHE_OF_MADNESS_DOOR, 150.0f))
-                    me->RemoveGameObject(forcefield, true);
             }
 
-            void DamageTaken(Unit* /*done_by*/, uint32 & /*damage*/)
+            void EnterCombat(Unit* /*who*/) override
             {
-                if (!enrage && me->GetHealthPct() <= 30.0f)
-                {
-                    enrage = true;
-                    Talk(EMOTE_FRENZY);
-                    me->CastSpell(me, SPELL_FRENZY, false);
-                }
+                _EnterCombat();
             }
 
-            void KilledUnit(Unit* victim)
+            void UpdateAI(uint32 diff) override
             {
-                if (victim->GetTypeId() == TYPEID_PLAYER)
-                    Talk(SAY_KILL_PLAYER);
-            }
-
-            void UpdateAI(uint32 const diff)
-            {
-                if(!UpdateVictim())
+                if (!UpdateVictim())
                     return;
 
-                events.Update(diff);
-
-                if(me->HasUnitState(UNIT_STATE_CASTING))
-                    return;
-
-                if(uint32 eventId = events.ExecuteEvent())
+                //Invisible_Timer
+                if (Invisible_Timer <= diff)
                 {
-                    switch(eventId)
+                    me->InterruptSpell(CURRENT_GENERIC_SPELL);
+
+                    SetEquipmentSlots(false, EQUIP_UNEQUIP, EQUIP_NO_CHANGE, EQUIP_NO_CHANGE);
+                    me->SetDisplayId(11686);
+
+                    me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                    Invisible = true;
+
+                    Invisible_Timer = urand(15000, 30000);
+                } else Invisible_Timer -= diff;
+
+                if (Invisible)
+                {
+                    if (Ambush_Timer <= diff)
                     {
-                        case EVENT_DEADLY_POISON:
-                            DoCastVictim(SPELL_DEADLY_POISON);
-                            events.ScheduleEvent(EVENT_DEADLY_POISON, urand(30*IN_MILLISECONDS, 40*IN_MILLISECONDS));
-                            break;
-                        case EVENT_VANISH:
-                            DoCast(me, SPELL_VANISH);
-                            events.ScheduleEvent(EVENT_AMBUSH, 1000);
-                            events.ScheduleEvent(EVENT_VANISH, urand(40*IN_MILLISECONDS, 45*IN_MILLISECONDS));
-                            break;
-                        case EVENT_AMBUSH:
-                             Talk(SAY_AMBUSH);
-                             if (Unit* target = SelectTarget(SELECT_TARGET_FARTHEST, 0))
-                                 DoCast(target, SPELL_AMBUSH);
-                            events.ScheduleEvent(EVENT_AMBUSH_END, 1000);
-                            break;
-                        case EVENT_AMBUSH_END:
-                            me->RemoveAura(SPELL_VANISH);
-                            me->HandleEmoteCommand(EMOTE_ONESHOT_LAUGH);
-                            me->SetReactState(REACT_AGGRESSIVE);
-                            break;
-                        case EVENT_THOUSAND_BLADES:
-                            Talk(SAY_THOUSAND_BLADES);
-                            me->CastSpell(me, SPELL_THOUSAND_BLADES, false);
-                            events.ScheduleEvent(EVENT_THOUSAND_BLADES, 40*IN_MILLISECONDS);
-                            events.ScheduleEvent(EVENT_THOUSAND_BLADES_START, 3000);
-                            events.ScheduleEvent(EVENT_THOUSAND_BLADES_END, urand(10000, 15000));
-                            break;
-                       case EVENT_THOUSAND_BLADES_START:
-                       {
-                            if (Unit* target = SelectTarget(SELECT_TARGET_FARTHEST, 0, 50.0f, true))
-                                me->CastSpell(target, SPELL_CHARGE_TARGET_DEST, true);
+                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100.0f, true))
+                        {
+                            DoTeleportTo(target->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
+                            DoCast(target, SPELL_AMBUSH);
+                        }
 
-                            if (me->HasAura(SPELL_THOUSAND_BLADES))
-                                events.ScheduleEvent(EVENT_THOUSAND_BLADES_START, urand(1000, 2000));
-                            break;
-                       }
-                        case EVENT_THOUSAND_BLADES_END:
-                            me->RemoveAura(SPELL_THOUSAND_BLADES);
-                            me->SetSpeed(MOVE_RUN, _baseRun, true);
-                            break;
-                        default:
-                            break;
-                    }
+                        Ambushed = true;
+                        Ambush_Timer = 3000;
+                    } else Ambush_Timer -= diff;
                 }
+
+                if (Ambushed)
+                {
+                    if (Visible_Timer <= diff)
+                    {
+                        me->InterruptSpell(CURRENT_GENERIC_SPELL);
+
+                        me->SetDisplayId(15268);
+                        SetEquipmentSlots(false, EQUIP_ID_MAIN_HAND, EQUIP_NO_CHANGE, EQUIP_NO_CHANGE);
+
+                        me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        Invisible = false;
+
+                        Visible_Timer = 4000;
+                    } else Visible_Timer -= diff;
+                }
+
+                //Resetting some aggro so he attacks other gamers
+                if (!Invisible)
+                {
+                    if (Aggro_Timer <= diff)
+                    {
+                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, 100.0f, true))
+                        {
+                            if (DoGetThreat(me->GetVictim()))
+                                DoModifyThreatPercent(me->GetVictim(), -50);
+                            AttackStart(target);
+                        }
+
+                        Aggro_Timer = urand(7000, 20000);
+                    } else Aggro_Timer -= diff;
+
+                    if (ThousandBlades_Timer <= diff)
+                    {
+                        DoCastVictim(SPELL_THOUSANDBLADES);
+                        ThousandBlades_Timer = urand(7000, 12000);
+                    } else ThousandBlades_Timer -= diff;
+                }
+
                 DoMeleeAttackIfReady();
-                EnterEvadeIfOutOfCombatArea(diff);
             }
-        private:
-            float _baseRun;
-            bool enrage;
         };
 
-        CreatureAI* GetAI(Creature* creature) const
+        CreatureAI* GetAI(Creature* creature) const override
         {
             return new boss_renatakiAI(creature);
-        }
-};
-
-class spell_thousand_blades_damage : public SpellScriptLoader
-{
-    public:
-        spell_thousand_blades_damage() : SpellScriptLoader("spell_thousand_blades_damage") { }
-
-    private:
-        class spell_thousand_blades_damage_SpellScript : public SpellScript
-        {
-            PrepareSpellScript(spell_thousand_blades_damage_SpellScript);
-
-            void CalculateDamage(SpellEffIndex /*effIndex*/)
-            {
-                float dist = 1.0f - GetCaster()->GetDistance(GetHitUnit()) / 100;
-                SetHitDamage(int32(GetHitDamage() * dist));
-            }
-
-            void Register()
-            {
-                OnEffectHitTarget += SpellEffectFn(spell_thousand_blades_damage_SpellScript::CalculateDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
-            }
-        };
-
-        SpellScript* GetSpellScript() const
-        {
-            return new spell_thousand_blades_damage_SpellScript();
         }
 };
 
 void AddSC_boss_renataki()
 {
     new boss_renataki();
-    new spell_thousand_blades_damage();
 }
+

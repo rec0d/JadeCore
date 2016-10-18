@@ -21,7 +21,6 @@
 #include "MovementPacketBuilder.h"
 #include "Unit.h"
 #include "Transport.h"
-#include "Vehicle.h"
 #include "WorldPacket.h"
 #include "Opcodes.h"
 
@@ -29,7 +28,7 @@ namespace Movement
 {
     UnitMoveType SelectSpeedType(uint32 moveFlags)
     {
-		if (moveFlags & MOVEMENTFLAG_FLYING)
+        if (moveFlags & MOVEMENTFLAG_FLYING)
         {
             if (moveFlags & MOVEMENTFLAG_BACKWARD /*&& speed_obj.flight >= speed_obj.flight_back*/)
                 return MOVE_FLIGHT_BACK;
@@ -52,7 +51,7 @@ namespace Movement
             return MOVE_RUN_BACK;
 
         // Flying creatures use MOVEMENTFLAG_CAN_FLY or MOVEMENTFLAG_DISABLE_GRAVITY
-        // Run speed is their default flight speed.			
+        // Run speed is their default flight speed.
         return MOVE_RUN;
     }
 
@@ -60,40 +59,44 @@ namespace Movement
     {
         MoveSpline& move_spline = *unit->movespline;
 
-        Location real_position(unit->GetPositionX(), unit->GetPositionY(), unit->GetPositionZMinusOffset(), unit->GetOrientation());
-        // Elevators also use MOVEMENTFLAG_ONTRANSPORT but we do not keep track of their position changes
-        if (unit->GetTransGUID())
-        {
-            real_position.x = unit->GetTransOffsetX();
-            real_position.y = unit->GetTransOffsetY();
-            real_position.z = unit->GetTransOffsetZ();
-            real_position.orientation = unit->GetTransOffsetO();
-        }
-
+        // Elevators also use MOVEMENTFLAG_ONTRANSPORT but we do not keep track of their position changes (movementInfo.transport.guid is 0 in that case)
+        bool transport = unit->HasUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT) && unit->GetTransGUID();
+        Location real_position;
         // there is a big chance that current position is unknown if current state is not finalized, need compute it
-        // this also allows calculate spline position and update map position in much greater intervals
+        // this also allows CalculatePath spline position and update map position in much greater intervals
         // Don't compute for transport movement if the unit is in a motion between two transports
-        if (!move_spline.Finalized() && move_spline.onTransport == (unit->GetTransGUID() != 0))
+        if (!move_spline.Finalized() && move_spline.onTransport == transport)
             real_position = move_spline.ComputePosition();
+        else
+        {
+            Position const* pos;
+            if (!transport)
+                pos = unit;
+            else
+                pos = &unit->m_movementInfo.transport.pos;
+
+            real_position.x = pos->GetPositionX();
+            real_position.y = pos->GetPositionY();
+            real_position.z = pos->GetPositionZ();
+            real_position.orientation = unit->GetOrientation();
+        }
 
         // should i do the things that user should do? - no.
         if (args.path.empty())
             return 0;
 
-        // correct first vertex
+        // corrent first vertex
         args.path[0] = real_position;
         args.initialOrientation = real_position.orientation;
-        move_spline.onTransport = (unit->GetTransGUID() != 0);
+        move_spline.onTransport = transport;
 
         uint32 moveFlags = unit->m_movementInfo.GetMovementFlags();
-
-        moveFlags |= MOVEMENTFLAG_FORWARD;
+        moveFlags |= (MOVEMENTFLAG_SPLINE_ENABLED|MOVEMENTFLAG_FORWARD);
 
         if (moveFlags & MOVEMENTFLAG_ROOT)
             moveFlags &= ~MOVEMENTFLAG_MASK_MOVING;
 
         if (!args.HasVelocity)
-
         {
             // If spline is initialized with SetWalk method it only means we need to select
             // walk move speed for it but not add walk flag to unit
@@ -113,11 +116,11 @@ namespace Movement
         move_spline.Initialize(args);
 
         WorldPacket data(SMSG_MONSTER_MOVE, 64);
-        data.append(unit->GetPackGUID());
-        if (unit->GetTransGUID())
+        data << unit->GetPackGUID();
+        if (transport)
         {
             data.SetOpcode(SMSG_MONSTER_MOVE_TRANSPORT);
-            data.appendPackGUID(unit->GetTransGUID());
+            data << unit->GetTransGUID().WriteAsPacked();
             data << int8(unit->GetTransSeat());
         }
 
@@ -135,17 +138,35 @@ namespace Movement
         if (move_spline.Finalized())
             return;
 
-        Location loc = move_spline.ComputePosition();
+        bool transport = unit->HasUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT) && unit->GetTransGUID();
+        Location loc;
+        if (move_spline.onTransport == transport)
+            loc = move_spline.ComputePosition();
+        else
+        {
+            Position const* pos;
+            if (!transport)
+                pos = unit;
+            else
+                pos = &unit->m_movementInfo.transport.pos;
+
+            loc.x = pos->GetPositionX();
+            loc.y = pos->GetPositionY();
+            loc.z = pos->GetPositionZ();
+            loc.orientation = unit->GetOrientation();
+        }
+
         args.flags = MoveSplineFlag::Done;
-        unit->m_movementInfo.RemoveMovementFlag(MOVEMENTFLAG_FORWARD);
+        unit->m_movementInfo.RemoveMovementFlag(MOVEMENTFLAG_FORWARD | MOVEMENTFLAG_SPLINE_ENABLED);
+        move_spline.onTransport = transport;
         move_spline.Initialize(args);
 
         WorldPacket data(SMSG_MONSTER_MOVE, 64);
-        data.append(unit->GetPackGUID());
-        if (unit->GetTransGUID())
+        data << unit->GetPackGUID();
+        if (transport)
         {
             data.SetOpcode(SMSG_MONSTER_MOVE_TRANSPORT);
-            data.appendPackGUID(unit->GetTransGUID());
+            data << unit->GetTransGUID().WriteAsPacked();
             data << int8(unit->GetTransSeat());
         }
 
@@ -153,32 +174,20 @@ namespace Movement
         unit->SendMessageToSet(&data, true);
     }
 
-    void MoveSplineInit::ForceDone()
-    {
-        MoveSpline& move_spline = *unit->movespline;
-
-        if (!move_spline.Initialized())
-            return;
-
-        args.flags = MoveSplineFlag::Done;
-        move_spline.Initialize(args);
-    }
-
     MoveSplineInit::MoveSplineInit(Unit* m) : unit(m)
     {
         args.splineId = splineIdGen.NewId();
         // Elevators also use MOVEMENTFLAG_ONTRANSPORT but we do not keep track of their position changes
-        args.TransformForTransport = unit->GetTransGUID();
+        args.TransformForTransport = unit->HasUnitMovementFlag(MOVEMENTFLAG_ONTRANSPORT) && unit->GetTransGUID();
         // mix existing state into new
         args.flags.walkmode = unit->m_movementInfo.HasMovementFlag(MOVEMENTFLAG_WALKING);
-        args.flags.flying = unit->m_movementInfo.HasMovementFlag(MovementFlags(MOVEMENTFLAG_CAN_FLY | MOVEMENTFLAG_DISABLE_GRAVITY));
-        args.flags.smoothGroundPath = true; // enabled by default, CatmullRom mode or client config "pathSmoothing" will disable this
+        args.flags.flying = unit->m_movementInfo.HasMovementFlag((MovementFlags)(MOVEMENTFLAG_CAN_FLY | MOVEMENTFLAG_DISABLE_GRAVITY));
     }
 
     void MoveSplineInit::SetFacing(const Unit* target)
     {
         args.flags.EnableFacingTarget();
-        args.facing.target = target->GetGUID();
+        args.facing.target = target->GetGUID().GetRawValue();
     }
 
     void MoveSplineInit::SetFacing(float angle)
@@ -201,7 +210,7 @@ namespace Movement
         {
             PathGenerator path(unit);
             bool result = path.CalculatePath(dest.x, dest.y, dest.z, forceDestination);
-            if (result && path.GetPathType() & ~PATHFIND_NOPATH)
+            if (result && !(path.GetPathType() & PATHFIND_NOPATH))
             {
                 MovebyPath(path.GetPath());
                 return;
@@ -214,22 +223,11 @@ namespace Movement
         args.path[1] = transform(dest);
     }
 
-    void MoveSplineInit::SetFall()
-    {
-        args.flags.EnableFalling();
-        args.flags.fallingSlow = unit->HasUnitMovementFlag(MOVEMENTFLAG_FALLING_SLOW);
-    }
-
     Vector3 TransportPathTransform::operator()(Vector3 input)
     {
         if (_transformForTransport)
-        {
             if (TransportBase* transport = _owner->GetDirectTransport())
-            {
-                float unused = 0.0f; // need reference
-                transport->CalculatePassengerOffset(input.x, input.y, input.z, unused);
-            }
-        }
+                transport->CalculatePassengerOffset(input.x, input.y, input.z);
 
         return input;
     }

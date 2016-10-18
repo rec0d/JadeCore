@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -49,58 +49,59 @@ class npc_warmage_violetstand : public CreatureScript
 public:
     npc_warmage_violetstand() : CreatureScript("npc_warmage_violetstand") { }
 
-    struct npc_warmage_violetstandAI : public Scripted_NoMovementAI
+    struct npc_warmage_violetstandAI : public ScriptedAI
     {
-        npc_warmage_violetstandAI(Creature* creature) : Scripted_NoMovementAI(creature){}
-
-        uint64 uiTargetGUID;
-
-        void Reset()
+        npc_warmage_violetstandAI(Creature* creature) : ScriptedAI(creature)
         {
-            uiTargetGUID = 0;
+            SetCombatMovement(false);
         }
 
-        void UpdateAI(const uint32 /*uiDiff*/)
+        ObjectGuid targetGUID;
+
+        void Reset() override
         {
-            if (me->IsNonMeleeSpellCasted(false))
+            targetGUID.Clear();
+        }
+
+        void UpdateAI(uint32 /*diff*/) override
+        {
+            if (me->IsNonMeleeSpellCast(false))
                 return;
 
             if (me->GetEntry() == NPC_WARMAGE_SARINA)
             {
-                if (!uiTargetGUID)
+                if (!targetGUID)
                 {
                     std::list<Creature*> orbList;
                     GetCreatureListWithEntryInGrid(orbList, me, NPC_TRANSITUS_SHIELD_DUMMY, 32.0f);
                     if (!orbList.empty())
                     {
-                        for (std::list<Creature*>::const_iterator itr = orbList.begin(); itr != orbList.end(); ++itr)
+                        for (Creature* orb : orbList)
                         {
-                            if (Creature* pOrb = *itr)
+                            if (orb->GetPositionY() < 1000)
                             {
-                                if (pOrb->GetPositionY() < 1000)
-                                {
-                                    uiTargetGUID = pOrb->GetGUID();
-                                    break;
-                                }
+                                targetGUID = orb->GetGUID();
+                                break;
                             }
                         }
                     }
                 }
-            }else
+            }
+            else
             {
-                if (!uiTargetGUID)
+                if (!targetGUID)
                     if (Creature* pOrb = GetClosestCreatureWithEntry(me, NPC_TRANSITUS_SHIELD_DUMMY, 32.0f))
-                        uiTargetGUID = pOrb->GetGUID();
+                        targetGUID = pOrb->GetGUID();
 
             }
 
-            if (Creature* pOrb = me->GetCreature(*me, uiTargetGUID))
+            if (Creature* pOrb = ObjectAccessor::GetCreature(*me, targetGUID))
                 DoCast(pOrb, SPELL_TRANSITUS_SHIELD_BEAM);
 
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new npc_warmage_violetstandAI(creature);
     }

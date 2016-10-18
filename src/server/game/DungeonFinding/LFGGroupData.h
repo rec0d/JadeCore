@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2014 WoWSource 4.3.4
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
- * Do Not Share The SourceCode
- * and read our WoWSource Terms
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
-/* ScriptData
-SDName: LFG
-SD%Complete: 100%
-SDComment: Fully Working
-SDCategory: LFG
-EndScriptData
-*/
 
 #ifndef _LFGGROUPDATA_H
 #define _LFGGROUPDATA_H
@@ -30,7 +31,7 @@ enum LfgGroupEnum
 /**
     Stores all lfg data needed about a group.
 */
-class LfgGroupData
+class TC_GAME_API LfgGroupData
 {
     public:
         LfgGroupData();
@@ -41,10 +42,10 @@ class LfgGroupData
         // General
         void SetState(LfgState state);
         void RestoreState();
-        void AddPlayer(uint64 guid);
-        uint8 RemovePlayer(uint64 guid);
+        void AddPlayer(ObjectGuid guid);
+        uint8 RemovePlayer(ObjectGuid guid);
         void RemoveAllPlayers();
-        void SetLeader(uint64 guid);
+        void SetLeader(ObjectGuid guid);
 
         // Dungeon
         void SetDungeon(uint32 dungeon);
@@ -55,9 +56,9 @@ class LfgGroupData
         // General
         LfgState GetState() const;
         LfgState GetOldState() const;
-        LfgGuidSet const& GetPlayers() const;
+        GuidSet const& GetPlayers() const;
         uint8 GetPlayerCount() const;
-        uint64 GetLeader() const;
+        ObjectGuid GetLeader() const;
 
         // Dungeon
         uint32 GetDungeon(bool asId = true) const;
@@ -65,16 +66,20 @@ class LfgGroupData
         // VoteKick
         uint8 GetKicksLeft() const;
 
+        void SetVoteKick(bool active);
+        bool IsVoteKickActive() const;
+
     private:
         // General
         LfgState m_State;                                  ///< State if group in LFG
         LfgState m_OldState;                               ///< Old State
-        uint64 m_Leader;                                   ///< Leader GUID
-        LfgGuidSet m_Players;                              ///< Players in group
+        ObjectGuid m_Leader;                               ///< Leader GUID
+        GuidSet m_Players;                                 ///< Players in group
         // Dungeon
         uint32 m_Dungeon;                                  ///< Dungeon entry
         // Vote Kick
         uint8 m_KicksLeft;                                 ///< Number of kicks left
+        bool m_VoteKickActive;
 };
 
 } // namespace lfg

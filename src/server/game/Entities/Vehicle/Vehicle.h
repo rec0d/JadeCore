@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -29,26 +29,9 @@ struct VehicleEntry;
 class Unit;
 class VehicleJoinEvent;
 
-typedef std::set<uint64> GuidSet;
-
-enum EjectTargetDirectionTypes
+class TC_GAME_API Vehicle : public TransportBase
 {
-    EJECT_DIR_NONE,
-    EJECT_DIR_FRONT,
-    EJECT_DIR_BACK,
-    EJECT_DIR_RIGHT,
-    EJECT_DIR_LEFT,
-    EJECT_DIR_FRONT_RIGHT,
-    EJECT_DIR_BACK_RIGHT,
-    EJECT_DIR_BACK_LEFT,
-    EJECT_DIR_FRONT_LEFT,
-    EJECT_DIR_RANDOM,
-    EJECT_DIR_ENTRY
-};
-
-class Vehicle : public TransportBase
-{
-     protected:
+    protected:
         friend bool Unit::CreateVehicleKit(uint32 id, uint32 creatureEntry);
         Vehicle(Unit* unit, VehicleEntry const* vehInfo, uint32 creatureEntry);
 
@@ -62,7 +45,6 @@ class Vehicle : public TransportBase
         void InstallAllAccessories(bool evading);
         void ApplyAllImmunities();
         void InstallAccessory(uint32 entry, int8 seatId, bool minion, uint8 type, uint32 summonTime);   //! May be called from scripts
-        void SetVehicleId(uint32 vehicleid);
 
         Unit* GetBase() const { return _me; }
         VehicleEntry const* GetVehicleInfo() const { return _vehicleInfo; }
@@ -74,13 +56,10 @@ class Vehicle : public TransportBase
         uint8 GetAvailableSeatCount() const;
 
         bool AddPassenger(Unit* passenger, int8 seatId = -1);
-        void EjectPassenger(int seatId, EjectTargetDirectionTypes dir = EJECT_DIR_RIGHT, float distance = 5.0f);
-        void EjectPassenger(Unit* passenger, EjectTargetDirectionTypes dir = EJECT_DIR_RIGHT, float distance = 5.0f);
-        void RemovePassenger(Unit* passenger);
+        void EjectPassenger(Unit* passenger, Unit* controller);
+        Vehicle* RemovePassenger(Unit* passenger);
         void RelocatePassengers();
         void RemoveAllPassengers();
-        void Dismiss();
-        void TeleportVehicle(float x, float y, float z, float o);
         bool IsVehicleInUse() const;
 
         void SetLastShootPos(Position const& pos) { _lastShootPos.Relocate(pos); }
@@ -104,20 +83,24 @@ class Vehicle : public TransportBase
             STATUS_UNINSTALLING,
         };
 
-        struct PlayerSeatSave
-        {
-            Player* player;
-            int8 seatId;
-        };
-
         SeatMap::iterator GetSeatIteratorForPassenger(Unit* passenger);
         void InitMovementInfoForBase();
 
         /// This method transforms supplied transport offsets into global coordinates
-        void CalculatePassengerPosition(float& x, float& y, float& z, float& o);
+        void CalculatePassengerPosition(float& x, float& y, float& z, float* o /*= NULL*/) const override
+        {
+            TransportBase::CalculatePassengerPosition(x, y, z, o,
+                GetBase()->GetPositionX(), GetBase()->GetPositionY(),
+                GetBase()->GetPositionZ(), GetBase()->GetOrientation());
+        }
 
         /// This method transforms supplied global coordinates into local offsets
-        void CalculatePassengerOffset(float& x, float& y, float& z, float& o);
+        void CalculatePassengerOffset(float& x, float& y, float& z, float* o /*= NULL*/) const override
+        {
+            TransportBase::CalculatePassengerOffset(x, y, z, o,
+                GetBase()->GetPositionX(), GetBase()->GetPositionY(),
+                GetBase()->GetPositionZ(), GetBase()->GetOrientation());
+        }
 
         void RemovePendingEvent(VehicleJoinEvent* e);
         void RemovePendingEventsForSeat(int8 seatId);
@@ -135,14 +118,13 @@ class Vehicle : public TransportBase
         PendingJoinEventContainer _pendingJoinEvents;       ///< Collection of delayed join events for prospective passengers
 };
 
-class VehicleJoinEvent : public BasicEvent
+class TC_GAME_API VehicleJoinEvent : public BasicEvent
 {
     friend class Vehicle;
     protected:
-        VehicleJoinEvent(Vehicle* v, Unit* u) : Target(v), Passenger(u), Seat(Target->Seats.end()) {}
-        ~VehicleJoinEvent();
-        bool Execute(uint64, uint32);
-        void Abort(uint64);
+        VehicleJoinEvent(Vehicle* v, Unit* u) : Target(v), Passenger(u), Seat(Target->Seats.end()) { }
+        bool Execute(uint64, uint32) override;
+        void Abort(uint64) override;
 
         Vehicle* Target;
         Unit* Passenger;

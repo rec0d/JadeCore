@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -19,12 +19,10 @@
 #include "vmapexport.h"
 #include "model.h"
 #include "wmo.h"
-#include "mpqfile.h"
+#include "mpq_libmpq04.h"
 #include <cassert>
 #include <algorithm>
 #include <cstdio>
-
-extern HANDLE WorldMpq;
 
 Model::Model(std::string &filename) : filename(filename), vertices(0), indices(0)
 {
@@ -33,7 +31,7 @@ Model::Model(std::string &filename) : filename(filename), vertices(0), indices(0
 
 bool Model::open()
 {
-    MPQFile f(WorldMpq, filename.c_str());
+    MPQFile f(filename.c_str());
 
     if (f.isEof())
     {
@@ -46,7 +44,7 @@ bool Model::open()
     _unload();
 
     memcpy(&header, f.getBuffer(), sizeof(ModelHeader));
-    if (header.nBoundingTriangles > 0)
+    if(header.nBoundingTriangles > 0)
     {
         f.seek(0);
         f.seekRelative(header.ofsBoundingVertices);
@@ -98,8 +96,19 @@ bool Model::ConvertToVMAPModel(const char * outfilename)
     wsize = sizeof(uint32) + sizeof(unsigned short) * nIndexes;
     fwrite(&wsize, sizeof(int), 1, output);
     fwrite(&nIndexes, sizeof(uint32), 1, output);
-    if (nIndexes >0)
+    if (nIndexes > 0)
+    {
+        for (uint32 i = 0; i < nIndexes; ++i)
+        {
+            if ((i % 3) - 1 == 0 && i + 1 < nIndexes)
+            {
+                uint16 tmp = indices[i];
+                indices[i] = indices[i + 1];
+                indices[i + 1] = tmp;
+            }
+        }
         fwrite(indices, sizeof(unsigned short), nIndexes, output);
+    }
 
     fwrite("VERT", 4, 1, output);
     wsize = sizeof(int) + sizeof(float) * 3 * nVertices;
@@ -107,8 +116,12 @@ bool Model::ConvertToVMAPModel(const char * outfilename)
     fwrite(&nVertices, sizeof(int), 1, output);
     if (nVertices >0)
     {
-        for(uint32 vpos=0; vpos <nVertices; ++vpos)
-            std::swap(vertices[vpos].y, vertices[vpos].z);
+        for (uint32 vpos = 0; vpos < nVertices; ++vpos)
+        {
+            float tmp = vertices[vpos].y;
+            vertices[vpos].y = -vertices[vpos].z;
+            vertices[vpos].z = tmp;
+        }
 
         fwrite(vertices, sizeof(float)*3, nVertices, output);
     }
@@ -130,6 +143,7 @@ Vec3D fixCoordSystem2(Vec3D v)
 }
 
 ModelInstance::ModelInstance(MPQFile& f, char const* ModelInstName, uint32 mapID, uint32 tileX, uint32 tileY, FILE *pDirfile)
+    : id(0), scale(0), flags(0)
 {
     float ff[3];
     f.read(&id, 4);

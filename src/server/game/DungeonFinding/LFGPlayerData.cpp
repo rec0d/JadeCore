@@ -1,18 +1,19 @@
 /*
- * Copyright (C) 2014 WoWSource 4.3.4
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
- * Do Not Share The SourceCode
- * and read our WoWSource Terms
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
-/* ScriptData
-SDName: LFG
-SD%Complete: 100%
-SDComment: Fully Working
-SDCategory: LFG
-EndScriptData
-*/
 
 #include "LFGPlayerData.h"
 
@@ -20,12 +21,10 @@ namespace lfg
 {
 
 LfgPlayerData::LfgPlayerData(): m_State(LFG_STATE_NONE), m_OldState(LFG_STATE_NONE),
-    m_Team(0), m_Group(0), m_Roles(0), m_Comment("")
-{}
+    m_Team(0), m_Group(), m_Roles(0), m_Comment("")
+{ }
 
-LfgPlayerData::~LfgPlayerData()
-{
-}
+LfgPlayerData::~LfgPlayerData() { }
 
 void LfgPlayerData::SetState(LfgState state)
 {
@@ -35,7 +34,7 @@ void LfgPlayerData::SetState(LfgState state)
         case LFG_STATE_FINISHED_DUNGEON:
             m_Roles = 0;
             m_SelectedDungeons.clear();
-            m_Comment = "";
+            m_Comment.clear();
             // No break on purpose
         case LFG_STATE_DUNGEON:
             m_OldState = state;
@@ -55,17 +54,12 @@ void LfgPlayerData::RestoreState()
     m_State = m_OldState;
 }
 
-void LfgPlayerData::SetLockedDungeons(LfgLockMap const& lockStatus)
-{
-    m_LockedDungeons = lockStatus;
-}
-
 void LfgPlayerData::SetTeam(uint8 team)
 {
     m_Team = team;
 }
 
-void LfgPlayerData::SetGroup(uint64 group)
+void LfgPlayerData::SetGroup(ObjectGuid group)
 {
     m_Group = group;
 }
@@ -95,17 +89,12 @@ LfgState LfgPlayerData::GetOldState() const
     return m_OldState;
 }
 
-const LfgLockMap& LfgPlayerData::GetLockedDungeons() const
-{
-    return m_LockedDungeons;
-}
-
 uint8 LfgPlayerData::GetTeam() const
 {
     return m_Team;
 }
 
-uint64 LfgPlayerData::GetGroup() const
+ObjectGuid LfgPlayerData::GetGroup() const
 {
     return m_Group;
 }

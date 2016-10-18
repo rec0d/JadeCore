@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+* Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -59,35 +59,42 @@ public:
 
     struct boss_zum_rahAI : public BossAI
     {
-        boss_zum_rahAI(Creature* creature) : BossAI(creature, DATA_ZUM_RAH) { }
-
-        void Reset()
+        boss_zum_rahAI(Creature* creature) : BossAI(creature, DATA_ZUM_RAH)
         {
-            me->setFaction(ZUMRAH_FRIENDLY_FACTION); // areatrigger sets faction to enemy
+            Initialize();
+        }
+
+        void Initialize()
+        {
             _ward80 = false;
             _ward40 = false;
             _heal30 = false;
         }
 
-        void EnterCombat(Unit* /*who*/)
+        void Reset() override
+        {
+            me->setFaction(ZUMRAH_FRIENDLY_FACTION); // areatrigger sets faction to enemy
+            Initialize();
+        }
+
+        void EnterCombat(Unit* /*who*/) override
         {
             Talk(SAY_SANCT_INVADE);
             events.ScheduleEvent(EVENT_SHADOW_BOLT, 1000);
             events.ScheduleEvent(EVENT_SHADOWBOLT_VOLLEY, 10000);
         }
 
-        void JustDied(Unit* /*killer*/)
+        void JustDied(Unit* /*killer*/) override
         {
-            if (instance)
-                instance->SetData(DATA_ZUM_RAH, DONE);
+            instance->SetData(DATA_ZUM_RAH, DONE);
         }
 
-        void KilledUnit(Unit* /*victim*/)
+        void KilledUnit(Unit* /*victim*/) override
         {
             Talk(SAY_KILL);
         }
 
-        void UpdateAI(uint32 const diff)
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -148,9 +155,9 @@ public:
 
     };
 
-    CreatureAI* GetAI(Creature* creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
-        return new boss_zum_rahAI(creature);
+        return GetInstanceAI<boss_zum_rahAI>(creature);
     }
 };
 

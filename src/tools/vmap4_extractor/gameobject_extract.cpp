@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -26,17 +26,18 @@
 
 bool ExtractSingleModel(std::string& fname)
 {
-    if (fname.substr(fname.length() - 4, 4) == ".mdx")
+    char * name = GetPlainName((char*)fname.c_str());
+    char * ext = GetExtension(name);
+
+    // < 3.1.0 ADT MMDX section store filename.mdx filenames for corresponded .m2 file
+    if (!strcmp(ext, ".mdx"))
     {
-        fname.erase(fname.length() - 2, 2);
+        // replace .mdx -> .m2
+        fname.erase(fname.length()-2,2);
         fname.append("2");
     }
-
-    std::string originalName = fname;
-
-    char* name = GetPlainName((char*)fname.c_str());
-    FixNameCase(name, strlen(name));
-    FixNameSpaces(name, strlen(name));
+    // >= 3.1.0 ADT MMDX section store filename.m2 filenames for corresponded .m2 file
+    // nothing do
 
     std::string output(szWorkDirWmo);
     output += "/";
@@ -45,19 +46,17 @@ bool ExtractSingleModel(std::string& fname)
     if (FileExists(output.c_str()))
         return true;
 
-    Model mdl(originalName);
+    Model mdl(fname);
     if (!mdl.open())
         return false;
 
     return mdl.ConvertToVMAPModel(output.c_str());
 }
 
-extern HANDLE LocaleMpq;
-
 void ExtractGameobjectModels()
 {
     printf("Extracting GameObject models...");
-    DBCFile dbc(LocaleMpq, "DBFilesClient\\GameObjectDisplayInfo.dbc");
+    DBCFile dbc("DBFilesClient\\GameObjectDisplayInfo.dbc");
     if(!dbc.open())
     {
         printf("Fatal error: Invalid GameObjectDisplayInfo.dbc file format!\n");
@@ -83,9 +82,9 @@ void ExtractGameobjectModels()
         if (path.length() < 4)
             continue;
 
-        FixNameCase((char*)path.c_str(), path.size());
+        fixnamen((char*)path.c_str(), path.size());
         char * name = GetPlainName((char*)path.c_str());
-        FixNameSpaces(name, strlen(name));
+        fixname2(name, strlen(name));
 
         char * ch_ext = GetExtension(name);
         if (!ch_ext)
@@ -95,11 +94,18 @@ void ExtractGameobjectModels()
 
         bool result = false;
         if (!strcmp(ch_ext, ".wmo"))
+        {
             result = ExtractSingleWmo(path);
-        else if (!strcmp(ch_ext, ".mdl"))   // TODO: extract .mdl files, if needed
+        }
+        else if (!strcmp(ch_ext, ".mdl"))
+        {
+            // TODO: extract .mdl files, if needed
             continue;
+        }
         else //if (!strcmp(ch_ext, ".mdx") || !strcmp(ch_ext, ".m2"))
+        {
             result = ExtractSingleModel(path);
+        }
 
         if (result)
         {

@@ -35,7 +35,7 @@ namespace Movement
     };
 
     // Transforms coordinates from global to transport offsets
-    class TransportPathTransform
+    class TC_GAME_API TransportPathTransform
     {
     public:
         TransportPathTransform(Unit* owner, bool transformForTransport)
@@ -49,7 +49,7 @@ namespace Movement
 
     /*  Initializes and launches spline movement
      */
-    class MoveSplineInit
+    class TC_GAME_API MoveSplineInit
     {
     public:
 
@@ -62,10 +62,6 @@ namespace Movement
         /*  Final pass of initialization that stops movement.
          */
         void Stop();
-
-        /* Force Done
-        */
-        void ForceDone();
 
         /* Adds movement by parabolic trajectory
          * @param amplitude  - the maximum height of parabola, value could be negative and positive
@@ -111,10 +107,6 @@ namespace Movement
         void SetFly();
         /* Enables walk mode. Disabled by default
          */
-        void EnableTaxiFlight();
-        /* Flags used in taxi
-        */
-
         void SetWalk(bool enable);
         /* Makes movement cyclic. Disabled by default
          */
@@ -153,10 +145,11 @@ namespace Movement
         Unit*  unit;
     };
 
-    inline void MoveSplineInit::SetFly() { args.flags.flying = true; }
+    inline void MoveSplineInit::SetFly() { args.flags.EnableFlying(); }
     inline void MoveSplineInit::SetWalk(bool enable) { args.flags.walkmode = enable; }
     inline void MoveSplineInit::SetSmooth() { args.flags.EnableCatmullRom(); }
     inline void MoveSplineInit::SetCyclic() { args.flags.cyclic = true; }
+    inline void MoveSplineInit::SetFall() { args.flags.EnableFalling(); }
     inline void MoveSplineInit::SetVelocity(float vel) { args.velocity = vel; args.HasVelocity = true; }
     inline void MoveSplineInit::SetOrientationInversed() { args.flags.orientationInversed = true;}
     inline void MoveSplineInit::SetTransportEnter() { args.flags.EnableTransportEnter(); }

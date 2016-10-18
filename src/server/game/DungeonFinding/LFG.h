@@ -1,23 +1,25 @@
 /*
- * Copyright (C) 2014 WoWSource 4.3.4
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
- * Do Not Share The SourceCode
- * and read our WoWSource Terms
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
-/* ScriptData
-SDName: LFG
-SD%Complete: 100%
-SDComment: Fully Working
-SDCategory: LFG
-EndScriptData
-*/
 
 #ifndef _LFG_H
 #define _LFG_H
 
 #include "Common.h"
+#include "ObjectGuid.h"
 
 namespace lfg
 {
@@ -43,21 +45,17 @@ enum LfgUpdateType
     LFG_UPDATETYPE_DEFAULT                       = 0,      // Internal Use
     LFG_UPDATETYPE_LEADER_UNK1                   = 1,      // FIXME: At group leave
     LFG_UPDATETYPE_ROLECHECK_ABORTED             = 4,
-    LFG_UPDATETYPE_JOIN_QUEUE                    = 6,
-    LFG_UPDATETYPE_ROLECHECK_FAILED              = 7,
-    LFG_UPDATETYPE_REMOVED_FROM_QUEUE            = 8,
-    LFG_UPDATETYPE_PROPOSAL_FAILED               = 9,
-    LFG_UPDATETYPE_PROPOSAL_DECLINED             = 10,
-    LFG_UPDATETYPE_GROUP_FOUND                   = 11,
-    LFG_UPDATETYPE_ADDED_TO_QUEUE                = 13,
-    LFG_UPDATETYPE_PROPOSAL_BEGIN                = 14,
-    LFG_UPDATETYPE_UPDATE_STATUS                 = 15,
-    LFG_UPDATETYPE_GROUP_MEMBER_OFFLINE          = 16,
-    LFG_UPDATETYPE_GROUP_DISBAND_UNK16           = 17,     // FIXME: Sometimes at group disband
-    LFG_UPDATETYPE_JOIN_QUEUE_INITIAL            = 24,
-    LFG_UPDATETYPE_DUNGEON_FINISHED              = 25,
-    LFG_UPDATETYPE_PARTY_ROLE_NOT_AVAILABLE      = 43,
-    LFG_UPDATETYPE_JOIN_LFG_OBJECT_FAILED        = 45,
+    LFG_UPDATETYPE_JOIN_QUEUE                    = 5,
+    LFG_UPDATETYPE_ROLECHECK_FAILED              = 6,
+    LFG_UPDATETYPE_REMOVED_FROM_QUEUE            = 7,
+    LFG_UPDATETYPE_PROPOSAL_FAILED               = 8,
+    LFG_UPDATETYPE_PROPOSAL_DECLINED             = 9,
+    LFG_UPDATETYPE_GROUP_FOUND                   = 10,
+    LFG_UPDATETYPE_ADDED_TO_QUEUE                = 12,
+    LFG_UPDATETYPE_PROPOSAL_BEGIN                = 13,
+    LFG_UPDATETYPE_UPDATE_STATUS                 = 14,
+    LFG_UPDATETYPE_GROUP_MEMBER_OFFLINE          = 15,
+    LFG_UPDATETYPE_GROUP_DISBAND_UNK16           = 16,     // FIXME: Sometimes at group disband
 };
 
 enum LfgState
@@ -66,8 +64,8 @@ enum LfgState
     LFG_STATE_ROLECHECK,                                   // Rolecheck active
     LFG_STATE_QUEUED,                                      // Queued
     LFG_STATE_PROPOSAL,                                    // Proposal active
-    LFG_STATE_BOOT,                                        // Vote kick active
-    LFG_STATE_DUNGEON,                                     // In LFG Group, in a Dungeon
+    //LFG_STATE_BOOT,                                      // Vote kick active
+    LFG_STATE_DUNGEON = 5,                                 // In LFG Group, in a Dungeon
     LFG_STATE_FINISHED_DUNGEON,                            // In LFG Group, in a finished Dungeon
     LFG_STATE_RAIDBROWSER                                  // Using Raid finder
 };
@@ -75,7 +73,6 @@ enum LfgState
 /// Instance lock types
 enum LfgLockStatusType
 {
-    LFG_LOCKSTATUS_NONE                          = 0,
     LFG_LOCKSTATUS_INSUFFICIENT_EXPANSION        = 1,
     LFG_LOCKSTATUS_TOO_LOW_LEVEL                 = 2,
     LFG_LOCKSTATUS_TOO_HIGH_LEVEL                = 3,
@@ -98,27 +95,15 @@ enum LfgAnswer
     LFG_ANSWER_AGREE                             = 1
 };
 
-struct LockData
-{
-    LfgLockStatusType locktyp;
-    uint32 neededItemlevel;
-    uint32 averageItemlevel;
-    
-    LockData(): locktyp(LFG_LOCKSTATUS_NONE), neededItemlevel(0), averageItemlevel(0) {};
-    LockData(LfgLockStatusType typ, uint32 nilevel,uint32 avlevel): locktyp(typ), neededItemlevel(nilevel), averageItemlevel(avlevel) {};
-};
-
 typedef std::set<uint32> LfgDungeonSet;
-typedef std::map<uint32, LockData> LfgLockMap;
-typedef std::map<uint64, LfgLockMap> LfgLockPartyMap;
-typedef std::set<uint64> LfgGuidSet;
-typedef std::list<uint64> LfgGuidList;
-typedef std::map<uint64, uint8> LfgRolesMap;
-typedef std::map<uint64, uint64> LfgGroupsMap;
+typedef std::map<uint32, uint32> LfgLockMap;
+typedef std::map<ObjectGuid, LfgLockMap> LfgLockPartyMap;
+typedef std::map<ObjectGuid, uint8> LfgRolesMap;
+typedef std::map<ObjectGuid, ObjectGuid> LfgGroupsMap;
 
-std::string ConcatenateDungeons(LfgDungeonSet const& dungeons);
-std::string GetRolesString(uint8 roles);
-std::string GetStateString(LfgState state);
+TC_GAME_API std::string ConcatenateDungeons(LfgDungeonSet const& dungeons);
+TC_GAME_API std::string GetRolesString(uint8 roles);
+TC_GAME_API std::string GetStateString(LfgState state);
 
 } // namespace lfg
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -22,7 +22,22 @@
 #include "Utilities/ByteConverter.h"
 #include <cassert>
 
-class DBCFileLoader
+enum DbcFieldFormat
+{
+    FT_NA='x',                                              //not used or unknown, 4 byte size
+    FT_NA_BYTE='X',                                         //not used or unknown, byte
+    FT_STRING='s',                                          //char*
+    FT_FLOAT='f',                                           //float
+    FT_INT='i',                                             //uint32
+    FT_BYTE='b',                                            //uint8
+    FT_SORT='d',                                            //sorted by this field, field is not included
+    FT_IND='n',                                             //the same, but parsed to data
+    FT_LOGIC='l',                                           //Logical (boolean)
+    FT_SQL_PRESENT='p',                                     //Used in sql format to mark column present in sql dbc
+    FT_SQL_ABSENT='a'                                       //Used in sql format to mark column absent in sql dbc
+};
+
+class TC_SHARED_API DBCFileLoader
 {
     public:
         DBCFileLoader();
@@ -62,7 +77,7 @@ class DBCFileLoader
                 }
 
             private:
-                Record(DBCFileLoader &file_, unsigned char *offset_): offset(offset_), file(file_) {}
+                Record(DBCFileLoader &file_, unsigned char *offset_): offset(offset_), file(file_) { }
                 unsigned char *offset;
                 DBCFileLoader &file;
 
@@ -91,5 +106,8 @@ class DBCFileLoader
         uint32 *fieldsOffset;
         unsigned char *data;
         unsigned char *stringTable;
+
+        DBCFileLoader(DBCFileLoader const& right) = delete;
+        DBCFileLoader& operator=(DBCFileLoader const& right) = delete;
 };
 #endif

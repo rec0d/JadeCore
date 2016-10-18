@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -35,103 +35,6 @@ EndContentData */
 #include "Player.h"
 #include "SpellInfo.h"
 
-enum GuardianOfAncientKings
-
-{
-	GOAK_HOLY_ENTRY = 46499,
-	GOAK_PROTECTION_ENTRY = 46490,
-	GOAK_RETRIBUTION_ENTRY = 46506,
-};
-
-class guard_guardian_of_ancient_kings : public CreatureScript
-{
-public:
-	guard_guardian_of_ancient_kings() : CreatureScript("guard_guardian_of_ancient_kings") { }
-
-	struct guard_guardian_of_ancient_kingsAI : public GuardAI
-	{
-		guard_guardian_of_ancient_kingsAI(Creature* creature) : GuardAI(creature) {}
-
-		void InitializeAI()
-		{
-			owner = me->GetCharmerOrOwner();
-			guardianEntry = me->GetEntry();
-			isRetribution = guardianEntry == GOAK_RETRIBUTION_ENTRY;
-			me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-			me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-
-			if (owner && !isRetribution)
-			{
-				// Holy and Protection guardian are passive
-				dummyGuard();
-			}
-		}
-
-		void UpdateAI(uint32 const diff)
-		{
-			// All operations available only for Retribution Guardian
-			if (owner && isRetribution)
-			{
-				if (!me->GetAura(86703))
-				{
-					// Cast Ancient Crusader on the guardian
-					owner->AddAura(86703, me);
-				}
-
-				Unit* ownerVictim = owner->GetVictim();
-
-				// Paladin's attacking check, also check range because state is applied when right clicking (even out of melee range)
-				if (ownerVictim && owner->HasUnitState(UNIT_STATE_MELEE_ATTACKING)
-					&& owner->IsInRange(ownerVictim, 0.0f, NOMINAL_MELEE_RANGE))
-				{
-					meVictim = me->GetVictim();
-
-					// Guardian's target switching only when paladin switch
-					if (ownerVictim != meVictim)
-					{
-						meVictim = ownerVictim;
-						me->Attack(meVictim, true);
-						me->GetMotionMaster()->MoveChase(meVictim);
-
-					}
-
-					// Required with me->Attack
-					if (me->isInCombat())
-					{
-						DoMeleeAttackIfReady();
-					}
-				}
-				else
-				{
-					dummyGuard();
-				}
-			}
-		}
-
-		void dummyGuard()
-		{
-			followdist = PET_FOLLOW_DIST * 2;
-			me->SetReactState(REACT_PASSIVE);
-			me->GetMotionMaster()->Clear(false);
-			me->GetMotionMaster()->MoveFollow(owner, followdist, me->GetFollowAngle());
-		}
-
-	private:
-		Unit* owner;
-		Unit* meVictim;
-		uint32 guardianEntry;
-		float followdist;
-		bool isRetribution;
-	};
-
-	CreatureAI* GetAI(Creature* creature) const
-	{
-		return new guard_guardian_of_ancient_kingsAI(creature);
-	}
-
-};
-
-
 enum GuardGeneric
 {
     GENERIC_CREATURE_COOLDOWN       = 5000,
@@ -151,23 +54,31 @@ public:
 
     struct guard_genericAI : public GuardAI
     {
-        guard_genericAI(Creature* creature) : GuardAI(creature) {}
+        guard_genericAI(Creature* creature) : GuardAI(creature)
+        {
+            Initialize();
+        }
 
-        void Reset()
+        void Initialize()
         {
             globalCooldown = 0;
             buffTimer = 0;
         }
 
-        void EnterCombat(Unit* who)
+        void Reset() override
+        {
+            Initialize();
+        }
+
+        void EnterCombat(Unit* who) override
         {
             if (me->GetEntry() == NPC_CENARION_HOLD_INFANTRY)
-                Talk(SAY_GUARD_SIL_AGGRO, who->GetGUID());
+                Talk(SAY_GUARD_SIL_AGGRO, who);
             if (SpellInfo const* spell = me->reachWithSpellAttack(who))
                 DoCast(who, spell->Id);
         }
 
-        void UpdateAI(const uint32 diff)
+        void UpdateAI(uint32 diff) override
         {
              //Always decrease our global cooldown first
             if (globalCooldown > diff)
@@ -176,7 +87,7 @@ public:
                 globalCooldown = 0;
 
             //Buff timer (only buff when we are alive and not in combat
-            if (me->isAlive() && !me->isInCombat())
+            if (me->IsAlive() && !me->IsInCombat())
             {
                 if (buffTimer <= diff)
                 {
@@ -203,7 +114,7 @@ public:
                 return;
 
             // Make sure our attack is ready and we arn't currently casting
-            if (me->isAttackReady() && !me->IsNonMeleeSpellCasted(false))
+            if (me->isAttackReady() && !me->IsNonMeleeSpellCast(false))
             {
                 //If we are within range melee the target
                 if (me->IsWithinMeleeRange(me->GetVictim()))
@@ -242,7 +153,7 @@ public:
             else
             {
                 //Only run this code if we arn't already casting
-                if (!me->IsNonMeleeSpellCasted(false))
+                if (!me->IsNonMeleeSpellCast(false))
                 {
                     bool healing = false;
                     SpellInfo const* info = NULL;
@@ -316,7 +227,7 @@ public:
             }
         }
 
-        void ReceiveEmote(Player* player, uint32 textEmote)
+        void ReceiveEmote(Player* player, uint32 textEmote) override
         {
             switch (me->GetEntry())
             {
@@ -339,7 +250,7 @@ public:
         uint32 buffTimer;
     };
 
-    CreatureAI* GetAI(Creature* creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
        return new guard_genericAI(creature);
     }
@@ -360,17 +271,25 @@ public:
 
     struct guard_shattrath_scryerAI : public GuardAI
     {
-        guard_shattrath_scryerAI(Creature* creature) : GuardAI(creature) {}
+        guard_shattrath_scryerAI(Creature* creature) : GuardAI(creature)
+        {
+            Initialize();
+        }
 
-        void Reset()
+        void Initialize()
         {
             banishTimer = 5000;
             exileTimer = 8500;
-            playerGUID = 0;
+            playerGUID.Clear();
             canTeleport = false;
         }
 
-        void UpdateAI(const uint32 diff)
+        void Reset() override
+        {
+            Initialize();
+        }
+
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -379,12 +298,12 @@ public:
             {
                 if (exileTimer <= diff)
                 {
-                    if (Unit* temp = Unit::GetUnit(*me, playerGUID))
+                    if (Unit* temp = ObjectAccessor::GetUnit(*me, playerGUID))
                     {
                         temp->CastSpell(temp, SPELL_EXILE, true);
                         temp->CastSpell(temp, SPELL_BANISH_TELEPORT, true);
                     }
-                    playerGUID = 0;
+                    playerGUID.Clear();
                     exileTimer = 8500;
                     canTeleport = false;
                 } else exileTimer -= diff;
@@ -408,11 +327,11 @@ public:
     private:
         uint32 exileTimer;
         uint32 banishTimer;
-        uint64 playerGUID;
+        ObjectGuid playerGUID;
         bool canTeleport;
     };
 
-    CreatureAI* GetAI(Creature* creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new guard_shattrath_scryerAI(creature);
     }
@@ -425,17 +344,25 @@ public:
 
     struct guard_shattrath_aldorAI : public GuardAI
     {
-        guard_shattrath_aldorAI(Creature* creature) : GuardAI(creature) {}
+        guard_shattrath_aldorAI(Creature* creature) : GuardAI(creature)
+        {
+            Initialize();
+        }
 
-        void Reset()
+        void Initialize()
         {
             banishTimer = 5000;
             exileTimer = 8500;
-            playerGUID = 0;
+            playerGUID.Clear();
             canTeleport = false;
         }
 
-        void UpdateAI(const uint32 diff)
+        void Reset() override
+        {
+            Initialize();
+        }
+
+        void UpdateAI(uint32 diff) override
         {
             if (!UpdateVictim())
                 return;
@@ -444,12 +371,12 @@ public:
             {
                 if (exileTimer <= diff)
                 {
-                    if (Unit* temp = Unit::GetUnit(*me, playerGUID))
+                    if (Unit* temp = ObjectAccessor::GetUnit(*me, playerGUID))
                     {
                         temp->CastSpell(temp, SPELL_EXILE, true);
                         temp->CastSpell(temp, SPELL_BANISH_TELEPORT, true);
                     }
-                    playerGUID = 0;
+                    playerGUID.Clear();
                     exileTimer = 8500;
                     canTeleport = false;
                 } else exileTimer -= diff;
@@ -472,11 +399,11 @@ public:
     private:
         uint32 exileTimer;
         uint32 banishTimer;
-        uint64 playerGUID;
+        ObjectGuid playerGUID;
         bool canTeleport;
     };
 
-    CreatureAI* GetAI(Creature* creature) const
+    CreatureAI* GetAI(Creature* creature) const override
     {
         return new guard_shattrath_aldorAI(creature);
     }
@@ -484,8 +411,7 @@ public:
 
 void AddSC_guards()
 {
-	new guard_guardian_of_ancient_kings();
-    new guard_generic;
-    new guard_shattrath_aldor;
-    new guard_shattrath_scryer;
+    new guard_generic();
+    new guard_shattrath_aldor();
+    new guard_shattrath_scryer();
 }

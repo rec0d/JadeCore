@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -20,7 +20,6 @@
 #include "ThreatManager.h"
 #include "Unit.h"
 #include "DBCStructure.h"
-#include "SpellMgr.h"
 #include "SpellInfo.h"
 
 HostileRefManager::~HostileRefManager()
@@ -29,19 +28,23 @@ HostileRefManager::~HostileRefManager()
 }
 
 //=================================================
-// send threat to all my hateres for the victim
-// The victim is hated than by them as well
+// send threat to all my haters for the victim
+// The victim is then hated by them as well
 // use for buffs and healing threat functionality
 
 void HostileRefManager::threatAssist(Unit* victim, float baseThreat, SpellInfo const* threatSpell)
 {
-    HostileReference* ref = getFirst();
+    if (getSize() == 0)
+        return;
+
     float threat = ThreatCalcHelper::calcThreat(victim, iOwner, baseThreat, (threatSpell ? threatSpell->GetSchoolMask() : SPELL_SCHOOL_MASK_NORMAL), threatSpell);
     threat /= getSize();
+
+    HostileReference* ref = getFirst();
     while (ref)
     {
-        if (ThreatCalcHelper::isValidProcess(victim, ref->getSource()->getOwner(), threatSpell))
-            ref->getSource()->doAddThreat(victim, threat);
+        if (ThreatCalcHelper::isValidProcess(victim, ref->GetSource()->GetOwner(), threatSpell))
+            ref->GetSource()->doAddThreat(victim, threat);
 
         ref = ref->next();
     }
@@ -52,7 +55,6 @@ void HostileRefManager::threatAssist(Unit* victim, float baseThreat, SpellInfo c
 void HostileRefManager::addTempThreat(float threat, bool apply)
 {
     HostileReference* ref = getFirst();
-
     while (ref)
     {
         if (apply)
@@ -130,7 +132,7 @@ void HostileRefManager::deleteReferencesForFaction(uint32 faction)
     while (ref)
     {
         HostileReference* nextRef = ref->next();
-        if (ref->getSource()->getOwner()->getFactionTemplateEntry()->faction == faction)
+        if (ref->GetSource()->GetOwner()->GetFactionTemplateEntry()->faction == faction)
         {
             ref->removeReference();
             delete ref;
@@ -148,7 +150,7 @@ void HostileRefManager::deleteReference(Unit* creature)
     while (ref)
     {
         HostileReference* nextRef = ref->next();
-        if (ref->getSource()->getOwner() == creature)
+        if (ref->GetSource()->GetOwner() == creature)
         {
             ref->removeReference();
             delete ref;
@@ -167,7 +169,7 @@ void HostileRefManager::setOnlineOfflineState(Unit* creature, bool isOnline)
     while (ref)
     {
         HostileReference* nextRef = ref->next();
-        if (ref->getSource()->getOwner() == creature)
+        if (ref->GetSource()->GetOwner() == creature)
         {
             ref->setOnlineOfflineState(isOnline);
             break;
@@ -184,7 +186,7 @@ void HostileRefManager::UpdateVisibility()
     while (ref)
     {
         HostileReference* nextRef = ref->next();
-        if (!ref->getSource()->getOwner()->canSeeOrDetect(getOwner()))
+        if (!ref->GetSource()->GetOwner()->CanSeeOrDetect(GetOwner()))
         {
             nextRef = ref->next();
             ref->removeReference();

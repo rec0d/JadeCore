@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -19,6 +19,7 @@
 #include "vmapexport.h"
 #include "wdtfile.h"
 #include "adtfile.h"
+
 #include <cstdio>
 
 char * wdtGetPlainName(char * FileName)
@@ -30,9 +31,7 @@ char * wdtGetPlainName(char * FileName)
     return FileName;
 }
 
-extern HANDLE WorldMpq;
-
-WDTFile::WDTFile(char* file_name, char* file_name1):WDT(WorldMpq, file_name)
+WDTFile::WDTFile(char* file_name, char* file_name1) : gWmoInstansName(NULL), gnWMO(0), WDT(file_name)
 {
     filename.append(file_name1,strlen(file_name1));
 }
@@ -79,11 +78,11 @@ bool WDTFile::init(char* /*map_id*/, unsigned int mapID)
                 WDT.read(buf, size);
                 char *p=buf;
                 int q = 0;
-                gWmoInstansName = new string[size];
+                gWmoInstansName = new std::string[size];
                 while (p < buf + size)
                 {
                     char* s=wdtGetPlainName(p);
-                    FixNameCase(s,strlen(s));
+                    fixnamen(s,strlen(s));
                     p=p+strlen(p)+1;
                     gWmoInstansName[q++] = s;
                 }
@@ -105,6 +104,7 @@ bool WDTFile::init(char* /*map_id*/, unsigned int mapID)
                 }
 
                 delete[] gWmoInstansName;
+                gWmoInstansName = NULL;
             }
         }
         WDT.seek((int)nextpos);
@@ -127,6 +127,6 @@ ADTFile* WDTFile::GetMap(int x, int z)
 
     char name[512];
 
-    sprintf(name,"World\\Maps\\%s\\%s_%d_%d_obj0.adt", filename.c_str(), filename.c_str(), x, z);
+    sprintf(name,"World\\Maps\\%s\\%s_%d_%d.adt", filename.c_str(), filename.c_str(), x, z);
     return new ADTFile(name);
 }

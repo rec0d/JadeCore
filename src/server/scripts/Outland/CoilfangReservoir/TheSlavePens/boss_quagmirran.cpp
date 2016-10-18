@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -51,17 +51,17 @@ class boss_quagmirran : public CreatureScript
         {
             boss_quagmirranAI(Creature* creature) : BossAI(creature, DATA_QUAGMIRRAN) { }
 
-            void Reset() 
+            void Reset() override
             {
                 _Reset();
             }
 
-            void JustDied(Unit* /*killer*/) 
+            void JustDied(Unit* /*killer*/) override
             {
                 _JustDied();
             }
 
-            void EnterCombat(Unit* /*who*/) 
+            void EnterCombat(Unit* /*who*/) override
             {
                 _EnterCombat();
                 events.ScheduleEvent(EVENT_ACID_SPRAY, 25000);
@@ -70,9 +70,9 @@ class boss_quagmirran : public CreatureScript
                 events.ScheduleEvent(EVENT_POISON_BOLT_VOLLEY, 31000);
             }
 
-            void KilledUnit(Unit* /*victim*/)  { }
+            void KilledUnit(Unit* /*victim*/) override { }
 
-            void UpdateAI(const uint32 diff) 
+            void UpdateAI(uint32 diff) override
             {
                 if (!UpdateVictim())
                     return;
@@ -106,13 +106,16 @@ class boss_quagmirran : public CreatureScript
                         default:
                             break;
                     }
+
+                    if (me->HasUnitState(UNIT_STATE_CASTING))
+                        return;
                 }
 
                 DoMeleeAttackIfReady();
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const 
+        CreatureAI* GetAI(Creature* creature) const override
         {
             return new boss_quagmirranAI(creature);
         }
