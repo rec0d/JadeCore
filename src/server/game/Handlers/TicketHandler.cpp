@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -28,27 +28,97 @@
 #include "WorldPacket.h"
 #include "WorldSession.h"
 
-
-//Todo Questlog AuraLog PhaseLog!
-void WorldSession::HandleSubmitBugOpcode(WorldPacket& recvData)
+//Todo Database Support
+void WorldSession::HandleSubmitComplainOpcode(WorldPacket & recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: CMSG_SUBMIT_BUG");
-
     float posX, posY, posZ, posO;
     uint32 mapID;
 
-    recvData >> posZ;
-    recvData >> posY;
-    recvData >> posX;
-    recvData >> posO;
-    recvData >> mapID;
-    uint32 length = recvData.ReadBits(10);
-    recvData.FlushBits();
-    std::string bug = recvData.ReadString(length);
+    ObjectGuid guid;
 
-    ObjectGuid plrGuid = GUID_LOPART(GetPlayer()->GetGUID());
-    std::string name = "<unknown>";
-    sObjectMgr->GetPlayerNameByGUID(plrGuid, name);
+    guid[5] = recvData.ReadBit();
+    guid[0] = recvData.ReadBit();
+    guid[1] = recvData.ReadBit();
+
+    uint32 length = recvData.ReadBits(12);
+
+    guid[3] = recvData.ReadBit();
+    guid[2] = recvData.ReadBit();
+    guid[4] = recvData.ReadBit();
+    guid[7] = recvData.ReadBit();
+     
+    //guid:4 options:0 length :0;posY:648.581055 ,posX:-8851.486328 ,posZ:96.454063 ,MAP:0 ,poso:2.151366 , unk:0 text:           //SPAM
+    //guid:4 options:10 length :0;posY:648.581055 ,posX:-8851.486328 ,posZ:96.454063 ,MAP:0 ,poso:2.151366 , unk:0 text:          //Ausdrucksweise
+
+    uint32 options = recvData.ReadBits(4); // ##
+
+    guid[6] = recvData.ReadBit();
+
+    recvData.ReadByteSeq(guid[3]);
+    recvData.ReadByteSeq(guid[5]);
+    recvData.ReadByteSeq(guid[1]);
+    recvData.ReadByteSeq(guid[2]);
+    recvData.ReadByteSeq(guid[6]);
+    recvData.ReadByteSeq(guid[0]);
+
+    std::string text = recvData.ReadString(length);
+
+    recvData.ReadByteSeq(guid[7]);
+    recvData.ReadByteSeq(guid[4]);
+
+    recvData >> posY;
+    recvData >> posZ;	    
+    recvData >> posX;	
+    recvData >> mapID;
+    recvData >> posO;
+
+    recvData.ReadBit();
+
+    uint32 count = recvData.ReadBits(22);
+    uint32* strLength = new uint32[count];
+
+    // sLog->outInfo(LOG_FILTER_SERVER_LOADING,"CMSG_SUBMIT_COMPLAIN:: count:%u guid:%u option:%u length :%u;posY:%f ,posX:%f ,posZ:%f ,MAP:%u ,poso:%f  text:%s",count,guid,options,length,posY,posX,posZ,mapID,posO,text.c_str());
+
+    switch(options)
+    {    
+        case COMPLAIN_CHEATER:
+        case COMPLAIN_PLAYER_NAME:
+        case COMPLAIN_GUILD_NAME:
+        case COMPLAIN_ARENA_NAME:
+            
+            break;
+        case COMPLAIN_SPAM:
+        case COMPLAIN_BAD_LANG:
+            for (uint32 i = 0; i < count; ++i)
+                strLength[i] = recvData.ReadBits(13);
+
+            for (uint32 i = 0; i < count; ++i)
+            {
+                sLog->outInfo(LOG_FILTER_SERVER_LOADING,"time : %u",recvData.ReadPackedTime());
+                sLog->outInfo(LOG_FILTER_SERVER_LOADING,"Text : %s",recvData.ReadString(strLength[i]).c_str());
+            }
+
+            break;
+        default:
+             sLog->outInfo(LOG_FILTER_SERVER_LOADING,"CMSG_SUBMIT_COMPLAIN::UNKNOW option:%u",options);
+
+    }
+}
+
+//Todo Questlog AuraLog PhaseLog!
+void WorldSession::HandleSubmitBugOpcode(WorldPacket & recvData)
+{
+    float posX, posY, posZ, posO;
+    uint32 mapID;
+
+    uint32 length = recvData.ReadBits(12);
+    std::string bug = recvData.ReadString(length);
+	
+    recvData >> posY;
+    recvData >> posZ;
+    recvData >> posX;
+    recvData >> mapID;
+    recvData >> posO;
 
     SQLTransaction trans = SQLTransaction(NULL);
 
@@ -57,21 +127,19 @@ void WorldSession::HandleSubmitBugOpcode(WorldPacket& recvData)
     uint8 index = 0;
     PreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_INS_BUG_TICKET);
     stmt->setUInt32(index, realmID);
-    stmt->setUInt32(++index, plrGuid);
+    stmt->setUInt32(++index, GUID_LOPART(GetPlayer()->GetGUID()));
     stmt->setString(++index, bug);
     stmt->setUInt32(++index, uint32(time(NULL)));
-    stmt->setString(++index, name.c_str());
+    stmt->setString(++index, "change Line" /*GetNode()->GetName()*/);
     stmt->setUInt16(++index, uint16(mapID));
-    stmt->setFloat(++index, (float)posX);
-    stmt->setFloat(++index, (float)posY);
-    stmt->setFloat(++index, (float)posZ);
+    stmt->setFloat (++index, (float)posX);
+    stmt->setFloat (++index, (float)posY);
+    stmt->setFloat (++index, (float)posZ);
 
     LoginDatabase.ExecuteOrAppend(trans, stmt);
 }
-void WorldSession::HandleSubmitSuggestionOpcode(WorldPacket& recvData)
+void WorldSession::HandleSubmitSuggestionOpcode(WorldPacket & recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: CMSG_SUGGESTION_SUBMIT");
-
     HandleSubmitBugOpcode(recvData);  //If you want a separate table for the suggestions. Do it !! Same opcode Structure HandleSubmitBugOpcode
 }
 
@@ -88,15 +156,10 @@ void WorldSession::HandleGMTicketCreateOpcode(WorldPacket& recvData)
     }
 
     GMTicketResponse response = GMTICKET_RESPONSE_CREATE_ERROR;
-    GmTicket* ticket = sTicketMgr->GetTicketByPlayer(GetPlayer()->GetGUID());
-
-    if (ticket && ticket->IsCompleted())
-        sTicketMgr->CloseTicket(ticket->GetId(), GetPlayer()->GetGUID());;
-
     // Player must not have ticket
-    if (!ticket || ticket->IsClosed())
+    if (!sTicketMgr->GetTicketByPlayer(GetPlayer()->GetGUID()))
     {
-        ticket = new GmTicket(GetPlayer(), recvData);
+        GmTicket* ticket = new GmTicket(GetPlayer(), recvData);
 
         uint32 count;
         std::list<uint32> times;
@@ -128,9 +191,8 @@ void WorldSession::HandleGMTicketCreateOpcode(WorldPacket& recvData)
             }
             else
             {
-                TC_LOG_ERROR("network", "CMSG_GMTICKET_CREATE possibly corrupt. Uncompression failed.");
+                sLog->outError(LOG_FILTER_NETWORKIO, "CMSG_GMTICKET_CREATE possibly corrupt. Uncompression failed.");
                 recvData.rfinish();
-                delete ticket;
                 return;
             }
 
@@ -145,7 +207,7 @@ void WorldSession::HandleGMTicketCreateOpcode(WorldPacket& recvData)
         response = GMTICKET_RESPONSE_CREATE_SUCCESS;
     }
 
-    WorldPacket data(SMSG_GM_TICKET_CREATE, 4);
+    WorldPacket data(SMSG_GMTICKET_CREATE, 4);
     data << uint32(response);
     SendPacket(&data);
 }
@@ -167,7 +229,7 @@ void WorldSession::HandleGMTicketUpdateOpcode(WorldPacket& recvData)
         response = GMTICKET_RESPONSE_UPDATE_SUCCESS;
     }
 
-    WorldPacket data(SMSG_GM_TICKET_UPDATE, 4);
+    WorldPacket data(SMSG_GMTICKET_UPDATETEXT, 4);
     data << uint32(response);
     SendPacket(&data);
 }
@@ -176,7 +238,7 @@ void WorldSession::HandleGMTicketDeleteOpcode(WorldPacket & /*recvData*/)
 {
     if (GmTicket* ticket = sTicketMgr->GetTicketByPlayer(GetPlayer()->GetGUID()))
     {
-        WorldPacket data(SMSG_GM_TICKET_DELETETICKET, 4);
+        WorldPacket data(SMSG_GMTICKET_DELETETICKET, 4);
         data << uint32(GMTICKET_RESPONSE_TICKET_DELETED);
         SendPacket(&data);
 
@@ -206,7 +268,7 @@ void WorldSession::HandleGMTicketSystemStatusOpcode(WorldPacket & /*recvData*/)
 {
     // Note: This only disables the ticket UI at client side and is not fully reliable
     // are we sure this is a uint32? Should ask Zor
-    WorldPacket data(SMSG_GM_TICKET_SYSTEMSTATUS, 4);
+    WorldPacket data(SMSG_GMTICKET_SYSTEMSTATUS, 4);
     data << uint32(sTicketMgr->GetStatus() ? GMTICKET_QUEUE_STATUS_ENABLED : GMTICKET_QUEUE_STATUS_DISABLED);
     SendPacket(&data);
 }
@@ -284,11 +346,11 @@ void WorldSession::HandleGMResponseResolve(WorldPacket& /*recvPacket*/)
         if (float(rand_chance()) < sWorld->getFloatConfig(CONFIG_CHANCE_OF_GM_SURVEY))
             getSurvey = 1;
 
-        WorldPacket data(SMSG_GM_RESPONSE_STATUS_UPDATE, 4);
+        WorldPacket data(SMSG_GMRESPONSE_STATUS_UPDATE, 4);
         data << uint8(getSurvey);
         SendPacket(&data);
 
-        WorldPacket data2(SMSG_GM_TICKET_DELETETICKET, 4);
+        WorldPacket data2(SMSG_GMTICKET_DELETETICKET, 4);
         data2 << uint32(GMTICKET_RESPONSE_TICKET_DELETED);
         SendPacket(&data2);
 

@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -20,6 +17,9 @@
 
 #ifndef DRAK_THARON_KEEP_H_
 #define DRAK_THARON_KEEP_H_
+
+#include "Map.h"
+#include "Creature.h"
 
 #define DrakTharonKeepScriptName "instance_drak_tharon_keep"
 
@@ -39,7 +39,6 @@ enum DataTypes
     DATA_TROLLGORE_INVADER_SUMMONER_1,
     DATA_TROLLGORE_INVADER_SUMMONER_2,
     DATA_TROLLGORE_INVADER_SUMMONER_3,
-
     DATA_NOVOS_CRYSTAL_1,
     DATA_NOVOS_CRYSTAL_2,
     DATA_NOVOS_CRYSTAL_3,
@@ -63,7 +62,6 @@ enum CreatureIds
     NPC_DRAKKARI_INVADER_A              = 27709,
     NPC_DRAKKARI_INVADER_B              = 27753,
     NPC_DRAKKARI_INVADER_C              = 27754,
-
     // Novos
     NPC_CRYSTAL_CHANNEL_TARGET          = 26712,
     NPC_CRYSTAL_HANDLER                 = 26627,
@@ -89,7 +87,11 @@ enum GameObjectIds
 template<class AI>
 AI* GetDrakTharonKeepAI(Creature* creature)
 {
-    return GetInstanceAI<AI>(creature, DrakTharonKeepScriptName);
+    if (InstanceMap* instance = creature->GetMap()->ToInstanceMap())
+        if (instance->GetInstanceScript())
+            if (instance->GetScriptId() == sObjectMgr->GetScriptId(DrakTharonKeepScriptName))
+                return new AI(creature);
+    return NULL;
 }
 
 #endif // DRAK_THARON_KEEP_H_

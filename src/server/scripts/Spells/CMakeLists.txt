@@ -1,39 +1,21 @@
-# Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
-# Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
-# Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+# Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
 #
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.
+# This file is free software; as a special exception the author gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
 #
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-# more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program. If not, see <http://www.gnu.org/licenses/>.
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+file(GLOB_RECURSE scripts_Spells Spells/*.cpp Spells/*.h)
+source_group(Spells FILES ${scripts_Spells})
 
 set(scripts_STAT_SRCS
   ${scripts_STAT_SRCS}
-  Spells/spell_shaman.cpp
-  Spells/spell_hunter.cpp
-  Spells/spell_rogue.cpp
-  Spells/spell_druid.cpp
-  Spells/spell_dk.cpp
-  Spells/spell_quest.cpp
-  Spells/spell_warrior.cpp
-  Spells/spell_generic.cpp
-  Spells/spell_warlock.cpp
-  Spells/spell_priest.cpp
-  Spells/spell_mage.cpp
-  Spells/spell_paladin.cpp
-  Spells/spell_item.cpp
+  ${scripts_Spells}
   Spells/spell_holiday.cpp
-  Spells/spell_pet.cpp
-  Spells/spell_monk.cpp
-  Spells/spell_mastery.cpp
+  Spells/spell_guild.cpp
 )
 
 message("  -> Prepared: Spells")

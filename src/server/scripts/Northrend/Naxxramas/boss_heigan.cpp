@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -51,32 +48,29 @@ enum Phases
     PHASE_DANCE,
 };
 
-enum Misc
-{
-    ACTION_SAFETY_DANCE_FAIL        = 1,
-    DATA_SAFETY_DANCE               = 19962139
-};
+#define ACTION_SAFETY_DANCE_FAIL 1
+#define DATA_SAFETY_DANCE        19962139
 
 class boss_heigan : public CreatureScript
 {
 public:
     boss_heigan() : CreatureScript("boss_heigan") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_heiganAI(creature);
+        return new boss_heiganAI (creature);
     }
 
     struct boss_heiganAI : public BossAI
     {
-        boss_heiganAI(Creature* creature) : BossAI(creature, BOSS_HEIGAN) { }
+        boss_heiganAI(Creature* creature) : BossAI(creature, BOSS_HEIGAN) {}
 
         uint32 eruptSection;
         bool eruptDirection;
         bool safetyDance;
         Phases phase;
 
-        void KilledUnit(Unit* who) override
+        void KilledUnit(Unit* who)
         {
             if (!(rand()%5))
                 Talk(SAY_SLAY);
@@ -84,13 +78,13 @@ public:
                 safetyDance = false;
         }
 
-        void SetData(uint32 id, uint32 data) override
+        void SetData(uint32 id, uint32 data)
         {
             if (id == DATA_SAFETY_DANCE)
                 safetyDance = data ? true : false;
         }
 
-        uint32 GetData(uint32 type) const override
+        uint32 GetData(uint32 type) const
         {
             if (type == DATA_SAFETY_DANCE)
                 return safetyDance ? 1 : 0;
@@ -98,13 +92,13 @@ public:
             return 0;
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             _JustDied();
             Talk(SAY_DEATH);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             _EnterCombat();
             Talk(SAY_AGGRO);
@@ -139,7 +133,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim() || !CheckInRoom())
                 return;
@@ -159,7 +153,7 @@ public:
                         events.ScheduleEvent(EVENT_FEVER, urand(20000, 25000));
                         break;
                     case EVENT_PHASE:
-                        /// @todo Add missing texts for both phase switches
+                        // TODO : Add missing texts for both phase switches
                         EnterPhase(phase == PHASE_FIGHT ? PHASE_DANCE : PHASE_FIGHT);
                         break;
                     case EVENT_ERUPT:
@@ -205,13 +199,13 @@ class spell_heigan_eruption : public SpellScriptLoader
                             Heigan->AI()->SetData(DATA_SAFETY_DANCE, 0);
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectHitTarget += SpellEffectFn(spell_heigan_eruption_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_heigan_eruption_SpellScript();
         }
@@ -224,7 +218,7 @@ class achievement_safety_dance : public AchievementCriteriaScript
         {
         }
 
-        bool OnCheck(Player* /*player*/, Unit* target) override
+        bool OnCheck(Player* /*player*/, Unit* target)
         {
             if (!target)
                 return false;

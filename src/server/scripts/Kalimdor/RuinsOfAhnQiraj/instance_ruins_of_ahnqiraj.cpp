@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -25,7 +22,7 @@
 class instance_ruins_of_ahnqiraj : public InstanceMapScript
 {
     public:
-        instance_ruins_of_ahnqiraj() : InstanceMapScript("instance_ruins_of_ahnqiraj", 509) { }
+        instance_ruins_of_ahnqiraj() : InstanceMapScript("instance_ruins_of_ahnqiraj", 509) {}
 
         struct instance_ruins_of_ahnqiraj_InstanceMapScript : public InstanceScript
         {
@@ -42,7 +39,7 @@ class instance_ruins_of_ahnqiraj : public InstanceMapScript
                 _paralyzedGUID  = 0;
             }
 
-            void OnCreatureCreate(Creature* creature) override
+            void OnCreatureCreate(Creature* creature)
             {
                 switch (creature->GetEntry())
                 {
@@ -75,13 +72,13 @@ class instance_ruins_of_ahnqiraj : public InstanceMapScript
                 return true;
             }
 
-            void SetData64(uint32 type, uint64 data) override
+            void SetData64(uint32 type, uint64 data)
             {
                 if (type == DATA_PARALYZED)
                     _paralyzedGUID = data;
             }
 
-            uint64 GetData64(uint32 type) const override
+            uint64 GetData64(uint32 type) const
             {
                 switch (type)
                 {
@@ -104,7 +101,7 @@ class instance_ruins_of_ahnqiraj : public InstanceMapScript
                 return 0;
             }
 
-            std::string GetSaveData() override
+            std::string GetSaveData()
             {
                 OUT_SAVE_INST_DATA;
 
@@ -157,7 +154,7 @@ class instance_ruins_of_ahnqiraj : public InstanceMapScript
             uint64 _paralyzedGUID;
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const
         {
             return new instance_ruins_of_ahnqiraj_InstanceMapScript(map);
         }

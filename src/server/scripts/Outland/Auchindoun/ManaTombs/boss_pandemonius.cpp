@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -40,14 +39,15 @@ enum Pandemonius
     H_SPELL_DARK_SHELL              = 38759
 };
 
+
 class boss_pandemonius : public CreatureScript
 {
 public:
     boss_pandemonius() : CreatureScript("boss_pandemonius") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_pandemoniusAI(creature);
+        return new boss_pandemoniusAI (creature);
     }
 
     struct boss_pandemoniusAI : public ScriptedAI
@@ -60,29 +60,29 @@ public:
         uint32 DarkShell_Timer;
         uint32 VoidBlast_Counter;
 
-        void Reset() override
+        void Reset()
         {
             VoidBlast_Timer = 8000+rand()%15000;
             DarkShell_Timer = 20000;
             VoidBlast_Counter = 0;
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Talk(SAY_DEATH);
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_KILL);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(SAY_AGGRO);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;

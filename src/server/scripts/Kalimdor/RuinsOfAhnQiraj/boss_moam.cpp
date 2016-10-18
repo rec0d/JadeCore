@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -65,7 +62,7 @@ class boss_moam : public CreatureScript
             {
             }
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 me->SetPower(POWER_MANA, 0);
@@ -74,7 +71,7 @@ class boss_moam : public CreatureScript
                 //events.ScheduleEvent(EVENT_WIDE_SLASH, 11000);
             }
 
-            void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/) override
+            void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/)
             {
                 if (!_isStonePhase && HealthBelowPct(45))
                 {
@@ -83,7 +80,7 @@ class boss_moam : public CreatureScript
                 }
             }
 
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 switch (action)
                 {
@@ -108,7 +105,7 @@ class boss_moam : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -178,7 +175,7 @@ class boss_moam : public CreatureScript
             bool _isStonePhase;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_moamAI(creature);
         }

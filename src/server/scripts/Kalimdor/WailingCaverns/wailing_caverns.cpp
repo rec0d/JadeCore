@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -81,12 +79,12 @@ class npc_disciple_of_naralex : public CreatureScript
 public:
     npc_disciple_of_naralex() : CreatureScript("npc_disciple_of_naralex") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_disciple_of_naralexAI(creature);
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         InstanceScript* instance = creature->GetInstanceScript();
@@ -108,7 +106,7 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         InstanceScript* instance = creature->GetInstanceScript();
 
@@ -152,7 +150,7 @@ public:
         uint32 eventProgress;
         InstanceScript* instance;
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId)
         {
             if (!instance)
                 return;
@@ -184,17 +182,17 @@ public:
             }
         }
 
-        void Reset() override
+        void Reset()
         {
 
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* who)
         {
-            Talk(SAY_ATTACKED, who);
+            Talk(SAY_ATTACKED, who->GetGUID());
         }
 
-        void JustDied(Unit* /*slayer*/) override
+        void JustDied(Unit* /*slayer*/)
         {
             if (instance)
             {
@@ -205,12 +203,12 @@ public:
             }
         }
 
-        void JustSummoned(Creature* summoned) override
+        void JustSummoned(Creature* summoned)
         {
              summoned->AI()->AttackStart(me);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (currentEvent != TYPE_NARALEX_PART3)
                 npc_escortAI::UpdateAI(diff);

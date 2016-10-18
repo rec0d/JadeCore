@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,6 +26,7 @@
 #include "Player.h"
 #include "SpellInfo.h"
 #include "CreatureTextMgr.h"
+#include "ScriptPCH.h"
 
 /*######
 ##Quest 12848
@@ -45,6 +44,9 @@ enum UnworthyInitiate
     SPELL_PLAGUE_STRIKE             = 52373,
     SPELL_BLOOD_STRIKE              = 52374,
     SPELL_DEATH_COIL                = 52375,
+
+
+
 
     SAY_EVENT_START                 = 0,
     SAY_EVENT_ATTACK                = 1,
@@ -94,7 +96,7 @@ class npc_unworthy_initiate : public CreatureScript
 public:
     npc_unworthy_initiate() : CreatureScript("npc_unworthy_initiate") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_unworthy_initiateAI(creature);
     }
@@ -116,18 +118,18 @@ public:
 
         EventMap events;
 
-        void Reset() override
+        void Reset()
         {
             anchorGUID = 0;
             phase = PHASE_CHAINED;
             events.Reset();
             me->setFaction(7);
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
-            me->SetUInt32Value(UNIT_FIELD_ANIM_TIER, 8);
+            me->SetUInt32Value(UNIT_FIELD_BYTES_1, 8);
             me->LoadEquipment(0, true);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             events.ScheduleEvent(EVENT_ICY_TOUCH, 1000, GCD_CAST);
             events.ScheduleEvent(EVENT_PLAGUE_STRIKE, 3000, GCD_CAST);
@@ -135,7 +137,7 @@ public:
             events.ScheduleEvent(EVENT_DEATH_COIL, 5000, GCD_CAST);
         }
 
-        void MovementInform(uint32 type, uint32 id) override
+        void MovementInform(uint32 type, uint32 id)
         {
             if (type != POINT_MOTION_TYPE)
                 return;
@@ -145,7 +147,7 @@ public:
                 wait_timer = 5000;
                 me->CastSpell(me, SPELL_DK_INITIATE_VISUAL, true);
 
-                if (Player* starter = ObjectAccessor::GetPlayer(*me, playerGUID))
+                if (Player* starter = Unit::GetPlayer(*me, playerGUID))
                     sCreatureTextMgr->SendChat(me, SAY_EVENT_ATTACK, 0, CHAT_MSG_ADDON, LANG_ADDON, TEXT_RANGE_NORMAL, 0, TEAM_OTHER, false, starter);
 
                 phase = PHASE_TO_ATTACK;
@@ -157,7 +159,7 @@ public:
             wait_timer = 5000;
             phase = PHASE_TO_EQUIP;
 
-            me->SetUInt32Value(UNIT_FIELD_ANIM_TIER, 0);
+            me->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
             me->RemoveAurasDueToSpell(SPELL_SOUL_PRISON_CHAIN_SELF);
             me->RemoveAurasDueToSpell(SPELL_SOUL_PRISON_CHAIN);
 
@@ -168,41 +170,31 @@ public:
             Talk(SAY_EVENT_START);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             switch (phase)
             {
             case PHASE_CHAINED:
                 if (!anchorGUID)
                 {
-                    if (Creature* anchor = me->FindNearestCreature(29521, 30))
+                    if (Creature* anchor = me->FindNearestCreature(29521, 6))
                     {
                         anchor->AI()->SetGUID(me->GetGUID());
                         anchor->CastSpell(me, SPELL_SOUL_PRISON_CHAIN, true);
                         anchorGUID = anchor->GetGUID();
                     }
-                    else
-                        TC_LOG_ERROR("scripts", "npc_unworthy_initiateAI: unable to find anchor!");
 
-                    float dist = 99.0f;
+
+
                     GameObject* prison = NULL;
-
                     for (uint8 i = 0; i < 12; ++i)
                     {
-                        if (GameObject* temp_prison = me->FindNearestGameObject(acherus_soul_prison[i], 30))
+                        if (prison = me->FindNearestGameObject(acherus_soul_prison[i], 6))
                         {
-                            if (me->IsWithinDist(temp_prison, dist, false))
-                            {
-                                dist = me->GetDistance2d(temp_prison);
-                                prison = temp_prison;
-                            }
+                            prison->ResetDoorOrButton();
+                            break;
                         }
                     }
-
-                    if (prison)
-                        prison->ResetDoorOrButton();
-                    else
-                        TC_LOG_ERROR("scripts", "npc_unworthy_initiateAI: unable to find prison!");
                 }
                 break;
             case PHASE_TO_EQUIP:
@@ -213,7 +205,7 @@ public:
                     else
                     {
                         me->GetMotionMaster()->MovePoint(1, anchorX, anchorY, me->GetPositionZ());
-                        //TC_LOG_DEBUG("scripts", "npc_unworthy_initiateAI: move to %f %f %f", anchorX, anchorY, me->GetPositionZ());
+                        //sLog->outDebug(LOG_FILTER_TSCR, "npc_unworthy_initiateAI: move to %f %f %f", anchorX, anchorY, me->GetPositionZ());
                         phase = PHASE_EQUIPING;
                         wait_timer = 0;
                     }
@@ -230,8 +222,8 @@ public:
                         me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
                         phase = PHASE_ATTACKING;
 
-                        if (Player* target = ObjectAccessor::GetPlayer(*me, playerGUID))
-                            AttackStart(target);
+                        if (Player* target = Unit::GetPlayer(*me, playerGUID))
+                            me->AI()->AttackStart(target);
                         wait_timer = 0;
                     }
                 }
@@ -254,7 +246,7 @@ public:
                     case EVENT_PLAGUE_STRIKE:
                         DoCastVictim(SPELL_PLAGUE_STRIKE);
                         events.DelayEvents(1000, GCD_CAST);
-                        events.ScheduleEvent(EVENT_PLAGUE_STRIKE, 5000, GCD_CAST);
+                        events.ScheduleEvent(SPELL_PLAGUE_STRIKE, 5000, GCD_CAST);
                         break;
                     case EVENT_BLOOD_STRIKE:
                         DoCastVictim(SPELL_BLOOD_STRIKE);
@@ -278,144 +270,29 @@ public:
     };
 };
 
-
-/*######
-## npc_eye_of_acherus
-######*/
-
-enum EyeOfAcherus
-{
-	DISPLAYID_EYE_HUGE = 26320,
-	DISPLAYID_EYE_SMALL = 25499,
-
-	SPELL_EYE_PHASEMASK = 70889,
-	SPELL_EYE_VISUAL = 51892,
-	SPELL_EYE_FL_BOOST_RUN = 51923,
-	SPELL_EYE_FL_BOOST_FLY = 51890,
-	SPELL_EYE_CONTROL = 51852,
-};
-
-enum Texts
-{
-	SAY_EYE_LAUNCHED = 1,
-	SAY_EYE_UNDER_CONTROL = 2,
-};
-
-static Position Center[] =
-{
-	{ 2346.550049f, -5694.430176f, 426.029999f, 0.0f },
-};
-
-class npc_eye_of_acherus : public CreatureScript
-{
-public:
-	npc_eye_of_acherus() : CreatureScript("npc_eye_of_acherus") { }
-
-	CreatureAI* GetAI(Creature* creature) const
-	{
-		return new npc_eye_of_acherusAI(creature);
-	}
-
-	struct npc_eye_of_acherusAI : public ScriptedAI
-	{
-		npc_eye_of_acherusAI(Creature* creature) : ScriptedAI(creature)
-		{
-			Reset();
-		}
-
-		uint32 startTimer;
-		bool IsActive;
-
-		void Reset()
-		{
-			if (Unit* controller = me->GetCharmer())
-				me->SetLevel(controller->getLevel());
-
-			me->CastSpell(me, SPELL_EYE_FL_BOOST_FLY, true);
-			me->SetDisplayId(DISPLAYID_EYE_HUGE);
-			Talk(SAY_EYE_LAUNCHED);
-			me->SetSpeed(MOVE_FLIGHT, 3.4f, true);
-			me->SetHomePosition(2363.970589f, -5659.861328f, 504.316833f, 0);
-			me->GetMotionMaster()->MoveCharge(1752.858276f, -5878.270996f, 145.136444f, 0); //position center
-			me->SetReactState(REACT_AGGRESSIVE);
-			me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_STUNNED);
-
-			IsActive = false;
-			startTimer = 2000;
-		}
-
-		void AttackStart(Unit *) {}
-		void MoveInLineOfSight(Unit *) {}
-
-		void JustDied(Unit* /*killer*/)
-		{
-			if (Unit* charmer = me->GetCharmer())
-				charmer->RemoveAurasDueToSpell(SPELL_EYE_CONTROL);
-		}
-
-		void UpdateAI(uint32 diff)
-		{
-			if (me->IsCharmed())
-			{
-				if (startTimer <= diff && !IsActive)    // fly to start point
-				{
-					me->CastSpell(me, SPELL_EYE_PHASEMASK, true);
-					me->CastSpell(me, SPELL_EYE_VISUAL, true);
-					me->CastSpell(me, SPELL_EYE_FL_BOOST_FLY, true);
-
-					me->CastSpell(me, SPELL_EYE_FL_BOOST_RUN, true);
-					me->SetSpeed(MOVE_FLIGHT, 3.4f, true);
-					me->GetMotionMaster()->MovePoint(0, 1711.0f, -5820.0f, 147.0f);
-					return;
-				}
-				else
-					startTimer -= diff;
-			}
-			else
-				me->DespawnOrUnsummon();
-		}
-
-		void MovementInform(uint32 type, uint32 pointId)
-		{
-			if (type != POINT_MOTION_TYPE || pointId != 0)
-				return;
-
-			// I think the green morph is not blizzlike...
-			me->SetDisplayId(DISPLAYID_EYE_SMALL);
-
-			// for some reason it does not work when this spell is casted before the waypoint movement
-			me->CastSpell(me, SPELL_EYE_VISUAL, true);
-			me->CastSpell(me, SPELL_EYE_FL_BOOST_FLY, true);
-			Talk(SAY_EYE_UNDER_CONTROL);
-			((Player*)(me->GetCharmer()))->SetClientControl(me, 1);
-			me->SetSpeed(MOVE_FLIGHT, 3.4f, true);
-		}
-	};
-};
-
 class npc_unworthy_initiate_anchor : public CreatureScript
 {
 public:
     npc_unworthy_initiate_anchor() : CreatureScript("npc_unworthy_initiate_anchor") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_unworthy_initiate_anchorAI(creature);
     }
 
     struct npc_unworthy_initiate_anchorAI : public PassiveAI
     {
-        npc_unworthy_initiate_anchorAI(Creature* creature) : PassiveAI(creature), prisonerGUID(0) { }
+        npc_unworthy_initiate_anchorAI(Creature* creature) : PassiveAI(creature), prisonerGUID(0) {}
 
         uint64 prisonerGUID;
 
-        void SetGUID(uint64 guid, int32 /*id*/) override
+        void SetGUID(uint64 guid, int32 /*id*/)
         {
             if (!prisonerGUID)
                 prisonerGUID = guid;
         }
 
-        uint64 GetGUID(int32 /*id*/) const override
+        uint64 GetGUID(int32 /*id*/) const
         {
             return prisonerGUID;
         }
@@ -427,16 +304,131 @@ class go_acherus_soul_prison : public GameObjectScript
 public:
     go_acherus_soul_prison() : GameObjectScript("go_acherus_soul_prison") { }
 
-    bool OnGossipHello(Player* player, GameObject* go) override
+    bool OnGossipHello(Player* player, GameObject* go)
     {
-        if (Creature* anchor = go->FindNearestCreature(29521, 15))
+        if (Creature* anchor = go->FindNearestCreature(29521, 2))
             if (uint64 prisonerGUID = anchor->AI()->GetGUID())
-                if (Creature* prisoner = Creature::GetCreature(*player, prisonerGUID))
-                    CAST_AI(npc_unworthy_initiate::npc_unworthy_initiateAI, prisoner->AI())->EventStart(anchor, player);
+                if (Creature* prisoner = Creature::GetCreature(*go, prisonerGUID))
+                    if (prisoner->isAlive())
+                        CAST_AI(npc_unworthy_initiate::npc_unworthy_initiateAI, prisoner->AI())->EventStart(anchor, player);
 
         return false;
     }
 
+};
+
+/*######
+## npc_eye_of_acherus
+######*/
+
+enum EyeOfAcherus
+{
+    DISPLAYID_EYE_HUGE          = 26320,
+    DISPLAYID_EYE_SMALL         = 25499,
+
+    SPELL_EYE_PHASEMASK         = 70889,
+    SPELL_EYE_VISUAL            = 51892,
+    SPELL_EYE_FL_BOOST_RUN      = 51923,
+    SPELL_EYE_FL_BOOST_FLY      = 51890,
+    SPELL_EYE_CONTROL           = 51852,
+};
+
+enum Texts
+{
+    SAY_EYE_LAUNCHED            = 1,
+    SAY_EYE_UNDER_CONTROL       = 2,
+};
+
+static Position Center[]=
+{
+    {2346.550049f, -5694.430176f, 426.029999f, 0.0f},
+};
+
+class npc_eye_of_acherus : public CreatureScript
+{
+public:
+    npc_eye_of_acherus() : CreatureScript("npc_eye_of_acherus") { }
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_eye_of_acherusAI(creature);
+    }
+
+    struct npc_eye_of_acherusAI : public ScriptedAI
+    {
+        npc_eye_of_acherusAI(Creature* creature) : ScriptedAI(creature)
+        {
+            Reset();
+        }
+
+        uint32 startTimer;
+        bool IsActive;
+
+        void Reset()
+        {
+            if (Unit* controller = me->GetCharmer())
+            me->SetLevel(controller->getLevel());
+
+            me->CastSpell(me, SPELL_EYE_FL_BOOST_FLY, true);
+            me->SetDisplayId(DISPLAYID_EYE_HUGE);
+            Talk(SAY_EYE_LAUNCHED);
+            me->SetSpeed(MOVE_FLIGHT, 3.4f, true);
+            me->SetHomePosition(2363.970589f, -5659.861328f, 504.316833f, 0);
+            me->GetMotionMaster()->MoveCharge(1752.858276f, -5878.270996f, 145.136444f, 0); //position center
+            me->SetReactState(REACT_AGGRESSIVE);
+            me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_STUNNED);
+
+            IsActive = false;
+            startTimer = 2000;
+        }
+
+        void AttackStart(Unit *) {}
+        void MoveInLineOfSight(Unit *) {}
+
+        void JustDied(Unit* /*killer*/)
+        {
+            if (Unit* charmer = me->GetCharmer())
+               charmer->RemoveAurasDueToSpell(SPELL_EYE_CONTROL);
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (me->isCharmed())
+            {
+                if (startTimer <=  diff && !IsActive)    // fly to start point
+                {
+                    me->CastSpell(me, SPELL_EYE_PHASEMASK, true);
+                    me->CastSpell(me, SPELL_EYE_VISUAL, true);
+                    me->CastSpell(me, SPELL_EYE_FL_BOOST_FLY, true);
+
+                    me->CastSpell(me, SPELL_EYE_FL_BOOST_RUN, true);
+                    me->SetSpeed(MOVE_FLIGHT, 3.4f, true);
+                    me->GetMotionMaster()->MovePoint(0, 1711.0f, -5820.0f, 147.0f);
+                    return;
+                }
+                else
+                startTimer -= diff;
+            }
+            else
+            me->DespawnOrUnsummon();
+        }
+
+        void MovementInform(uint32 type, uint32 pointId)
+        {
+            if (type != POINT_MOTION_TYPE || pointId != 0)
+               return;
+
+            // I think the green morph is not blizzlike...
+            me->SetDisplayId(DISPLAYID_EYE_SMALL);
+
+            // for some reason it does not work when this spell is casted before the waypoint movement
+            me->CastSpell(me, SPELL_EYE_VISUAL, true);
+            me->CastSpell(me, SPELL_EYE_FL_BOOST_FLY, true);
+            Talk(SAY_EYE_UNDER_CONTROL);
+            ((Player*)(me->GetCharmer()))->SetClientControl(me, 1);
+            me->SetSpeed(MOVE_FLIGHT, 3.4f, true);
+        }
+    };
 };
 
 /*######
@@ -455,6 +447,7 @@ enum Spells_DKI
 
 enum Says_VBM
 {
+
     SAY_DUEL                    = 0,
 };
 
@@ -469,14 +462,14 @@ class npc_death_knight_initiate : public CreatureScript
 public:
     npc_death_knight_initiate() : CreatureScript("npc_death_knight_initiate") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         if (action == GOSSIP_ACTION_INFO_DEF)
         {
             player->CLOSE_GOSSIP_MENU();
 
-            if (player->IsInCombat() || creature->IsInCombat())
+            if (player->isInCombat() || creature->isInCombat())
                 return true;
 
             if (npc_death_knight_initiateAI* pInitiateAI = CAST_AI(npc_death_knight_initiate::npc_death_knight_initiateAI, creature->AI()))
@@ -496,14 +489,14 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (player->GetQuestStatus(QUEST_DEATH_CHALLENGE) == QUEST_STATUS_INCOMPLETE && creature->IsFullHealth())
         {
             if (player->HealthBelowPct(10))
                 return true;
 
-            if (player->IsInCombat() || creature->IsInCombat())
+            if (player->isInCombat() || creature->isInCombat())
                 return true;
 
             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ACCEPT_DUEL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF);
@@ -512,7 +505,7 @@ public:
         return true;
     }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_death_knight_initiateAI(creature);
     }
@@ -529,7 +522,7 @@ public:
         uint32 m_uiDuelTimer;
         bool m_bIsDuelInProgress;
 
-        void Reset() override
+        void Reset()
         {
             lose = false;
             me->RestoreFaction();
@@ -542,7 +535,7 @@ public:
             m_bIsDuelInProgress = false;
         }
 
-        void SpellHit(Unit* pCaster, const SpellInfo* pSpell) override
+        void SpellHit(Unit* pCaster, const SpellInfo* pSpell)
         {
             if (!m_bIsDuelInProgress && pSpell->Id == SPELL_DUEL)
             {
@@ -551,7 +544,7 @@ public:
             }
         }
 
-       void DamageTaken(Unit* pDoneBy, uint32 &uiDamage) override
+       void DamageTaken(Unit* pDoneBy, uint32 &uiDamage)
         {
             if (m_bIsDuelInProgress && pDoneBy->IsControlledByPlayer())
             {
@@ -574,7 +567,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 uiDiff) override
+        void UpdateAI(const uint32 uiDiff)
         {
             if (!UpdateVictim())
             {
@@ -610,7 +603,7 @@ public:
                 }
             }
 
-            /// @todo spells
+            // TODO: spells
 
             CombatAI::UpdateAI(uiDiff);
         }
@@ -622,102 +615,109 @@ public:
 ## npc_dark_rider_of_acherus
 ######*/
 
-enum DarkRiderOfAcherus
+enum Spells_DR
 {
-    SAY_DARK_RIDER              = 0,
     SPELL_DESPAWN_HORSE         = 51918
+};
+
+enum Says_DR
+{
+    SAY_DARK_RIDER              = 0
 };
 
 class npc_dark_rider_of_acherus : public CreatureScript
 {
-    public:
-        npc_dark_rider_of_acherus() : CreatureScript("npc_dark_rider_of_acherus") { }
+public:
+    npc_dark_rider_of_acherus() : CreatureScript("npc_dark_rider_of_acherus") { }
 
-        struct npc_dark_rider_of_acherusAI : public ScriptedAI
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_dark_rider_of_acherusAI(creature);
+    }
+
+    struct npc_dark_rider_of_acherusAI : public ScriptedAI
+    {
+        npc_dark_rider_of_acherusAI(Creature* creature) : ScriptedAI(creature) {}
+
+        uint32 PhaseTimer;
+        uint32 Phase;
+        bool Intro;
+        uint64 TargetGUID;
+
+        void Reset()
         {
-            npc_dark_rider_of_acherusAI(Creature* creature) : ScriptedAI(creature) { }
-
-            void Reset() override
-            {
-                PhaseTimer = 4000;
-                Phase = 0;
-                Intro = false;
-                TargetGUID = 0;
-            }
-
-            void UpdateAI(uint32 diff) override
-            {
-                if (!Intro || !TargetGUID)
-                    return;
-
-                if (PhaseTimer <= diff)
-                {
-                    switch (Phase)
-                    {
-                       case 0:
-                            Talk(SAY_DARK_RIDER);
-                            PhaseTimer = 5000;
-                            Phase = 1;
-                            break;
-                        case 1:
-                            if (Unit* target = ObjectAccessor::GetUnit(*me, TargetGUID))
-                                DoCast(target, SPELL_DESPAWN_HORSE, true);
-                            PhaseTimer = 3000;
-                            Phase = 2;
-                            break;
-                        case 2:
-                            me->SetVisible(false);
-                            PhaseTimer = 2000;
-                            Phase = 3;
-                            break;
-                        case 3:
-                            me->DespawnOrUnsummon();
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                else
-                    PhaseTimer -= diff;
-            }
-
-            void InitDespawnHorse(Unit* who)
-            {
-                if (!who)
-                    return;
-
-                TargetGUID = who->GetGUID();
-                me->SetWalk(true);
-                me->SetSpeed(MOVE_RUN, 0.4f);
-                me->GetMotionMaster()->MoveChase(who);
-                me->SetTarget(TargetGUID);
-                Intro = true;
-            }
-
-        private:
-            uint32 PhaseTimer;
-            uint32 Phase;
-            bool Intro;
-            uint64 TargetGUID;
-        };
-
-        CreatureAI* GetAI(Creature* creature) const override
-        {
-            return new npc_dark_rider_of_acherusAI(creature);
+            PhaseTimer = 4000;
+            Phase = 0;
+            Intro = false;
+            TargetGUID = 0;
         }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (!Intro || !TargetGUID)
+                return;
+
+            if (PhaseTimer <= diff)
+            {
+                switch (Phase)
+                {
+                   case 0:
+                        me->MonsterSay(SAY_DARK_RIDER, LANG_UNIVERSAL, 0);
+                        PhaseTimer = 5000;
+                        Phase = 1;
+                        break;
+                    case 1:
+                        if (Unit* target = Unit::GetUnit(*me, TargetGUID))
+                            DoCast(target, SPELL_DESPAWN_HORSE, true);
+                        PhaseTimer = 3000;
+                        Phase = 2;
+                        break;
+                    case 2:
+                        me->SetVisible(false);
+                        PhaseTimer = 2000;
+                        Phase = 3;
+                        break;
+                    case 3:
+                        me->DespawnOrUnsummon();
+                        break;
+                    default:
+                        break;
+                }
+            } else PhaseTimer -= diff;
+
+        }
+
+        void InitDespawnHorse(Unit* who)
+        {
+            if (!who)
+                return;
+
+            TargetGUID = who->GetGUID();
+            me->SetWalk(true);
+            me->SetSpeed(MOVE_RUN, 0.4f);
+            me->GetMotionMaster()->MoveChase(who);
+            me->SetTarget(TargetGUID);
+            Intro = true;
+        }
+
+    };
+
 };
 
 /*######
 ## npc_salanar_the_horseman
 ######*/
 
-enum Spells_Salanar
+enum SalanarTheHorseman
 {
     SPELL_REALM_OF_SHADOWS            = 52693,
-    SPELL_EFFECT_STOLEN_HORSE         = 52263,
-    SPELL_DELIVER_STOLEN_HORSE        = 52264,
-    SPELL_CALL_DARK_RIDER             = 52266,
-    SPELL_EFFECT_OVERTAKE             = 52349
+    EFFECT_STOLEN_HORSE               = 52263,
+    DELIVER_STOLEN_HORSE              = 52264,
+    CALL_DARK_RIDER                   = 52266,
+    SPELL_EFFECT_OVERTAKE             = 52349,
+    QUEST_REALM_OF_SHADOWS            = 12687,
+    NPC_DARK_RIDER_OF_ACHERUS         = 28654,
+    NPC_SALANAR_THE_HORSEMAN          = 28788    
 };
 
 class npc_salanar_the_horseman : public CreatureScript
@@ -725,30 +725,39 @@ class npc_salanar_the_horseman : public CreatureScript
 public:
     npc_salanar_the_horseman() : CreatureScript("npc_salanar_the_horseman") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_salanar_the_horsemanAI(creature);
     }
+	bool OnQuestComplete(Player* player, Creature* creature, Quest const* quest){
+		if (quest->GetQuestId() == 12687){
+			player->learnSpell(33388, true);
+			player->learnSpell(33391, true);
+			player->learnSpell(48778, true);
+		}
+		return true;
+	}
+
 
     struct npc_salanar_the_horsemanAI : public ScriptedAI
     {
-        npc_salanar_the_horsemanAI(Creature* creature) : ScriptedAI(creature) { }
+        npc_salanar_the_horsemanAI(Creature* creature) : ScriptedAI(creature) {}
 
-        void SpellHit(Unit* caster, const SpellInfo* spell) override
+        void SpellHit(Unit* caster, const SpellInfo* spell)
         {
-            if (spell->Id == SPELL_DELIVER_STOLEN_HORSE)
+            if (spell->Id == DELIVER_STOLEN_HORSE)
             {
                 if (caster->GetTypeId() == TYPEID_UNIT && caster->IsVehicle())
                 {
                     if (Unit* charmer = caster->GetCharmer())
                     {
-                        if (charmer->HasAura(SPELL_EFFECT_STOLEN_HORSE))
+                        if (charmer->HasAura(EFFECT_STOLEN_HORSE))
                         {
-                            charmer->RemoveAurasDueToSpell(SPELL_EFFECT_STOLEN_HORSE);
-                            caster->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+                            charmer->RemoveAurasDueToSpell(EFFECT_STOLEN_HORSE);
+                            caster->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
                             caster->setFaction(35);
-                            DoCast(caster, SPELL_CALL_DARK_RIDER, true);
-                            if (Creature* Dark_Rider = me->FindNearestCreature(28654, 15))
+                            DoCast(caster, CALL_DARK_RIDER, true);
+                            if (Creature* Dark_Rider = me->FindNearestCreature(NPC_DARK_RIDER_OF_ACHERUS, 15))
                                 CAST_AI(npc_dark_rider_of_acherus::npc_dark_rider_of_acherusAI, Dark_Rider->AI())->InitDespawnHorse(caster);
                         }
                     }
@@ -756,7 +765,8 @@ public:
             }
         }
 
-        void MoveInLineOfSight(Unit* who) override
+
+        void MoveInLineOfSight(Unit* who)
         {
             ScriptedAI::MoveInLineOfSight(who);
 
@@ -764,22 +774,19 @@ public:
             {
                 if (Unit* charmer = who->GetCharmer())
                 {
-                    if (Player* player = charmer->ToPlayer())
+                    if (charmer->GetTypeId() == TYPEID_PLAYER)
                     {
                         // for quest Into the Realm of Shadows(12687)
-                        if (me->GetEntry() == 28788 && player->GetQuestStatus(12687) == QUEST_STATUS_INCOMPLETE)
+                        if (me->GetEntry() == NPC_SALANAR_THE_HORSEMAN && CAST_PLR(charmer)->GetQuestStatus(QUEST_REALM_OF_SHADOWS) == QUEST_STATUS_INCOMPLETE)
                         {
-                            player->GroupEventHappens(12687, me);
+                            CAST_PLR(charmer)->GroupEventHappens(QUEST_REALM_OF_SHADOWS, me);
                             charmer->RemoveAurasDueToSpell(SPELL_EFFECT_OVERTAKE);
-                            if (Creature* creature = who->ToCreature())
-                            {
-                                creature->DespawnOrUnsummon();
-                                //creature->Respawn(true);
-                            }
+                            CAST_CRE(who)->DespawnOrUnsummon();
+                            //CAST_CRE(who)->Respawn(true);
                         }
 
-                        if (player->HasAura(SPELL_REALM_OF_SHADOWS))
-                            player->RemoveAurasDueToSpell(SPELL_REALM_OF_SHADOWS);
+                        if (CAST_PLR(charmer)->HasAura(SPELL_REALM_OF_SHADOWS))
+                            charmer->RemoveAurasDueToSpell(SPELL_REALM_OF_SHADOWS);
                     }
                 }
             }
@@ -792,47 +799,50 @@ public:
 ## npc_ros_dark_rider
 ######*/
 
+enum RosDarkRider
+{
+    NPC_DEATHCHARGER     = 28782
+};
 class npc_ros_dark_rider : public CreatureScript
 {
 public:
     npc_ros_dark_rider() : CreatureScript("npc_ros_dark_rider") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_ros_dark_riderAI(creature);
     }
 
     struct npc_ros_dark_riderAI : public ScriptedAI
     {
-        npc_ros_dark_riderAI(Creature* creature) : ScriptedAI(creature) { }
+        npc_ros_dark_riderAI(Creature* creature) : ScriptedAI(creature) {}
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             me->ExitVehicle();
         }
 
-        void Reset() override
+        void Reset()
         {
-            Creature* deathcharger = me->FindNearestCreature(28782, 30);
+            Creature* deathcharger = me->FindNearestCreature(NPC_DEATHCHARGER, 30);
             if (!deathcharger)
                 return;
 
             deathcharger->RestoreFaction();
-            deathcharger->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+            deathcharger->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
             deathcharger->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             if (!me->GetVehicle() && deathcharger->IsVehicle() && deathcharger->GetVehicleKit()->HasEmptySeat(0))
                 me->EnterVehicle(deathcharger);
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* killer)
         {
-            Creature* deathcharger = me->FindNearestCreature(28782, 30);
-            if (!deathcharger)
-                return;
+            Creature* deathcharger = me->FindNearestCreature(NPC_DEATHCHARGER, 30);
+            if (!deathcharger) return;
 
             if (killer->GetTypeId() == TYPEID_PLAYER && deathcharger->GetTypeId() == TYPEID_UNIT && deathcharger->IsVehicle())
             {
-                deathcharger->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+                deathcharger->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
                 deathcharger->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                 deathcharger->setFaction(2096);
             }
@@ -852,17 +862,16 @@ class npc_dkc1_gothik : public CreatureScript
 public:
     npc_dkc1_gothik() : CreatureScript("npc_dkc1_gothik") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_dkc1_gothikAI(creature);
     }
 
     struct npc_dkc1_gothikAI : public ScriptedAI
     {
-        npc_dkc1_gothikAI(Creature* creature) : ScriptedAI(creature) { }
+        npc_dkc1_gothikAI(Creature* creature) : ScriptedAI(creature) {}
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
             ScriptedAI::MoveInLineOfSight(who);
 
@@ -870,18 +879,17 @@ public:
             {
                 if (Unit* owner = who->GetOwner())
                 {
-                    if (Player* player = owner->ToPlayer())
+                    if (owner->GetTypeId() == TYPEID_PLAYER)
                     {
-                        Creature* creature = who->ToCreature();
-                        if (player->GetQuestStatus(12698) == QUEST_STATUS_INCOMPLETE)
-                            creature->CastSpell(owner, 52517, true);
+                        if (CAST_PLR(owner)->GetQuestStatus(12698) == QUEST_STATUS_INCOMPLETE)
+                            CAST_CRE(who)->CastSpell(owner, 52517, true);
 
-                        /// @todo Creatures must not be removed, but, must instead
+                        //Todo: Creatures must not be removed, but, must instead
                         //      stand next to Gothik and be commanded into the pit
                         //      and dig into the ground.
-                        creature->DespawnOrUnsummon();
+                        CAST_CRE(who)->DespawnOrUnsummon();
 
-                        if (player->GetQuestStatus(12698) == QUEST_STATUS_COMPLETE)
+                        if (CAST_PLR(owner)->GetQuestStatus(12698) == QUEST_STATUS_COMPLETE)
                             owner->RemoveAllMinionsByEntry(NPC_GHOSTS);
                     }
                 }
@@ -896,7 +904,7 @@ class npc_scarlet_ghoul : public CreatureScript
 public:
     npc_scarlet_ghoul() : CreatureScript("npc_scarlet_ghoul") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_scarlet_ghoulAI(creature);
     }
@@ -909,7 +917,10 @@ public:
             // Crawling out of the ground
             //DoCast(me, 35177, true);
             //me->MonsterSay("Mommy?", LANG_UNIVERSAL, 0);
-            me->SetReactState(REACT_DEFENSIVE);
+            //me->SetReactState(REACT_DEFENSIVE);
+            me->SetReactState(REACT_PASSIVE);
+            me->setFaction(35);
+            me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_ATTACKABLE_1 | UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC);
         }
 
         void FindMinions(Unit* owner)
@@ -923,7 +934,7 @@ public:
                 {
                     if ((*itr)->GetOwner()->GetGUID() == me->GetOwner()->GetGUID())
                     {
-                        if ((*itr)->IsInCombat() && (*itr)->getAttackerForHelper())
+                        if ((*itr)->isInCombat() && (*itr)->getAttackerForHelper())
                         {
                             AttackStart((*itr)->getAttackerForHelper());
                         }
@@ -932,41 +943,41 @@ public:
             }
         }
 
-        void UpdateAI(uint32 /*diff*/) override
-        {
-            if (!me->IsInCombat())
-            {
-                if (Unit* owner = me->GetOwner())
-                {
-                    Player* plrOwner = owner->ToPlayer();
-                    if (plrOwner && plrOwner->IsInCombat())
-                    {
-                        if (plrOwner->getAttackerForHelper() && plrOwner->getAttackerForHelper()->GetEntry() == NPC_GHOSTS)
-                            AttackStart(plrOwner->getAttackerForHelper());
-                        else
-                            FindMinions(owner);
-                    }
-                }
-            }
+        //void UpdateAI(const uint32 /*diff*/)
+        //{
+        //    if (!me->isInCombat())
+        //    {
+        //        if (Unit* owner = me->GetOwner())
+        //        {
+        //            Player* plrOwner = owner->ToPlayer();
+        //            if (plrOwner && plrOwner->isInCombat())
+        //            {
+        //                if (plrOwner->getAttackerForHelper() && plrOwner->getAttackerForHelper()->GetEntry() == NPC_GHOSTS)
+        //                    AttackStart(plrOwner->getAttackerForHelper());
+        //                else
+        //                    FindMinions(owner);
+        //            }
+        //        }
+        //    }
 
-            if (!UpdateVictim())
-                return;
+        //    if (!UpdateVictim())
+        //        return;
 
-            //ScriptedAI::UpdateAI(diff);
-            //Check if we have a current target
-            if (me->GetVictim()->GetEntry() == NPC_GHOSTS)
-            {
-                if (me->isAttackReady())
-                {
-                    //If we are within range melee the target
-                    if (me->IsWithinMeleeRange(me->GetVictim()))
-                    {
-                        me->AttackerStateUpdate(me->GetVictim());
-                        me->resetAttackTimer();
-                    }
-                }
-            }
-        }
+        //    //ScriptedAI::UpdateAI(diff);
+        //    //Check if we have a current target
+        //    if (me->GetVictim()->GetEntry() == NPC_GHOSTS)
+        //    {
+        //        if (me->isAttackReady())
+        //        {
+        //            //If we are within range melee the target
+        //            if (me->IsWithinMeleeRange(me->GetVictim()))
+        //            {
+        //                me->AttackerStateUpdate(me->GetVictim());
+        //                me->resetAttackTimer();
+        //            }
+        //        }
+        //    }
+        //}
     };
 
 };
@@ -975,82 +986,60 @@ public:
 ## npc_scarlet_miner_cart
 ####*/
 
-enum ScarletMinerCart
+enum Spells_SM
 {
-    SPELL_CART_CHECK        = 54173,
-    SPELL_SUMMON_CART       = 52463,
-    SPELL_SUMMON_MINER      = 52464,
-    SPELL_CART_DRAG         = 52465,
-
-    NPC_MINER               = 28841
+    SPELL_CART_CHECK       = 54173,
+    SPELL_CART_DRAG        = 52465
 };
 
 class npc_scarlet_miner_cart : public CreatureScript
 {
-    public:
-        npc_scarlet_miner_cart() : CreatureScript("npc_scarlet_miner_cart") { }
+public:
+    npc_scarlet_miner_cart() : CreatureScript("npc_scarlet_miner_cart") { }
 
-        struct npc_scarlet_miner_cartAI : public PassiveAI
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_scarlet_miner_cartAI(creature);
+    }
+
+    struct npc_scarlet_miner_cartAI : public PassiveAI
+    {
+        npc_scarlet_miner_cartAI(Creature* creature) : PassiveAI(creature), minerGUID(0)
         {
-            npc_scarlet_miner_cartAI(Creature* creature) : PassiveAI(creature), _minerGUID(0), _playerGUID(0)
-            {
-                me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid1); // Modelid2 is a horse.
-            }
-
-            void JustSummoned(Creature* summon) override
-            {
-                if (summon->GetEntry() == NPC_MINER)
-                {
-                    _minerGUID = summon->GetGUID();
-                    summon->AI()->SetGUID(_playerGUID);
-                }
-            }
-
-            void SummonedCreatureDespawn(Creature* summon) override
-            {
-                if (summon->GetEntry() == NPC_MINER)
-                    _minerGUID = 0;
-            }
-
-            void DoAction(int32 /*param*/) override
-            {
-                if (Creature* miner = ObjectAccessor::GetCreature(*me, _minerGUID))
-                {
-                    me->SetWalk(false);
-
-                    // Not 100% correct, but movement is smooth. Sometimes miner walks faster
-                    // than normal, this speed is fast enough to keep up at those times.
-                    me->SetSpeed(MOVE_RUN, 1.25f);
-
-                    me->GetMotionMaster()->MoveFollow(miner, 1.0f, 0);
-                }
-            }
-
-            void PassengerBoarded(Unit* who, int8 /*seatId*/, bool apply) override
-            {
-                if (apply)
-                {
-                    _playerGUID = who->GetGUID();
-                    me->CastSpell((Unit*)NULL, SPELL_SUMMON_MINER, true);
-                }
-                else
-                {
-                    _playerGUID = 0;
-                    if (Creature* miner = ObjectAccessor::GetCreature(*me, _minerGUID))
-                        miner->DespawnOrUnsummon();
-                }
-            }
-
-        private:
-            uint64 _minerGUID;
-            uint64 _playerGUID;
-        };
-
-        CreatureAI* GetAI(Creature* creature) const override
-        {
-            return new npc_scarlet_miner_cartAI(creature);
+            me->setFaction(35);
+            me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
+            me->SetDisplayId(me->GetCreatureTemplate()->Modelid1); // Modelid2 is a horse.
         }
+
+        uint64 minerGUID;
+
+        void SetGUID(uint64 guid, int32 /*id*/)
+        {
+            minerGUID = guid;
+        }
+
+        void DoAction(const int32 /*param*/)
+        {
+            if (Creature* miner = Unit::GetCreature(*me, minerGUID))
+            {
+                me->SetWalk(false);
+
+                //Not 100% correct, but movement is smooth. Sometimes miner walks faster
+                //than normal, this speed is fast enough to keep up at those times.
+                me->SetSpeed(MOVE_RUN, 1.25f);
+
+                me->GetMotionMaster()->MoveFollow(miner, 1.0f, 0);
+            }
+        }
+
+        void PassengerBoarded(Unit* /*who*/, int8 /*seatId*/, bool apply)
+        {
+            if (!apply)
+                if (Creature* miner = Unit::GetCreature(*me, minerGUID))
+                    miner->DisappearAndDie();
+        }
+    };
+
 };
 
 /*####
@@ -1065,139 +1054,131 @@ enum Says_SM
 
 class npc_scarlet_miner : public CreatureScript
 {
-    public:
-        npc_scarlet_miner() : CreatureScript("npc_scarlet_miner") { }
+public:
+    npc_scarlet_miner() : CreatureScript("npc_scarlet_miner") { }
 
-        struct npc_scarlet_minerAI : public npc_escortAI
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_scarlet_minerAI(creature);
+    }
+
+    struct npc_scarlet_minerAI : public npc_escortAI
+    {
+        npc_scarlet_minerAI(Creature* creature) : npc_escortAI(creature)
         {
-            npc_scarlet_minerAI(Creature* creature) : npc_escortAI(creature)
+            me->SetReactState(REACT_PASSIVE);
+        }
+
+        uint32 IntroTimer;
+        uint32 IntroPhase;
+        uint64 carGUID;
+
+        void Reset()
+        {
+            carGUID = 0;
+            IntroTimer = 0;
+            IntroPhase = 0;
+            me->RestoreFaction();
+        }
+
+        void InitWaypoint()
+        {
+            AddWaypoint(1, 2389.03f,     -5902.74f,     109.014f, 5000);
+            AddWaypoint(2, 2341.812012f, -5900.484863f, 102.619743f);
+            AddWaypoint(3, 2306.561279f, -5901.738281f, 91.792419f);
+            AddWaypoint(4, 2300.098389f, -5912.618652f, 86.014885f);
+            AddWaypoint(5, 2294.142090f, -5927.274414f, 75.316849f);
+            AddWaypoint(6, 2286.984375f, -5944.955566f, 63.714966f);
+            AddWaypoint(7, 2280.001709f, -5961.186035f, 54.228283f);
+            AddWaypoint(8, 2259.389648f, -5974.197754f, 42.359348f);
+            AddWaypoint(9, 2242.882812f, -5984.642578f, 32.827850f);
+            AddWaypoint(10, 2217.265625f, -6028.959473f, 7.675705f);
+            AddWaypoint(11, 2202.595947f, -6061.325684f, 5.882018f);
+            AddWaypoint(12, 2188.974609f, -6080.866699f, 3.370027f);
+
+            if (urand(0, 1))
             {
-                me->SetReactState(REACT_PASSIVE);
+                AddWaypoint(13, 2176.483887f, -6110.407227f, 1.855181f);
+                AddWaypoint(14, 2172.516602f, -6146.752441f, 1.074235f);
+                AddWaypoint(15, 2138.918457f, -6158.920898f, 1.342926f);
+                AddWaypoint(16, 2129.866699f, -6174.107910f, 4.380779f);
+                AddWaypoint(17, 2117.709473f, -6193.830078f, 13.3542f, 10000);
             }
-
-            uint32 IntroTimer;
-            uint32 IntroPhase;
-            uint64 carGUID;
-
-            void Reset() override
+            else
             {
-                carGUID = 0;
-                IntroTimer = 0;
-                IntroPhase = 0;
+                AddWaypoint(13, 2184.190186f, -6166.447266f, 0.968877f);
+                AddWaypoint(14, 2234.265625f, -6163.741211f, 0.916021f);
+                AddWaypoint(15, 2268.071777f, -6158.750977f, 1.822252f);
+                AddWaypoint(16, 2270.028320f, -6176.505859f, 6.340538f);
+                AddWaypoint(17, 2271.739014f, -6195.401855f, 13.3542f, 10000);
             }
+        }
 
-            void IsSummonedBy(Unit* summoner) override
+        void InitCartQuest(Player* who)
+        {
+			if (who!=NULL)
+				carGUID = me->FindNearestCreature(28817, 100, true)->GetGUID();
+            InitWaypoint();
+            Start(false, false, who->GetGUID());
+            SetDespawnAtFar(false);
+        }
+
+        void WaypointReached(uint32 waypointId)
+        {
+            switch (waypointId)
             {
-                carGUID = summoner->GetGUID();
-            }
-
-            void InitWaypoint()
-            {
-                AddWaypoint(1, 2389.03f,     -5902.74f,     109.014f, 5000);
-                AddWaypoint(2, 2341.812012f, -5900.484863f, 102.619743f);
-                AddWaypoint(3, 2306.561279f, -5901.738281f, 91.792419f);
-                AddWaypoint(4, 2300.098389f, -5912.618652f, 86.014885f);
-                AddWaypoint(5, 2294.142090f, -5927.274414f, 75.316849f);
-                AddWaypoint(6, 2286.984375f, -5944.955566f, 63.714966f);
-                AddWaypoint(7, 2280.001709f, -5961.186035f, 54.228283f);
-                AddWaypoint(8, 2259.389648f, -5974.197754f, 42.359348f);
-                AddWaypoint(9, 2242.882812f, -5984.642578f, 32.827850f);
-                AddWaypoint(10, 2217.265625f, -6028.959473f, 7.675705f);
-                AddWaypoint(11, 2202.595947f, -6061.325684f, 5.882018f);
-                AddWaypoint(12, 2188.974609f, -6080.866699f, 3.370027f);
-
-                if (urand(0, 1))
-                {
-                    AddWaypoint(13, 2176.483887f, -6110.407227f, 1.855181f);
-                    AddWaypoint(14, 2172.516602f, -6146.752441f, 1.074235f);
-                    AddWaypoint(15, 2138.918457f, -6158.920898f, 1.342926f);
-                    AddWaypoint(16, 2129.866699f, -6174.107910f, 4.380779f);
-                    AddWaypoint(17, 2117.709473f, -6193.830078f, 13.3542f, 10000);
-                }
-                else
-                {
-                    AddWaypoint(13, 2184.190186f, -6166.447266f, 0.968877f);
-                    AddWaypoint(14, 2234.265625f, -6163.741211f, 0.916021f);
-                    AddWaypoint(15, 2268.071777f, -6158.750977f, 1.822252f);
-                    AddWaypoint(16, 2270.028320f, -6176.505859f, 6.340538f);
-                    AddWaypoint(17, 2271.739014f, -6195.401855f, 13.3542f, 10000);
-                }
-            }
-
-            void SetGUID(uint64 guid, int32 /*id = 0*/) override
-            {
-                InitWaypoint();
-                Start(false, false, guid);
-                SetDespawnAtFar(false);
-            }
-
-            void WaypointReached(uint32 waypointId) override
-            {
-                switch (waypointId)
-                {
-                    case 1:
-                        if (Unit* car = ObjectAccessor::GetCreature(*me, carGUID))
-                            me->SetFacingToObject(car);
-                        Talk(SAY_SCARLET_MINER_0);
-                        SetRun(true);
-                        IntroTimer = 4000;
-                        IntroPhase = 1;
-                        break;
-                    case 17:
-                        if (Unit* car = ObjectAccessor::GetCreature(*me, carGUID))
-                        {
-                            me->SetFacingToObject(car);
-                            car->Relocate(car->GetPositionX(), car->GetPositionY(), me->GetPositionZ() + 1);
-                            car->StopMoving();
-                            car->RemoveAura(SPELL_CART_DRAG);
-                        }
-                        Talk(SAY_SCARLET_MINER_1);
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-			void InitCartQuest(Player* who)
-			{
-				if (who != NULL)
-					carGUID = me->FindNearestCreature(28817, 100, true)->GetGUID();
-				InitWaypoint();
-				Start(false, false, who->GetGUID());
-				SetDespawnAtFar(false);
-			}
-
-            void UpdateAI(uint32 diff) override
-            {
-                if (IntroPhase)
-                {
-                    if (IntroTimer <= diff)
+                case 1:
+                    if (Unit* car = Unit::GetCreature(*me, carGUID))
                     {
-                        if (IntroPhase == 1)
-                        {
-                            if (Creature* car = Unit::GetCreature(*me, carGUID))
-                                DoCast(car, SPELL_CART_DRAG);
-                            IntroTimer = 800;
-                            IntroPhase = 2;
-                        }
-                        else
-                        {
-                            if (Creature* car = Unit::GetCreature(*me, carGUID))
-                                car->AI()->DoAction(0);
-                            IntroPhase = 0;
-                        }
+                        me->SetInFront(car);
+                        me->SetFacingToObject(car);
+                    }
+                    Talk(SAY_SCARLET_MINER_0);
+                    SetRun(true);
+                    IntroTimer = 4000;
+                    IntroPhase = 1;
+                    break;
+                case 17:
+                    if (Unit* car = Unit::GetCreature(*me, carGUID))
+                    {
+                        me->SetInFront(car);
+                        me->SetFacingToObject(car);
+                        car->Relocate(car->GetPositionX(), car->GetPositionY(), me->GetPositionZ() + 1);
+                        car->StopMoving();
+                        car->RemoveAura(SPELL_CART_DRAG);
+                    }
+                    Talk(SAY_SCARLET_MINER_1);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (IntroPhase)
+            {
+                if (IntroTimer <= diff)
+                {
+                    if (IntroPhase == 1)
+                    {
+                        if (Creature* car = Unit::GetCreature(*me, carGUID))
+                            DoCast(car, SPELL_CART_DRAG);
+                        IntroTimer = 800;
+                        IntroPhase = 2;
                     }
                     else
-                        IntroTimer -= diff;
-                }
-                npc_escortAI::UpdateAI(diff);
+                    {
+                        if (Creature* car = Unit::GetCreature(*me, carGUID))
+                            car->AI()->DoAction(0);
+                        IntroPhase = 0;
+                    }
+                } else IntroTimer-=diff;
             }
-        };
-
-        CreatureAI* GetAI(Creature* creature) const override
-        {
-            return new npc_scarlet_minerAI(creature);
+            npc_escortAI::UpdateAI(diff);
         }
+    };
+
 };
 
 /*######
@@ -1207,75 +1188,72 @@ class npc_scarlet_miner : public CreatureScript
 enum MineCar
 
 {
-	SPELL_HIDE_IN_MINE_CAR = 52463,
-	NPC_SCARLET_MINER = 28841,
-	NPC_MINE_CAR = 28817,
-	QUEST_MASSACRE_AT_LIGHTS_POINT = 12701
+    SPELL_HIDE_IN_MINE_CAR          = 52463,
+    NPC_SCARLET_MINER               = 28841,
+    NPC_MINE_CAR                    = 28817,
+    QUEST_MASSACRE_AT_LIGHTS_POINT  = 12701
 
 };
 
 class go_inconspicuous_mine_car : public GameObjectScript
 {
 public:
-	go_inconspicuous_mine_car() : GameObjectScript("go_inconspicuous_mine_car") { }
+    go_inconspicuous_mine_car() : GameObjectScript("go_inconspicuous_mine_car") { }
 
-	bool OnGossipHello(Player* player, GameObject* /*go*/)
-	{
-		if (player->GetQuestStatus(QUEST_MASSACRE_AT_LIGHTS_POINT) == QUEST_STATUS_INCOMPLETE)
-		{
-			// Hack Why SkyFire Dont Support Custom Summon Location
-			if (Creature* miner = player->SummonCreature(NPC_SCARLET_MINER, 2383.869629f, -5900.312500f, 107.996086f, player->GetOrientation(), TEMPSUMMON_DEAD_DESPAWN, 1))
-			{
-				player->CastSpell(player, SPELL_HIDE_IN_MINE_CAR, true);
-				if (Creature* car = player->FindNearestCreature(28817, true))
-				{
-					if (car->GetEntry() == NPC_MINE_CAR)
-					{
-						car->AI()->SetGUID(miner->GetGUID());
-						CAST_AI(npc_scarlet_miner::npc_scarlet_minerAI, miner->AI())->InitCartQuest(player);
-					}
-					//else sLog->outError(LOG_FILTER_TSCR, "TSCR: OnGossipHello vehicle entry is not correct.");
-				}
-				//else sLog->outError(LOG_FILTER_TSCR, "TSCR: OnGossipHello player is not on the vehicle.");
-			}
-			else {}//sLog->outError(LOG_FILTER_TSCR, "TSCR: OnGossipHello Scarlet Miner cant be found by script.");
-		}
-		return true;
-	}
+    bool OnGossipHello(Player* player, GameObject* /*go*/)
+    {
+        if (player->GetQuestStatus(QUEST_MASSACRE_AT_LIGHTS_POINT) == QUEST_STATUS_INCOMPLETE)
+        {
+            // Hack Why SkyFire Dont Support Custom Summon Location
+            if (Creature* miner = player->SummonCreature(NPC_SCARLET_MINER, 2383.869629f, -5900.312500f, 107.996086f, player->GetOrientation(), TEMPSUMMON_DEAD_DESPAWN, 1))
+            {
+                player->CastSpell(player, SPELL_HIDE_IN_MINE_CAR, true);
+                if (Creature* car = player->FindNearestCreature(28817, true) )
+                {
+                    if (car->GetEntry() == NPC_MINE_CAR)
+                    {
+                        car->AI()->SetGUID(miner->GetGUID());
+                        CAST_AI(npc_scarlet_miner::npc_scarlet_minerAI, miner->AI())->InitCartQuest(player);
+                    } else sLog->outError(LOG_FILTER_TSCR, "TSCR: OnGossipHello vehicle entry is not correct.");
+                } else sLog->outError(LOG_FILTER_TSCR, "TSCR: OnGossipHello player is not on the vehicle.");
+            } else sLog->outError(LOG_FILTER_TSCR, "TSCR: OnGossipHello Scarlet Miner cant be found by script.");
+        }
+        return true;
+    }
 
 };
 
 class npc_frostbrood_vanquisher : public CreatureScript
 {
 public:
-	npc_frostbrood_vanquisher() : CreatureScript("npc_frostbrood_vanquisher") { }
+    npc_frostbrood_vanquisher() : CreatureScript("npc_frostbrood_vanquisher") { }
 
-	CreatureAI* GetAI(Creature* creature) const
-	{
-		return new npc_frostbrood_vanquisherAI(creature);
-	}
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_frostbrood_vanquisherAI(creature);
+    }
 
-	struct npc_frostbrood_vanquisherAI : public ScriptedAI
-	{
-		npc_frostbrood_vanquisherAI(Creature* creature) : ScriptedAI(creature)
-		{
-			Reset();
-		}
+    struct npc_frostbrood_vanquisherAI : public ScriptedAI
+    {
+        npc_frostbrood_vanquisherAI(Creature* creature) : ScriptedAI(creature)
+        {
+            Reset();
+        }
 
-		void Reset()
-		{
-			me->SetSpeed(MOVE_FLIGHT, 2.5f, true);
-		}
+        void Reset()
+        {
+            me->SetSpeed(MOVE_FLIGHT, 2.5f, true);
+        }
 
-		void MovementInform(uint32 type, uint32 pointId)
-		{
-			if (type != POINT_MOTION_TYPE)
-				return;
+        void MovementInform(uint32 type, uint32 pointId)
+        {
+            if (type != POINT_MOTION_TYPE)
+               return;
 
-			((Player*)(me->GetCharmer()))->SetClientControl(me, 1);
-			me->SetSpeed(MOVE_FLIGHT, 2.5f, true);
-		}
-	};
+            ((Player*)(me->GetCharmer()))->SetClientControl(me, 1);
+            me->SetSpeed(MOVE_FLIGHT, 2.5f, true);
+        }
+    };
 };
 
 // npc 28912 quest 17217 boss 29001 mob 29007 go 191092
@@ -1284,8 +1262,7 @@ void AddSC_the_scarlet_enclave_c1()
 {
     new npc_unworthy_initiate();
     new npc_unworthy_initiate_anchor();
-	new npc_eye_of_acherus();
-
+    new npc_eye_of_acherus();
     new go_acherus_soul_prison();
     new npc_death_knight_initiate();
     new npc_salanar_the_horseman();
@@ -1295,6 +1272,6 @@ void AddSC_the_scarlet_enclave_c1()
     new npc_scarlet_ghoul();
     new npc_scarlet_miner();
     new npc_scarlet_miner_cart();
-	new go_inconspicuous_mine_car();
-	new npc_frostbrood_vanquisher();
+    new go_inconspicuous_mine_car();
+    new npc_frostbrood_vanquisher();
 }

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -73,59 +72,59 @@ class npc_torek : public CreatureScript
 
         struct npc_torekAI : public npc_escortAI
         {
-            npc_torekAI(Creature* creature) : npc_escortAI(creature) { }
+            npc_torekAI(Creature* creature) : npc_escortAI(creature) {}
 
             uint32 Rend_Timer;
             uint32 Thunderclap_Timer;
             bool Completed;
 
-            void WaypointReached(uint32 waypointId) override
+            void WaypointReached(uint32 waypointId)
             {
                 if (Player* player = GetPlayerForEscort())
                 {
                     switch (waypointId)
                     {
                         case 1:
-                            Talk(SAY_MOVE, player);
+                            Talk(SAY_MOVE, player->GetGUID());
                             break;
                         case 8:
-                            Talk(SAY_PREPARE, player);
+                            Talk(SAY_PREPARE, player->GetGUID());
                             break;
                         case 19:
-                            /// @todo verify location and creatures amount.
+                            //TODO: verify location and creatures amount.
                             me->SummonCreature(ENTRY_DURIEL, 1776.73f, -2049.06f, 109.83f, 1.54f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 25000);
                             me->SummonCreature(ENTRY_SILVERWING_SENTINEL, 1774.64f, -2049.41f, 109.83f, 1.40f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 25000);
                             me->SummonCreature(ENTRY_SILVERWING_WARRIOR, 1778.73f, -2049.50f, 109.83f, 1.67f, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 25000);
                             break;
                         case 20:
-                            Talk(SAY_WIN, player);
+                            Talk(SAY_WIN, player->GetGUID());
                             Completed = true;
                             player->GroupEventHappens(QUEST_TOREK_ASSULT, me);
                             break;
                         case 21:
-                            Talk(SAY_END, player);
+                            Talk(SAY_END, player->GetGUID());
                             break;
                     }
                 }
             }
 
-            void Reset() override
+            void Reset()
             {
                 Rend_Timer = 5000;
                 Thunderclap_Timer = 8000;
                 Completed = false;
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
             }
 
-            void JustSummoned(Creature* summoned) override
+            void JustSummoned(Creature* summoned)
             {
                 summoned->AI()->AttackStart(me);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 npc_escortAI::UpdateAI(diff);
 
@@ -146,17 +145,17 @@ class npc_torek : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_torekAI(creature);
         }
 
-        bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) override
+        bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest)
         {
             if (quest->GetQuestId() == QUEST_TOREK_ASSULT)
             {
-                /// @todo find companions, make them follow Torek, at any time (possibly done by core/database in future?)
-                creature->AI()->Talk(SAY_READY, player);
+                //TODO: find companions, make them follow Torek, at any time (possibly done by core/database in future?)
+                creature->AI()->Talk(SAY_READY, player->GetGUID());
                 creature->setFaction(113);
 
                 if (npc_escortAI* pEscortAI = CAST_AI(npc_torekAI, creature->AI()))
@@ -201,7 +200,7 @@ class npc_ruul_snowhoof : public CreatureScript
         {
             npc_ruul_snowhoofAI(Creature* creature) : npc_escortAI(creature) { }
 
-            void WaypointReached(uint32 waypointId) override
+            void WaypointReached(uint32 waypointId)
             {
                 Player* player = GetPlayerForEscort();
                 if (!player)
@@ -210,7 +209,7 @@ class npc_ruul_snowhoof : public CreatureScript
                 switch (waypointId)
                 {
                     case 0:
-                        me->SetUInt32Value(UNIT_FIELD_ANIM_TIER, 0);
+                        me->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
                         if (GameObject* Cage = me->FindNearestGameObject(GO_CAGE, 20))
                             Cage->SetGoState(GO_STATE_ACTIVE);
                         break;
@@ -230,31 +229,31 @@ class npc_ruul_snowhoof : public CreatureScript
                 }
             }
 
-            void EnterCombat(Unit* /*who*/) override { }
+            void EnterCombat(Unit* /*who*/) {}
 
-            void Reset() override
+            void Reset()
             {
                 if (GameObject* Cage = me->FindNearestGameObject(GO_CAGE, 20))
                     Cage->SetGoState(GO_STATE_READY);
             }
 
-            void JustSummoned(Creature* summoned) override
+            void JustSummoned(Creature* summoned)
             {
                 summoned->AI()->AttackStart(me);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 npc_escortAI::UpdateAI(diff);
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_ruul_snowhoofAI(creature);
         }
 
-        bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) override
+        bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest)
         {
             if (quest->GetQuestId() == QUEST_FREEDOM_TO_RUUL)
             {
@@ -326,26 +325,26 @@ class npc_muglash : public CreatureScript
             uint32 EventTimer;
             bool IsBrazierExtinguished;
 
-            void JustSummoned(Creature* summoned) override
+            void JustSummoned(Creature* summoned)
             {
                 summoned->AI()->AttackStart(me);
             }
 
-            void WaypointReached(uint32 waypointId) override
+            void WaypointReached(uint32 waypointId)
             {
                 if (Player* player = GetPlayerForEscort())
                 {
                     switch (waypointId)
                     {
                         case 0:
-                            Talk(SAY_MUG_START2, player);
+                            Talk(SAY_MUG_START2, player->GetGUID());
                             break;
                         case 24:
-                            Talk(SAY_MUG_BRAZIER, player);
+                            Talk(SAY_MUG_BRAZIER, player->GetGUID());
 
                             if (GameObject* go = GetClosestGameObjectWithEntry(me, GO_NAGA_BRAZIER, INTERACTION_DISTANCE*2))
                             {
-                                go->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                                go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
                                 SetEscortPaused(true);
                             }
                             break;
@@ -363,25 +362,25 @@ class npc_muglash : public CreatureScript
                 }
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 if (Player* player = GetPlayerForEscort())
                     if (HasEscortState(STATE_ESCORT_PAUSED))
                     {
                         if (urand(0, 1))
-                            Talk(SAY_MUG_ON_GUARD, player);
+                            Talk(SAY_MUG_ON_GUARD, player->GetGUID());
                         return;
                     }
             }
 
-            void Reset() override
+            void Reset()
             {
                 EventTimer = 10000;
                 WaveId = 0;
                 IsBrazierExtinguished = false;
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 if (HasEscortState(STATE_ESCORT_ESCORTING))
                     if (Player* player = GetPlayerForEscort())
@@ -412,7 +411,7 @@ class npc_muglash : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 uiDiff) override
+            void UpdateAI(const uint32 uiDiff)
             {
                 npc_escortAI::UpdateAI(uiDiff);
 
@@ -435,12 +434,12 @@ class npc_muglash : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_muglashAI(creature);
         }
 
-        bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) override
+        bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest)
         {
             if (quest->GetQuestId() == QUEST_VORSHA)
             {
@@ -461,7 +460,7 @@ class go_naga_brazier : public GameObjectScript
     public:
         go_naga_brazier() : GameObjectScript("go_naga_brazier") { }
 
-        bool OnGossipHello(Player* /*player*/, GameObject* go) override
+        bool OnGossipHello(Player* /*player*/, GameObject* go)
         {
             if (Creature* creature = GetClosestCreatureWithEntry(go, NPC_MUGLASH, INTERACTION_DISTANCE*2))
             {

@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -38,15 +38,10 @@ void CreatureAI::OnCharmed(bool /*apply*/)
 AISpellInfoType* UnitAI::AISpellInfo;
 AISpellInfoType* GetAISpellInfo(uint32 i) { return &CreatureAI::AISpellInfo[i]; }
 
-void CreatureAI::Talk(uint8 id, WorldObject const* whisperTarget /*= NULL*/)
+void CreatureAI::Talk(uint8 id, uint64 WhisperGuid)
 {
-    sCreatureTextMgr->SendChat(me, id, whisperTarget);
+    sCreatureTextMgr->SendChat(me, id, WhisperGuid);
 }
-
-/*void CreatureAI::Talk(uint8 id, uint64 WhisperGuid)
-{
-	sCreatureTextMgr->SendChat(me, id, WhisperGuid);
-*/
 
 void CreatureAI::DoZoneInCombat(Creature* creature /*= NULL*/, float maxRangeToNearestTarget /* = 50.0f*/)
 {
@@ -59,7 +54,7 @@ void CreatureAI::DoZoneInCombat(Creature* creature /*= NULL*/, float maxRangeToN
     Map* map = creature->GetMap();
     if (!map->IsDungeon())                                  //use IsDungeon instead of Instanceable, in case battlegrounds will be instantiated
     {
-        TC_LOG_ERROR("misc", "DoZoneInCombat call for map that isn't an instance (creature entry = %d)", creature->GetTypeId() == TYPEID_UNIT ? creature->ToCreature()->GetEntry() : 0);
+        sLog->outError(LOG_FILTER_GENERAL, "DoZoneInCombat call for map that isn't an instance (creature entry = %d)", creature->GetTypeId() == TYPEID_UNIT ? creature->ToCreature()->GetEntry() : 0);
         return;
     }
 
@@ -67,7 +62,7 @@ void CreatureAI::DoZoneInCombat(Creature* creature /*= NULL*/, float maxRangeToN
     {
         if (Unit* nearTarget = creature->SelectNearestTarget(maxRangeToNearestTarget))
             creature->AI()->AttackStart(nearTarget);
-        else if (creature->IsSummon())
+        else if (creature->isSummon())
         {
             if (Unit* summoner = creature->ToTempSummon()->GetSummoner())
             {
@@ -80,11 +75,9 @@ void CreatureAI::DoZoneInCombat(Creature* creature /*= NULL*/, float maxRangeToN
         }
     }
 
-    // Intended duplicated check, the code above this should select a victim
-    // If it can't find a suitable attack target then we should error out.
     if (!creature->HasReactState(REACT_PASSIVE) && !creature->GetVictim())
     {
-        TC_LOG_ERROR("misc", "DoZoneInCombat called for creature that has empty threat list (creature entry = %u)", creature->GetEntry());
+        sLog->outError(LOG_FILTER_GENERAL, "DoZoneInCombat called for creature that has empty threat list (creature entry = %u)", creature->GetEntry());
         return;
     }
 
@@ -95,12 +88,12 @@ void CreatureAI::DoZoneInCombat(Creature* creature /*= NULL*/, float maxRangeToN
 
     for (Map::PlayerList::const_iterator itr = playerList.begin(); itr != playerList.end(); ++itr)
     {
-        if (Player* player = itr->GetSource())
+        if (Player* player = itr->getSource())
         {
-            if (player->IsGameMaster())
+            if (player->isGameMaster())
                 continue;
 
-            if (player->IsAlive())
+            if (player->isAlive())
             {
                 creature->SetInCombatWith(player);
                 player->SetInCombatWith(creature);
@@ -122,6 +115,10 @@ void CreatureAI::DoZoneInCombat(Creature* creature /*= NULL*/, float maxRangeToN
 // MoveInLineOfSight can be called inside another MoveInLineOfSight and cause stack overflow
 void CreatureAI::MoveInLineOfSight_Safe(Unit* who)
 {
+    if (Player* player = who->ToPlayer())
+        if (player->isGameMaster())
+            return;
+
     if (m_MoveInLineOfSight_locked == true)
         return;
     m_MoveInLineOfSight_locked = true;
@@ -131,18 +128,31 @@ void CreatureAI::MoveInLineOfSight_Safe(Unit* who)
 
 void CreatureAI::MoveInLineOfSight(Unit* who)
 {
+    if (!me->HasReactState(REACT_AGGRESSIVE))
+        return;
+
     if (me->GetVictim())
         return;
 
     if (me->GetCreatureType() == CREATURE_TYPE_NON_COMBAT_PET) // non-combat pets should just stand there and look good;)
         return;
 
-    if (me->CanStartAttack(who, false))
+    if (me->canStartAttack(who, false))
         AttackStart(who);
     //else if (who->GetVictim() && me->IsFriendlyTo(who)
     //    && me->IsWithinDistInMap(who, sWorld->getIntConfig(CONFIG_CREATURE_FAMILY_ASSISTANCE_RADIUS))
-    //    && me->CanStartAttack(who->GetVictim(), true)) /// @todo if we use true, it will not attack it when it arrives
+    //    && me->canStartAttack(who->GetVictim(), true)) // TODO: if we use true, it will not attack it when it arrives
     //    me->GetMotionMaster()->MoveChase(who->GetVictim());
+}
+
+void CreatureAI::JustReachedHome()
+{
+    me->setActive(false);
+}
+
+void CreatureAI::EnterCombat(Unit* /*victim*/)
+{
+    me->setActive(true);
 }
 
 void CreatureAI::EnterEvadeMode()
@@ -150,7 +160,7 @@ void CreatureAI::EnterEvadeMode()
     if (!_EnterEvadeMode())
         return;
 
-    TC_LOG_DEBUG("entities.unit", "Creature %u enters evade mode.", me->GetEntry());
+    sLog->outDebug(LOG_FILTER_UNITS, "Creature %u enters evade mode.", me->GetEntry());
 
     if (!me->GetVehicle()) // otherwise me will be in evade mode forever
     {
@@ -158,6 +168,9 @@ void CreatureAI::EnterEvadeMode()
         {
             me->GetMotionMaster()->Clear(false);
             me->GetMotionMaster()->MoveFollow(owner, PET_FOLLOW_DIST, me->GetFollowAngle(), MOTION_SLOT_ACTIVE);
+            Reset();
+            if (me->IsVehicle()) // use the same sequence of addtoworld, aireset may remove all summons!
+                me->GetVehicleKit()->Reset(true);
         }
         else
         {
@@ -167,11 +180,13 @@ void CreatureAI::EnterEvadeMode()
             me->GetMotionMaster()->MoveTargetedHome();
         }
     }
+    else
+    {
+        Reset();
+        if (me->IsVehicle()) // use the same sequence of addtoworld, aireset may remove all summons!
+            me->GetVehicleKit()->Reset(true);
+    }
 
-    Reset();
-
-    if (me->IsVehicle()) // use the same sequence of addtoworld, aireset may remove all summons!
-        me->GetVehicleKit()->Reset(true);
 }
 
 /*void CreatureAI::AttackedBy(Unit* attacker)
@@ -191,7 +206,7 @@ void CreatureAI::SetGazeOn(Unit* target)
 
 bool CreatureAI::UpdateVictimWithGaze()
 {
-    if (!me->IsInCombat())
+    if (!me->isInCombat())
         return false;
 
     if (me->HasReactState(REACT_PASSIVE))
@@ -209,7 +224,7 @@ bool CreatureAI::UpdateVictimWithGaze()
 
 bool CreatureAI::UpdateVictim()
 {
-    if (!me->IsInCombat())
+    if (!me->isInCombat())
         return false;
 
     if (!me->HasReactState(REACT_PASSIVE))
@@ -229,12 +244,14 @@ bool CreatureAI::UpdateVictim()
 
 bool CreatureAI::_EnterEvadeMode()
 {
-    if (!me->IsAlive())
+    if (!me->isAlive())
         return false;
 
-    // don't remove vehicle auras, passengers aren't supposed to drop off the vehicle
-    // don't remove clone caster on evade (to be verified)
-    me->RemoveAllAurasExceptType(SPELL_AURA_CONTROL_VEHICLE, SPELL_AURA_CLONE_CASTER);
+    // dont remove vehicle auras, passengers arent supposed to drop off the vehicle
+    if (me->isGuardian())
+        me->RemoveAllNonPassiveAurasExceptType(SPELL_AURA_CONTROL_VEHICLE);
+    else
+        me->RemoveAllAurasExceptType(SPELL_AURA_CONTROL_VEHICLE);
 
     // sometimes bosses stuck in combat?
     me->DeleteThreatList();

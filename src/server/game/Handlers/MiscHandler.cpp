@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -36,11 +36,9 @@
 #include "zlib.h"
 #include "ObjectAccessor.h"
 #include "Object.h"
-#include "Item.h"
 #include "Battleground.h"
 #include "OutdoorPvP.h"
 #include "Pet.h"
-#include "ReputationMgr.h"
 #include "SocialMgr.h"
 #include "CellImpl.h"
 #include "AccountMgr.h"
@@ -55,19 +53,17 @@
 #include "AccountMgr.h"
 #include "Spell.h"
 #include "BattlegroundMgr.h"
-#include "BattleShop.h"
 #include "Battlefield.h"
 #include "BattlefieldMgr.h"
-#include "DB2Stores.h"
-#include "Unit.h"
+#include "DB2Stores.h" 
 
 void WorldSession::HandleRepopRequestOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: Recvd CMSG_REPOP_REQUEST Message");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Recvd CMSG_REPOP_REQUEST Message");
 
     recvData.read_skip<uint8>();
 
-    if (GetPlayer()->IsAlive() || GetPlayer()->HasFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
+    if (GetPlayer()->isAlive() || GetPlayer()->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
         return;
 
     if (GetPlayer()->HasAuraType(SPELL_AURA_PREVENT_RESURRECTION))
@@ -80,39 +76,30 @@ void WorldSession::HandleRepopRequestOpcode(WorldPacket& recvData)
     // release spirit after he's killed but before he is updated
     if (GetPlayer()->getDeathState() == JUST_DIED)
     {
-        TC_LOG_DEBUG("network", "HandleRepopRequestOpcode: got request after player %s(%d) was killed and before he was updated",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "HandleRepopRequestOpcode: got request after player %s(%d) was killed and before he was updated",
             GetPlayer()->GetName().c_str(), GetPlayer()->GetGUIDLow());
         GetPlayer()->KillPlayer();
     }
 
     //this is spirit release confirm?
-    GetPlayer()->RemovePet(NULL, PET_SAVE_NOT_IN_SLOT, true);
+    GetPlayer()->RemovePet(NULL, PET_SLOT_ACTUAL_PET_SLOT, true);
     GetPlayer()->BuildPlayerRepop();
     GetPlayer()->RepopAtGraveyard();
 }
 
 void WorldSession::HandleGossipSelectOptionOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: CMSG_GOSSIP_SELECT_OPTION");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: CMSG_GOSSIP_SELECT_OPTION");
 
-    ObjectGuid guid;
     uint32 gossipListId;
     uint32 menuId;
-    uint8 boxTextLength = 0;
+    uint64 guid;
     std::string code = "";
 
-    recvData >> gossipListId >> menuId;
-
-    recvData.ReadGuidMask(guid, 3, 0, 1, 4, 7, 5, 6);
-    boxTextLength = recvData.ReadBits(8);
-    guid[2] = recvData.ReadBit();
-
-    recvData.ReadGuidBytes(guid, 7, 3, 4, 6, 0, 5);
+    recvData >> guid >> menuId >> gossipListId;
 
     if (_player->PlayerTalkClass->IsGossipOptionCoded(gossipListId))
-        code = recvData.ReadString(boxTextLength);
-
-    recvData.ReadGuidBytes(guid, 2, 1);
+        recvData >> code;
 
     Creature* unit = NULL;
     GameObject* go = NULL;
@@ -121,7 +108,7 @@ void WorldSession::HandleGossipSelectOptionOpcode(WorldPacket& recvData)
         unit = GetPlayer()->GetNPCIfCanInteractWith(guid, UNIT_NPC_FLAG_NONE);
         if (!unit)
         {
-            TC_LOG_DEBUG("network", "WORLD: HandleGossipSelectOptionOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(guid)));
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: HandleGossipSelectOptionOpcode - Unit (GUID: %u) not found or you can't interact with him.", uint32(GUID_LOPART(guid)));
             return;
         }
     }
@@ -130,13 +117,13 @@ void WorldSession::HandleGossipSelectOptionOpcode(WorldPacket& recvData)
         go = _player->GetMap()->GetGameObject(guid);
         if (!go)
         {
-            TC_LOG_DEBUG("network", "WORLD: HandleGossipSelectOptionOpcode - GameObject (GUID: %u) not found.", uint32(GUID_LOPART(guid)));
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: HandleGossipSelectOptionOpcode - GameObject (GUID: %u) not found.", uint32(GUID_LOPART(guid)));
             return;
         }
     }
     else
     {
-        TC_LOG_DEBUG("network", "WORLD: HandleGossipSelectOptionOpcode - unsupported GUID type for highguid %u. lowpart %u.", uint32(GUID_HIPART(guid)), uint32(GUID_LOPART(guid)));
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: HandleGossipSelectOptionOpcode - unsupported GUID type for highguid %u. lowpart %u.", uint32(GUID_HIPART(guid)), uint32(GUID_LOPART(guid)));
         return;
     }
 
@@ -146,7 +133,7 @@ void WorldSession::HandleGossipSelectOptionOpcode(WorldPacket& recvData)
 
     if ((unit && unit->GetCreatureTemplate()->ScriptID != unit->LastUsedScriptID) || (go && go->GetGOInfo()->ScriptId != go->LastUsedScriptID))
     {
-        TC_LOG_DEBUG("network", "WORLD: HandleGossipSelectOptionOpcode - Script reloaded while in use, ignoring and set new scipt id");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: HandleGossipSelectOptionOpcode - Script reloaded while in use, ignoring and set new scipt id");
         if (unit)
             unit->LastUsedScriptID = unit->GetCreatureTemplate()->ScriptID;
         if (go)
@@ -187,158 +174,128 @@ void WorldSession::HandleGossipSelectOptionOpcode(WorldPacket& recvData)
 
 void WorldSession::HandleWhoOpcode(WorldPacket& recvData)
 {
-    //CMSG_WHO
-    TC_LOG_DEBUG("network", "WORLD: Recvd CMSG_WHO Message");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Recvd CMSG_WHO Message");
 
-    time_t now = time(NULL);
-    if (now - timeLastWhoCommand < 5)
+	time_t now = time(NULL);
+    if (now - timeLastWhoCommand < 8)
         return;
     else timeLastWhoCommand = now;
 
-    uint32 levelMin, levelMax, raceMask, classMask, zonesCount, wordCount;
-    uint32 zoneIds[10];                                     // 10 is client limit
-    bool requestServerInfo, showEnemies, showArenaPlayers, exactName;
-    uint8 playerLen, guildLen, realmNameLen, guildRealmNameLen;
-    std::string playerName, guildName, realmName, guildRealmName;
+    uint32 matchcount = 0;
 
-    recvData >> classMask;                                  // race mask
-    recvData >> raceMask;                                   // minimal player level, default 100 (MAX_LEVEL)
-    recvData >> levelMax;                                   // maximal player level, default 0
-    recvData >> levelMin;                                   // class mask
+    uint32 level_min, level_max, racemask, classmask, zones_count, str_count;
+    uint32 zoneids[10];                                     // 10 is client limit
+    std::string player_name, guild_name;
 
-    showEnemies = recvData.ReadBit();
-    exactName = recvData.ReadBit();
-    requestServerInfo = recvData.ReadBit();
-    guildRealmNameLen = recvData.ReadBits(9);
-    showArenaPlayers = recvData.ReadBit();
-    playerLen = recvData.ReadBits(6);
+    recvData >> level_min;                                 // maximal player level, default 0
+    recvData >> level_max;                                 // minimal player level, default 100 (MAX_LEVEL)
+    recvData >> player_name;                               // player name, case sensitive...
 
-    zonesCount = recvData.ReadBits(4);                     // zones count, client limit = 10 (2.0.10)
-    if (zonesCount > 10)                                   // can't be received from real client or broken packet
-        return;
+    recvData >> guild_name;                                // guild name, case sensitive...
 
-    realmNameLen = recvData.ReadBits(9);
-    guildLen = recvData.ReadBits(7);
+    recvData >> racemask;                                  // race mask
+    recvData >> classmask;                                 // class mask
+    recvData >> zones_count;                               // zones count, client limit = 10 (2.0.10)
 
-    wordCount = recvData.ReadBits(3);
-    if (wordCount > 4)
-        return;                                            // can't be received from real client or broken packet
+    if (zones_count > 10)
+        return;                                             // can't be received from real client or broken packet
 
-    uint8* wordLens = new uint8[wordCount];
-    std::string* words = new std::string[wordCount];
+    for (uint32 i = 0; i < zones_count; ++i)
+    {
+        uint32 temp;
+        recvData >> temp;                                  // zone id, 0 if zone is unknown...
+        zoneids[i] = temp;
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Zone %u: %u", i, zoneids[i]);
+    }
 
-    for (uint8 i = 0; i < wordCount; i++)
-        wordLens[i] = recvData.ReadBits(7);
+    recvData >> str_count;                                 // user entered strings count, client limit=4 (checked on 2.0.10)
 
-    recvData.FlushBits();
+    if (str_count > 4)
+        return;                                             // can't be received from real client or broken packet
 
-    std::wstring wWords[4];
-    for (uint32 i = 0; i < wordCount; ++i)
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Minlvl %u, maxlvl %u, name %s, guild %s, racemask %u, classmask %u, zones %u, strings %u", level_min, level_max, player_name.c_str(), guild_name.c_str(), racemask, classmask, zones_count, str_count);
+
+    std::wstring str[4];                                    // 4 is client limit
+    for (uint32 i = 0; i < str_count; ++i)
     {
         std::string temp;
         recvData >> temp;                                  // user entered string, it used as universal search pattern(guild+player name)?
 
-        if (!Utf8toWStr(temp, wWords[i]))
+        if (!Utf8toWStr(temp, str[i]))
             continue;
 
-        wstrToLower(wWords[i]);
+        wstrToLower(str[i]);
 
-        TC_LOG_DEBUG("network", "String %u: %s", i, temp.c_str());
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "String %u: %s", i, temp.c_str());
     }
 
-    guildRealmName = recvData.ReadString(guildRealmNameLen);
-
-    for (uint32 i = 0; i < zonesCount; ++i)
-    {
-        recvData >> zoneIds[i];                            // zone id, 0 if zone is unknown...
-        TC_LOG_DEBUG("network", "Zone %u: %u", i, zoneIds[i]);
-    }
-
-    // NYI
-    playerName = recvData.ReadString(playerLen);
-    realmName = recvData.ReadString(realmNameLen);
-    guildName = recvData.ReadString(guildLen);
-
-    uint32 virtualRealmAddress = 0;
-    int32 faction = 0, locale = 0;
-
-    if (requestServerInfo)
-    {
-        recvData >> locale;
-        recvData >> virtualRealmAddress;
-        recvData >> faction;
-    }
-
-    TC_LOG_DEBUG("network", "Minlvl %u, maxlvl %u, name %s, guild %s, racemask %u, classmask %u, zones %u, strings %u", levelMin, levelMax, playerName.c_str(), guildName.c_str(), raceMask, classMask, zonesCount, wordCount);
-
-    std::wstring wPlayerName, wGuildName;
-    if (!(Utf8toWStr(playerName, wPlayerName) && Utf8toWStr(guildName, wGuildName)))
+    std::wstring wplayer_name;
+    std::wstring wguild_name;
+    if (!(Utf8toWStr(player_name, wplayer_name) && Utf8toWStr(guild_name, wguild_name)))
         return;
+    wstrToLower(wplayer_name);
+    wstrToLower(wguild_name);
 
-    wstrToLower(wPlayerName);
-    wstrToLower(wGuildName);
-
-    // SMSG_WHO
     // client send in case not set max level value 100 but Trinity supports 255 max level,
     // update it to show GMs with characters after 100 level
-    if (levelMax >= MAX_LEVEL)
-        levelMax = STRONG_MAX_LEVEL;
+    if (level_max >= MAX_LEVEL)
+        level_max = STRONG_MAX_LEVEL;
 
     uint32 team = _player->GetTeam();
     uint32 security = GetSecurity();
-    //bool allowTwoSideWhoList = sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_WHO_LIST);
+    bool allowTwoSideWhoList = sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_WHO_LIST);
     uint32 gmLevelInWhoList  = sWorld->getIntConfig(CONFIG_GM_LEVEL_IN_WHO_LIST);
-    uint8 displaycount = 0, matchcount = 0;
+    uint32 displaycount = 0;
 
-    ByteBuffer bytesData;
-    WorldPacket data(SMSG_WHO);
-
-    size_t pos = data.bitwpos();
-    data.WriteBits(displaycount, 6);
+    WorldPacket data(SMSG_WHO, 50);                       // guess size
+    data << uint32(matchcount);                           // placeholder, count of players matching criteria
+    data << uint32(displaycount);                         // placeholder, count of players displayed
 
     TRINITY_READ_GUARD(HashMapHolder<Player>::LockType, *HashMapHolder<Player>::GetLock());
     HashMapHolder<Player>::MapType const& m = sObjectAccessor->GetPlayers();
     for (HashMapHolder<Player>::MapType::const_iterator itr = m.begin(); itr != m.end(); ++itr)
     {
-        Player* target = itr->second;
-        // player can see member of other team only if CONFIG_ALLOW_TWO_SIDE_WHO_LIST
-        if (target->GetTeam() != team && !HasPermission(rbac::RBAC_PERM_TWO_SIDE_WHO_LIST))
-            continue;
+        if (AccountMgr::IsPlayerAccount(security))
+        {
+            // player can see member of other team only if CONFIG_ALLOW_TWO_SIDE_WHO_LIST
+            if (itr->second->GetTeam() != team && !allowTwoSideWhoList)
+                continue;
 
-        // player can see MODERATOR, GAME MASTER, ADMINISTRATOR only if CONFIG_GM_IN_WHO_LIST
-        if (!HasPermission(rbac::RBAC_PERM_WHO_SEE_ALL_SEC_LEVELS) && target->GetSession()->GetSecurity() > AccountTypes(gmLevelInWhoList))
-            continue;
+            // player can see MODERATOR, GAME MASTER, ADMINISTRATOR only if CONFIG_GM_IN_WHO_LIST
+            if ((itr->second->GetSession()->GetSecurity() > AccountTypes(gmLevelInWhoList)))
+                continue;
+        }
 
-        // do not process players which are not in world
-        if (!target->IsInWorld())
+        //do not process players which are not in world
+        if (!(itr->second->IsInWorld()))
             continue;
 
         // check if target is globally visible for player
-        if (!target->IsVisibleGloballyFor(_player))
+        if (!(itr->second->IsVisibleGloballyFor(_player)))
             continue;
 
         // check if target's level is in level range
-        uint8 level = target->getLevel();
-        if (level < levelMin || level > levelMax)
+        uint8 lvl = itr->second->getLevel();
+        if (lvl < level_min || lvl > level_max)
             continue;
 
         // check if class matches classmask
-        uint8 class_ = target->getClass();
-        if (!(classMask & (1 << class_)))
+        uint32 class_ = itr->second->getClass();
+        if (!(classmask & (1 << class_)))
             continue;
 
         // check if race matches racemask
-        uint32 race = target->getRace();
-        if (!(raceMask & (1 << race)))
+        uint32 race = itr->second->getRace();
+        if (!(racemask & (1 << race)))
             continue;
 
-        uint32 zoneId = target->GetZoneId();
-        uint8 gender = target->getGender();
+        uint32 pzoneid = itr->second->GetZoneId();
+        uint8 gender = itr->second->getGender();
 
         bool z_show = true;
-        for (uint32 i = 0; i < zonesCount; ++i)
+        for (uint32 i = 0; i < zones_count; ++i)
         {
-            if (zoneIds[i] == zoneId)
+            if (zoneids[i] == pzoneid)
             {
                 z_show = true;
                 break;
@@ -349,36 +306,36 @@ void WorldSession::HandleWhoOpcode(WorldPacket& recvData)
         if (!z_show)
             continue;
 
-        std::string pname = target->GetName();
+        std::string pname = itr->second->GetName();
         std::wstring wpname;
         if (!Utf8toWStr(pname, wpname))
             continue;
         wstrToLower(wpname);
 
-        if (!(wPlayerName.empty() || wpname.find(wPlayerName) != std::wstring::npos))
+        if (!(wplayer_name.empty() || wpname.find(wplayer_name) != std::wstring::npos))
             continue;
 
-        std::string gname = sGuildMgr->GetGuildNameById(target->GetGuildId());
+        std::string gname = sGuildMgr->GetGuildNameById(itr->second->GetGuildId());
         std::wstring wgname;
         if (!Utf8toWStr(gname, wgname))
             continue;
         wstrToLower(wgname);
 
-        if (!(wGuildName.empty() || wgname.find(wGuildName) != std::wstring::npos))
+        if (!(wguild_name.empty() || wgname.find(wguild_name) != std::wstring::npos))
             continue;
 
         std::string aname;
-        if (AreaTableEntry const* areaEntry = GetAreaEntryByAreaID(zoneId))
+        if (AreaTableEntry const* areaEntry = GetAreaEntryByAreaID(itr->second->GetZoneId()))
             aname = areaEntry->area_name[GetSessionDbcLocale()];
 
         bool s_show = true;
-        for (uint32 i = 0; i < wordCount; ++i)
+        for (uint32 i = 0; i < str_count; ++i)
         {
-            if (!wWords[i].empty())
+            if (!str[i].empty())
             {
-                if (wgname.find(wWords[i]) != std::wstring::npos ||
-                    wpname.find(wWords[i]) != std::wstring::npos ||
-                    Utf8FitTo(aname, wWords[i]))
+                if (wgname.find(str[i]) != std::wstring::npos ||
+                    wpname.find(str[i]) != std::wstring::npos ||
+                    Utf8FitTo(aname, str[i]))
                 {
                     s_show = true;
                     break;
@@ -394,121 +351,79 @@ void WorldSession::HandleWhoOpcode(WorldPacket& recvData)
         if ((matchcount++) >= sWorld->getIntConfig(CONFIG_MAX_WHO))
             continue;
 
-        ObjectGuid playerGuid = target->GetGUID();
-        ObjectGuid accountId = target->GetSession()->GetAccountId();
-        ObjectGuid guildGuid = target->GetGuild() ? target->GetGuild()->GetGUID() : 0;
-
-        data.WriteBit(accountId[2]);
-        data.WriteBit(playerGuid[2]);
-        data.WriteBit(accountId[7]);
-        data.WriteBit(guildGuid[5]);
-        data.WriteBits(gname.size(), 7);
-        data.WriteGuidMask(accountId, 1, 5);
-        data.WriteBit(guildGuid[7]);
-        data.WriteBit(playerGuid[5]);
-        data.WriteBit(false);
-        data.WriteBit(guildGuid[1]);
-        data.WriteBit(playerGuid[6]);
-        data.WriteBit(guildGuid[2]);
-        data.WriteBit(playerGuid[4]);
-        data.WriteGuidMask(guildGuid, 0, 3);
-        data.WriteBit(accountId[6]);
-        data.WriteBit(false);
-        data.WriteBit(playerGuid[1]);
-        data.WriteBit(guildGuid[4]);
-        data.WriteBit(accountId[0]);
-
-        if (DeclinedName const* names = itr->second->GetDeclinedNames())
-        {
-            for (uint8 i = 0; i < MAX_DECLINED_NAME_CASES; ++i)
-                data.WriteBits(names->name[i].size(), 14);
-        }
-        else
-        {
-            for (uint8 i = 0; i < MAX_DECLINED_NAME_CASES; ++i)
-                data.WriteBits(0, 7);
-        }
-
-        data.WriteBit(playerGuid[3]);
-        data.WriteBit(guildGuid[6]);
-        data.WriteBit(playerGuid[0]);
-        data.WriteGuidMask(accountId, 4, 3);
-        data.WriteBit(playerGuid[7]);
-        data.WriteBits(pname.size(), 6);
-
-        bytesData.WriteByteSeq(playerGuid[1]);
-        bytesData << uint32(realmID);
-        bytesData.WriteByteSeq(playerGuid[7]);
-        bytesData << uint32(realmID);
-        bytesData.WriteByteSeq(playerGuid[4]);
-        bytesData.WriteString(pname);
-        bytesData.WriteByteSeq(guildGuid[1]);
-        bytesData.WriteByteSeq(playerGuid[0]);
-        bytesData.WriteGuidBytes(guildGuid, 2, 0, 4);
-        bytesData.WriteByteSeq(playerGuid[3]);
-        bytesData.WriteByteSeq(guildGuid[6]);
-        bytesData << uint32(target->GetSession()->GetAccountId());
-        bytesData.WriteString(gname);
-        bytesData.WriteByteSeq(guildGuid[3]);
-        bytesData.WriteByteSeq(accountId[4]);
-        bytesData << uint8(class_);
-        bytesData.WriteByteSeq(accountId[7]);
-        bytesData.WriteGuidBytes(playerGuid, 6, 2);
-
-        if (DeclinedName const* names = itr->second->GetDeclinedNames())
-            for (uint8 i = 0; i < MAX_DECLINED_NAME_CASES; ++i)
-                bytesData.WriteString(names->name[i]);
-
-        bytesData.WriteGuidBytes(accountId, 2, 3);
-        bytesData << uint8(race);
-        bytesData.WriteByteSeq(guildGuid[7]);
-        bytesData.WriteGuidBytes(accountId, 1, 5, 6);
-        bytesData.WriteByteSeq(playerGuid[5]);
-        bytesData.WriteByteSeq(accountId[0]);
-        bytesData << uint8(gender);
-        bytesData.WriteByteSeq(guildGuid[5]);
-        bytesData << uint8(level);
-        bytesData << int32(zoneId);
+        data << pname;                                    // player name
+        data << gname;                                    // guild name
+        data << uint32(lvl);                              // player level
+        data << uint32(class_);                           // player class
+        data << uint32(race);                             // player race
+        data << uint8(gender);                            // player gender
+        data << uint32(pzoneid);                          // player zone id
 
         ++displaycount;
     }
 
-    data.FlushBits();
-    data.PutBits(pos, displaycount, 6);
-    data.append(bytesData);
+	
+    if (sWorld->getBoolConfig(CONFIG_FAKE_WHO_LIST) && displaycount < 49) 
+    { 
+        // PFake Player By Lizard.tiny                          0,   1,    2,   3,    4,   5 ,    6
+        QueryResult result = CharacterDatabase.Query("SELECT name,race,class,level,zone,gender,guild FROM characters_fake WHERE online>1 AND level > 3"); 
+        if (result)
+        {
+            do
+            {
+                Field *fields = result->Fetch();
+
+                std::string pname = fields[0].GetString();  // player name
+                std::string gname = fields[6].GetString();  // guild name 
+                uint32 lvl = fields[3].GetUInt32();         // player level
+                uint32 class_ = fields[2].GetUInt32();      // player class
+                uint32 race = fields[1].GetUInt32();        // player race
+                uint32 pzoneid = fields[4].GetUInt32();     // player zone id
+                uint8 gender = fields[5].GetUInt8();        // player gender
+
+                data << pname;                              // player name
+                data << gname;                              // guild name
+                data << uint32(lvl);                        // player level
+                data << uint32(class_);                     // player class
+                data << uint32(race);                       // player race
+                data << uint8(gender);                      // player gender
+                data << uint32(pzoneid);                    // player zone id
+
+                if ((++matchcount) == sWorld->getIntConfig(CONFIG_MAX_WHO))
+                    break;
+            } while (result->NextRow());
+        }
+    }
+
+    data.put(0, matchcount);
+    data.put(4, matchcount);                              // insert right count, count of matches
 
     SendPacket(&data);
-
-    delete[] words, wordLens;
-
-    TC_LOG_DEBUG("network", "WORLD: Send SMSG_WHO Message");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Send SMSG_WHO Message");
 }
 
 void WorldSession::HandleLogoutRequestOpcode(WorldPacket& /*recvData*/)
 {
-    TC_LOG_DEBUG("network", "WORLD: Recvd CMSG_LOGOUT_REQUEST Message, security - %u", GetSecurity());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Recvd CMSG_LOGOUT_REQUEST Message, security - %u", GetSecurity());
 
     if (uint64 lguid = GetPlayer()->GetLootGUID())
         DoLootRelease(lguid);
 
-    bool instantLogout = (GetPlayer()->HasFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_RESTING) && !GetPlayer()->IsInCombat()) ||
-                         GetPlayer()->IsInFlight() || HasPermission(rbac::RBAC_PERM_INSTANT_LOGOUT);
+    bool instantLogout = (GetPlayer()->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_RESTING) && !GetPlayer()->isInCombat()) ||
+                         GetPlayer()->isInFlight() || GetSecurity() >= AccountTypes(sWorld->getIntConfig(CONFIG_INSTANT_LOGOUT));
 
-    /// TODO: Possibly add RBAC permission to log out in combat
-    bool canLogoutInCombat = GetPlayer()->HasFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_RESTING);
-
+    bool canLogoutInCombat = GetPlayer()->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_RESTING);
     uint32 reason = 0;
-    if (GetPlayer()->IsInCombat() && !canLogoutInCombat)
+    if (GetPlayer()->isInCombat() && !canLogoutInCombat)
         reason = 1;
-    else if (GetPlayer()->IsFalling())
+    else if (GetPlayer()->m_movementInfo.HasMovementFlag(MOVEMENTFLAG_FALLING | MOVEMENTFLAG_FALLING_FAR))
         reason = 3;                                         // is jumping or falling
     else if (GetPlayer()->duel || GetPlayer()->HasAura(9454)) // is dueling or frozen by GM via freeze command
         reason = 2;                                         // FIXME - Need the correct value
 
     WorldPacket data(SMSG_LOGOUT_RESPONSE, 1+4);
     data << uint32(reason);
-    data.WriteBit(instantLogout);
-    data.FlushBits();
+    data << uint8(instantLogout);
     SendPacket(&data);
 
     if (reason)
@@ -517,7 +432,7 @@ void WorldSession::HandleLogoutRequestOpcode(WorldPacket& /*recvData*/)
         return;
     }
 
-    // instant logout in taverns/cities or on taxi or for admins, gm's, mod's if its enabled in worldserver.conf
+    //instant logout in taverns/cities or on taxi or for admins, gm's, mod's if its enabled in worldserver.conf
     if (instantLogout)
     {
         LogoutPlayer(true);
@@ -531,18 +446,17 @@ void WorldSession::HandleLogoutRequestOpcode(WorldPacket& /*recvData*/)
         GetPlayer()->SetRooted(true);
         GetPlayer()->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
     }
-
     LogoutRequest(time(NULL));
 }
 
 void WorldSession::HandlePlayerLogoutOpcode(WorldPacket& /*recvData*/)
 {
-    TC_LOG_DEBUG("network", "WORLD: Recvd CMSG_PLAYER_LOGOUT Message");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Recvd CMSG_PLAYER_LOGOUT Message");
 }
 
 void WorldSession::HandleLogoutCancelOpcode(WorldPacket& /*recvData*/)
 {
-    TC_LOG_DEBUG("network", "WORLD: Recvd CMSG_LOGOUT_CANCEL Message");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Recvd CMSG_LOGOUT_CANCEL Message");
 
     // Player have already logged out serverside, too late to cancel
     if (!GetPlayer())
@@ -566,33 +480,34 @@ void WorldSession::HandleLogoutCancelOpcode(WorldPacket& /*recvData*/)
         GetPlayer()->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
     }
 
-    TC_LOG_DEBUG("network", "WORLD: Sent SMSG_LOGOUT_CANCEL_ACK Message");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Sent SMSG_LOGOUT_CANCEL_ACK Message");
 }
 
-void WorldSession::HandleSetPvP(WorldPacket& recvData)
+void WorldSession::HandleTogglePvP(WorldPacket& recvData)
 {
+    // this opcode can be used in two ways: Either set explicit new status or toggle old status
     if (recvData.size() == 1)
     {
         bool newPvPStatus;
-        newPvPStatus = recvData.ReadBit();
-        GetPlayer()->ApplyModFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_IN_PVP, newPvPStatus);
-        GetPlayer()->ApplyModFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_PVP_TIMER, !newPvPStatus);
+        recvData >> newPvPStatus;
+        GetPlayer()->ApplyModFlag(PLAYER_FLAGS, PLAYER_FLAGS_IN_PVP, newPvPStatus);
+        GetPlayer()->ApplyModFlag(PLAYER_FLAGS, PLAYER_FLAGS_PVP_TIMER, !newPvPStatus);
     }
-}
-void WorldSession::HandleTogglePvP(WorldPacket& recvData)
-{
-    GetPlayer()->ToggleFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_IN_PVP);
-    GetPlayer()->ToggleFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_PVP_TIMER);
-
-    if (GetPlayer()->HasFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_IN_PVP))
+    else
     {
-        if (!GetPlayer()->IsPvP() || GetPlayer()->pvpInfo.EndTimer)
+        GetPlayer()->ToggleFlag(PLAYER_FLAGS, PLAYER_FLAGS_IN_PVP);
+        GetPlayer()->ToggleFlag(PLAYER_FLAGS, PLAYER_FLAGS_PVP_TIMER);
+    }
+
+    if (GetPlayer()->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_IN_PVP))
+    {
+        if (!GetPlayer()->IsPvP() || GetPlayer()->pvpInfo.endTimer != 0)
             GetPlayer()->UpdatePvP(true, true);
     }
     else
     {
-        if (!GetPlayer()->pvpInfo.IsHostile && GetPlayer()->IsPvP())
-            GetPlayer()->pvpInfo.EndTimer = time(NULL);     // start toggle-off
+        if (!GetPlayer()->pvpInfo.inHostileArea && GetPlayer()->IsPvP())
+            GetPlayer()->pvpInfo.endTimer = time(NULL);     // start toggle-off
     }
 
     //if (OutdoorPvP* pvp = _player->GetOutdoorPvP())
@@ -604,7 +519,7 @@ void WorldSession::HandleZoneUpdateOpcode(WorldPacket& recvData)
     uint32 newZone;
     recvData >> newZone;
 
-    TC_LOG_DEBUG("network", "WORLD: Recvd ZONE_UPDATE: %u", newZone);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Recvd ZONE_UPDATE: %u", newZone);
 
     // use server size data
     uint32 newzone, newarea;
@@ -615,26 +530,22 @@ void WorldSession::HandleZoneUpdateOpcode(WorldPacket& recvData)
 
 void WorldSession::HandleReturnToGraveyard(WorldPacket& /*recvPacket*/)
 {
-    if (GetPlayer()->IsAlive() || !GetPlayer()->HasFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
+    if (GetPlayer()->isAlive() || !GetPlayer()->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
         return;
-
     GetPlayer()->RepopAtGraveyard();
 }
 
 void WorldSession::HandleSetSelectionOpcode(WorldPacket& recvData)
 {
-    ObjectGuid guid;
-
-    recvData.ReadGuidMask(guid, 7, 6, 5, 4, 3, 2, 1, 0);
-
-    recvData.ReadGuidBytes(guid, 0, 7, 3, 5, 1, 4, 6, 2);
+    uint64 guid;
+    recvData >> guid;
 
     _player->SetSelection(guid);
 }
 
 void WorldSession::HandleStandStateChangeOpcode(WorldPacket& recvData)
 {
-    // TC_LOG_DEBUG("network", "WORLD: Received CMSG_STANDSTATECHANGE"); -- too many spam in log at lags/debug stop
+    // sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_STANDSTATECHANGE"); -- too many spam in log at lags/debug stop
     uint32 animstate;
     recvData >> animstate;
 
@@ -644,24 +555,25 @@ void WorldSession::HandleStandStateChangeOpcode(WorldPacket& recvData)
 void WorldSession::HandleContactListOpcode(WorldPacket& recvData)
 {
     recvData.read_skip<uint32>(); // always 1
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_CONTACT_LIST");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_CONTACT_LIST");
     _player->GetSocial()->SendSocialList(_player);
 }
 
 void WorldSession::HandleAddFriendOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_ADD_FRIEND");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_ADD_FRIEND");
 
     std::string friendName = GetTrinityString(LANG_FRIEND_IGNORE_UNKNOWN);
     std::string friendNote;
 
     recvData >> friendName;
+
     recvData >> friendNote;
 
     if (!normalizePlayerName(friendName))
         return;
 
-    TC_LOG_DEBUG("network", "WORLD: %s asked to add friend : '%s'",
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: %s asked to add friend : '%s'",
         GetPlayer()->GetName().c_str(), friendName.c_str());
 
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_GUID_RACE_ACC_BY_NAME);
@@ -693,13 +605,13 @@ void WorldSession::HandleAddFriendOpcodeCallBack(PreparedQueryResult result, std
         team = Player::TeamForRace(fields[1].GetUInt8());
         friendAccountId = fields[2].GetUInt32();
 
-        if (HasPermission(rbac::RBAC_PERM_ALLOW_GM_FRIEND) || AccountMgr::IsPlayerAccount(AccountMgr::GetSecurity(friendAccountId, realmID)))
+        if (!AccountMgr::IsPlayerAccount(GetSecurity()) || sWorld->getBoolConfig(CONFIG_ALLOW_GM_FRIEND) || AccountMgr::IsPlayerAccount(AccountMgr::GetSecurity(friendAccountId, realmID)))
         {
             if (friendGuid)
             {
                 if (friendGuid == GetPlayer()->GetGUID())
                     friendResult = FRIEND_SELF;
-                else if (GetPlayer()->GetTeam() != team && !HasPermission(rbac::RBAC_PERM_TWO_SIDE_ADD_FRIEND))
+                else if (GetPlayer()->GetTeam() != team && !sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_ADD_FRIEND) && AccountMgr::IsPlayerAccount(GetSecurity()))
                     friendResult = FRIEND_ENEMY;
                 else if (GetPlayer()->GetSocial()->HasFriend(GUID_LOPART(friendGuid)))
                     friendResult = FRIEND_ALREADY;
@@ -713,7 +625,7 @@ void WorldSession::HandleAddFriendOpcodeCallBack(PreparedQueryResult result, std
                     if (!GetPlayer()->GetSocial()->AddToSocialList(GUID_LOPART(friendGuid), false))
                     {
                         friendResult = FRIEND_LIST_FULL;
-                        TC_LOG_DEBUG("network", "WORLD: %s's friend list is full.", GetPlayer()->GetName().c_str());
+                        sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: %s's friend list is full.", GetPlayer()->GetName().c_str());
                     }
                 }
                 GetPlayer()->GetSocial()->SetFriendNote(GUID_LOPART(friendGuid), friendNote);
@@ -723,14 +635,14 @@ void WorldSession::HandleAddFriendOpcodeCallBack(PreparedQueryResult result, std
 
     sSocialMgr->SendFriendStatus(GetPlayer(), friendResult, GUID_LOPART(friendGuid), false);
 
-    TC_LOG_DEBUG("network", "WORLD: Sent (SMSG_FRIEND_STATUS)");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Sent (SMSG_FRIEND_STATUS)");
 }
 
 void WorldSession::HandleDelFriendOpcode(WorldPacket& recvData)
 {
     uint64 FriendGUID;
 
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_DEL_FRIEND");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_DEL_FRIEND");
 
     recvData >> FriendGUID;
 
@@ -738,12 +650,12 @@ void WorldSession::HandleDelFriendOpcode(WorldPacket& recvData)
 
     sSocialMgr->SendFriendStatus(GetPlayer(), FRIEND_REMOVED, GUID_LOPART(FriendGUID), false);
 
-    TC_LOG_DEBUG("network", "WORLD: Sent motd (SMSG_FRIEND_STATUS)");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Sent motd (SMSG_FRIEND_STATUS)");
 }
 
 void WorldSession::HandleAddIgnoreOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_ADD_IGNORE");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_ADD_IGNORE");
 
     std::string ignoreName = GetTrinityString(LANG_FRIEND_IGNORE_UNKNOWN);
 
@@ -752,7 +664,7 @@ void WorldSession::HandleAddIgnoreOpcode(WorldPacket& recvData)
     if (!normalizePlayerName(ignoreName))
         return;
 
-    TC_LOG_DEBUG("network", "WORLD: %s asked to Ignore: '%s'",
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: %s asked to Ignore: '%s'",
         GetPlayer()->GetName().c_str(), ignoreName.c_str());
 
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_GUID_BY_NAME);
@@ -796,14 +708,14 @@ void WorldSession::HandleAddIgnoreOpcodeCallBack(PreparedQueryResult result)
 
     sSocialMgr->SendFriendStatus(GetPlayer(), ignoreResult, GUID_LOPART(IgnoreGuid), false);
 
-    TC_LOG_DEBUG("network", "WORLD: Sent (SMSG_FRIEND_STATUS)");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Sent (SMSG_FRIEND_STATUS)");
 }
 
 void WorldSession::HandleDelIgnoreOpcode(WorldPacket& recvData)
 {
     uint64 IgnoreGUID;
 
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_DEL_IGNORE");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_DEL_IGNORE");
 
     recvData >> IgnoreGUID;
 
@@ -811,12 +723,12 @@ void WorldSession::HandleDelIgnoreOpcode(WorldPacket& recvData)
 
     sSocialMgr->SendFriendStatus(GetPlayer(), FRIEND_IGNORE_REMOVED, GUID_LOPART(IgnoreGUID), false);
 
-    TC_LOG_DEBUG("network", "WORLD: Sent motd (SMSG_FRIEND_STATUS)");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Sent motd (SMSG_FRIEND_STATUS)");
 }
 
 void WorldSession::HandleSetContactNotesOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "CMSG_SET_CONTACT_NOTES");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_SET_CONTACT_NOTES");
     uint64 guid;
     std::string note;
     recvData >> guid >> note;
@@ -835,12 +747,12 @@ void WorldSession::HandleBugOpcode(WorldPacket& recvData)
     type = recvData.ReadString(typelen);
 
     if (suggestion == 0)
-        TC_LOG_DEBUG("network", "WORLD: Received CMSG_BUG [Bug Report]");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_BUG [Bug Report]");
     else
-        TC_LOG_DEBUG("network", "WORLD: Received CMSG_BUG [Suggestion]");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_BUG [Suggestion]");
 
-    TC_LOG_DEBUG("network", "%s", type.c_str());
-    TC_LOG_DEBUG("network", "%s", content.c_str());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "%s", type.c_str());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "%s", content.c_str());
 
     PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_BUG_REPORT);
 
@@ -852,15 +764,12 @@ void WorldSession::HandleBugOpcode(WorldPacket& recvData)
 
 void WorldSession::HandleReclaimCorpseOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_RECLAIM_CORPSE");
-	
-    ObjectGuid guid;
-	
-    recvData.ReadGuidMask(guid, 1, 5, 7, 2, 6, 3, 0, 4);
-		
-    recvData.ReadGuidBytes(guid, 2, 5, 4, 6, 1, 0, 7, 3);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_RECLAIM_CORPSE");
 
-    if (GetPlayer()->IsAlive())
+    uint64 guid;
+    recvData >> guid;
+
+    if (GetPlayer()->isAlive())
         return;
 
     // do not allow corpse reclaim in arena
@@ -868,7 +777,7 @@ void WorldSession::HandleReclaimCorpseOpcode(WorldPacket& recvData)
         return;
 
     // body not released yet
-    if (!GetPlayer()->HasFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
+    if (!GetPlayer()->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_GHOST))
         return;
 
     Corpse* corpse = GetPlayer()->GetCorpse();
@@ -892,35 +801,17 @@ void WorldSession::HandleReclaimCorpseOpcode(WorldPacket& recvData)
 
 void WorldSession::HandleResurrectResponseOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_RESURRECT_RESPONSE");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_RESURRECT_RESPONSE");
 
-    ObjectGuid guid;
-    uint32 response;
+    uint64 guid;
+    uint8 status;
+    recvData >> guid;
+    recvData >> status;
 
-    recvData >> response;
-
-    guid[3] = recvData.ReadBit();
-    guid[0] = recvData.ReadBit();
-    guid[6] = recvData.ReadBit();
-    guid[4] = recvData.ReadBit();
-    guid[5] = recvData.ReadBit();
-    guid[2] = recvData.ReadBit();
-    guid[1] = recvData.ReadBit();
-    guid[7] = recvData.ReadBit();
-
-    recvData.ReadByteSeq(guid[7]);
-    recvData.ReadByteSeq(guid[0]);
-    recvData.ReadByteSeq(guid[1]);
-    recvData.ReadByteSeq(guid[3]);
-    recvData.ReadByteSeq(guid[4]);
-    recvData.ReadByteSeq(guid[6]);
-    recvData.ReadByteSeq(guid[2]);
-    recvData.ReadByteSeq(guid[5]);
-
-    if (GetPlayer()->IsAlive())
+    if (GetPlayer()->isAlive())
         return;
 
-    if (response == 0)
+    if (status == 0)
     {
         GetPlayer()->ClearResurrectRequestData();           // reject
         return;
@@ -952,17 +843,14 @@ void WorldSession::SendAreaTriggerMessage(const char* Text, ...)
 void WorldSession::HandleAreaTriggerOpcode(WorldPacket& recvData)
 {
     uint32 triggerId;
-    uint8 unk1, unk2;
     recvData >> triggerId;
-    unk1 = recvData.ReadBit();
-    unk2 = recvData.ReadBit();
 
-    TC_LOG_DEBUG("network", "CMSG_AREA_TRIGGER. Trigger ID: %u", triggerId);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_AREATRIGGER. Trigger ID: %u", triggerId);
 
     Player* player = GetPlayer();
-    if (player->IsInFlight())
+    if (player->isInFlight())
     {
-        TC_LOG_DEBUG("network", "HandleAreaTriggerOpcode: Player '%s' (GUID: %u) in flight, ignore Area Trigger ID:%u",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "HandleAreaTriggerOpcode: Player '%s' (GUID: %u) in flight, ignore Area Trigger ID:%u",
             player->GetName().c_str(), player->GetGUIDLow(), triggerId);
         return;
     }
@@ -970,14 +858,14 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket& recvData)
     AreaTriggerEntry const* atEntry = sAreaTriggerStore.LookupEntry(triggerId);
     if (!atEntry)
     {
-        TC_LOG_DEBUG("network", "HandleAreaTriggerOpcode: Player '%s' (GUID: %u) send unknown (by DBC) Area Trigger ID:%u",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "HandleAreaTriggerOpcode: Player '%s' (GUID: %u) send unknown (by DBC) Area Trigger ID:%u",
             player->GetName().c_str(), player->GetGUIDLow(), triggerId);
         return;
     }
 
     if (player->GetMapId() != atEntry->mapid)
     {
-        TC_LOG_DEBUG("network", "HandleAreaTriggerOpcode: Player '%s' (GUID: %u) too far (trigger map: %u player map: %u), ignore Area Trigger ID: %u",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "HandleAreaTriggerOpcode: Player '%s' (GUID: %u) too far (trigger map: %u player map: %u), ignore Area Trigger ID: %u",
             player->GetName().c_str(), atEntry->mapid, player->GetMapId(), player->GetGUIDLow(), triggerId);
         return;
     }
@@ -991,7 +879,7 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket& recvData)
         float dist = player->GetDistance(atEntry->x, atEntry->y, atEntry->z);
         if (dist > atEntry->radius + delta)
         {
-            TC_LOG_DEBUG("network", "HandleAreaTriggerOpcode: Player '%s' (GUID: %u) too far (radius: %f distance: %f), ignore Area Trigger ID: %u",
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "HandleAreaTriggerOpcode: Player '%s' (GUID: %u) too far (radius: %f distance: %f), ignore Area Trigger ID: %u",
                 player->GetName().c_str(), player->GetGUIDLow(), atEntry->radius, dist, triggerId);
             return;
         }
@@ -1022,7 +910,7 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket& recvData)
             (fabs(dy) > atEntry->box_y / 2 + delta) ||
             (fabs(dz) > atEntry->box_z / 2 + delta))
         {
-            TC_LOG_DEBUG("network", "HandleAreaTriggerOpcode: Player '%s' (GUID: %u) too far (1/2 box X: %f 1/2 box Y: %f 1/2 box Z: %f rotatedPlayerX: %f rotatedPlayerY: %f dZ:%f), ignore Area Trigger ID: %u",
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "HandleAreaTriggerOpcode: Player '%s' (GUID: %u) too far (1/2 box X: %f 1/2 box Y: %f 1/2 box Z: %f rotatedPlayerX: %f rotatedPlayerY: %f dZ:%f), ignore Area Trigger ID: %u",
                 player->GetName().c_str(), player->GetGUIDLow(), atEntry->box_x/2, atEntry->box_y/2, atEntry->box_z/2, rotPlayerX, rotPlayerY, dz, triggerId);
             return;
         }
@@ -1034,7 +922,7 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket& recvData)
     if (sScriptMgr->OnAreaTrigger(player, atEntry))
         return;
 
-    if (player->IsAlive())
+    if (player->isAlive())
         if (uint32 questId = sObjectMgr->GetQuestForAreaTrigger(triggerId))
             if (player->GetQuestStatus(questId) == QUEST_STATUS_INCOMPLETE)
                 player->AreaExploredOrEventHappens(questId);
@@ -1042,19 +930,22 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket& recvData)
     if (sObjectMgr->IsTavernAreaTrigger(triggerId))
     {
         // set resting flag we are in the inn
-        player->SetFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_RESTING);
+        player->SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_RESTING);
         player->InnEnter(time(NULL), atEntry->mapid, atEntry->x, atEntry->y, atEntry->z);
         player->SetRestType(REST_TYPE_IN_TAVERN);
 
         if (sWorld->IsFFAPvPRealm())
-            player->RemoveByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+            player->RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
 
         return;
     }
 
     if (Battleground* bg = player->GetBattleground())
         if (bg->GetStatus() == STATUS_IN_PROGRESS)
+        {
             bg->HandleAreaTrigger(player, triggerId);
+            return;
+        }
 
     if (OutdoorPvP* pvp = player->GetOutdoorPvP())
         if (pvp->HandleAreaTrigger(_player, triggerId))
@@ -1081,18 +972,21 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket& recvData)
 
 void WorldSession::HandleUpdateAccountData(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_UPDATE_ACCOUNT_DATA");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_UPDATE_ACCOUNT_DATA");
 
-    uint32 timestamp = 0, decompressedSize = 0, compCount = 0;
-    uint8 type = 0;
-    recvData >> decompressedSize >> timestamp >> compCount;
+    uint32 type, timestamp, decompressedSize;
+    recvData >> type >> timestamp >> decompressedSize;
+
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "UAD: type %u, time %u, decompressedSize %u", type, timestamp, decompressedSize);
+
+    if (type > NUM_ACCOUNT_DATA_TYPES)
+        return;
 
     if (decompressedSize == 0)                               // erase
     {
         SetAccountData(AccountDataType(type), 0, "");
 
-        WorldPacket data(SMSG_UPDATE_ACCOUNT_DATA_COMPLETE, 4 + 4);
-        type = recvData.ReadBits(3);
+        WorldPacket data(SMSG_UPDATE_ACCOUNT_DATA_COMPLETE, 4+4);
         data << uint32(type);
         data << uint32(0);
         SendPacket(&data);
@@ -1102,8 +996,8 @@ void WorldSession::HandleUpdateAccountData(WorldPacket& recvData)
 
     if (decompressedSize > 0xFFFF)
     {
-        recvData.rfinish();                   // unneeded warning spam in this case
-        TC_LOG_DEBUG("network", "UAD: Account data packet too big, size %u", decompressedSize);
+        recvData.rfinish();                   // unnneded warning spam in this case
+        sLog->outError(LOG_FILTER_NETWORKIO, "UAD: Account data packet too big, size %u", decompressedSize);
         return;
     }
 
@@ -1111,27 +1005,21 @@ void WorldSession::HandleUpdateAccountData(WorldPacket& recvData)
     dest.resize(decompressedSize);
 
     uLongf realSize = decompressedSize;
-    if (uncompress(const_cast<uint8*>(dest.contents()), &realSize, const_cast<uint8*>(recvData.contents() + recvData.rpos()), compCount) != Z_OK)
+    if (uncompress(dest.contents(), &realSize, recvData.contents() + recvData.rpos(), recvData.size() - recvData.rpos()) != Z_OK)
     {
-        recvData.rfinish();                   // unneeded warning spam in this case
-        TC_LOG_DEBUG("network", "UAD: Failed to decompress account data");
+        recvData.rfinish();                   // unnneded warning spam in this case
+        sLog->outError(LOG_FILTER_NETWORKIO, "UAD: Failed to decompress account data");
         return;
     }
 
-    recvData.rpos(recvData.rpos() + compCount);
-
-    type = recvData.ReadBits(3);
-
-    if (type > NUM_ACCOUNT_DATA_TYPES)
-        return;
+    recvData.rfinish();                       // uncompress read (recvData.size() - recvData.rpos())
 
     std::string adata;
     dest >> adata;
 
-    // sLog->outError("general", "data  %u %s", type, adata.c_str());
     SetAccountData(AccountDataType(type), timestamp, adata);
 
-    WorldPacket data(SMSG_UPDATE_ACCOUNT_DATA_COMPLETE, 4 + 4);
+    WorldPacket data(SMSG_UPDATE_ACCOUNT_DATA_COMPLETE, 4+4);
     data << uint32(type);
     data << uint32(0);
     SendPacket(&data);
@@ -1139,11 +1027,12 @@ void WorldSession::HandleUpdateAccountData(WorldPacket& recvData)
 
 void WorldSession::HandleRequestAccountData(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_REQUEST_ACCOUNT_DATA");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_REQUEST_ACCOUNT_DATA");
 
-    uint32 type = recvData.ReadBits(3);
+    uint32 type;
+    recvData >> type;
 
-    TC_LOG_DEBUG("network", "RAD: type %u", type);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "RAD: type %u", type);
 
     if (type > NUM_ACCOUNT_DATA_TYPES)
         return;
@@ -1159,40 +1048,57 @@ void WorldSession::HandleRequestAccountData(WorldPacket& recvData)
 
     if (size && compress(dest.contents(), &destSize, (uint8 const*)adata->Data.c_str(), size) != Z_OK)
     {
-        TC_LOG_DEBUG("network", "RAD: Failed to compress account data");
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "RAD: Failed to compress account data");
         return;
     }
 
     dest.resize(destSize);
 
-    WorldPacket data(SMSG_UPDATE_ACCOUNT_DATA, 8 + 4 + 4 + 4 + destSize);
-
-    ObjectGuid guid;
-
-    data.WriteBits(type, 3);       // type (0-7)
-    data.WriteBit(guid[5]);
-    data.WriteBit(guid[1]);
-    data.WriteBit(guid[3]);
-    data.WriteBit(guid[7]);
-    data.WriteBit(guid[0]);
-    data.WriteBit(guid[4]);
-    data.WriteBit(guid[2]);
-    data.WriteBit(guid[6]);
-
-    data.WriteByteSeq(guid[3]);
-    data.WriteByteSeq(guid[1]);
-    data.WriteByteSeq(guid[5]);
-    data << uint32(size);         // decompressed length
-    data << uint32(destSize);
-    data.append(dest);
-    data.WriteByteSeq(guid[7]);
-    data.WriteByteSeq(guid[4]);
-    data.WriteByteSeq(guid[0]);
-    data.WriteByteSeq(guid[6]);
-    data.WriteByteSeq(guid[2]);
-    data << uint32(adata->Time); // unix time
-    
+    WorldPacket data(SMSG_UPDATE_ACCOUNT_DATA, 8+4+4+4+destSize);
+    data << uint64(_player ? _player->GetGUID() : 0);       // player guid
+    data << uint32(type);                                   // type (0-7)
+    data << uint32(adata->Time);                            // unix time
+    data << uint32(size);                                   // decompressed length
+    data.append(dest);                                      // compressed data
     SendPacket(&data);
+}
+
+void WorldSession::HandleSetPreferedCemetery(WorldPacket& recvData)
+{
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_SET_PREFERED_CEMETERY");
+
+    uint32 CemeteryId;
+    recvData >> CemeteryId;
+}
+
+void WorldSession::HandleCemeteryListRequest(WorldPacket& recvData)
+{
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_REQUEST_CEMETERY_LIST");
+
+    PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_SEL_GRAVEYARDS);
+
+    stmt->setUInt32(0,GetPlayer()->getFaction());
+
+    PreparedQueryResult result = WorldDatabase.AsyncQuery(stmt);
+
+    if(result)
+    {
+        WorldPacket sendData(SMSG_REQUEST_CEMETERY_LIST_RESPONSE);
+
+        sendData.WriteBit(false);               //unk bit
+        sendData.FlushBits();
+        sendData.WriteBits(result->GetRowCount(),24);
+        sendData.FlushBits();
+
+        do
+        {
+            Field* field = result->Fetch();
+            sendData << uint32(field[0].GetUInt32());
+        }
+        while (result->NextRow());
+        SendPacket(&sendData);
+    }
+
 }
 
 int32 WorldSession::HandleEnableNagleAlgorithm()
@@ -1204,112 +1110,69 @@ int32 WorldSession::HandleEnableNagleAlgorithm()
 
 void WorldSession::HandleSetActionButtonOpcode(WorldPacket& recvData)
 {
-    ObjectGuid buttonStream;
-    uint8 slotId;
+    uint8 button;
+    uint32 packetData;
+    recvData >> button >> packetData;
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_SET_ACTION_BUTTON Button: %u Data: %u", button, packetData);
 
-    recvData >> slotId;
-	
-    recvData.ReadGuidMask(buttonStream, 7, 0, 5, 2, 1, 6, 3, 4);
-
-    recvData.ReadGuidBytes(buttonStream, 6, 7, 3, 5, 2, 1, 4, 0);
-
-    if(!uint64(buttonStream))
-        GetPlayer()->removeActionButton(slotId);
+    if (!packetData)
+        GetPlayer()->removeActionButton(button);
     else
-    {
-        uint8 type = ACTION_BUTTON_TYPE(buttonStream);
-        uint32 actionId = ACTION_BUTTON_ACTION(buttonStream);
-
-        GetPlayer()->addActionButton(slotId, actionId, type);
-    }
+        GetPlayer()->addActionButton(button, ACTION_BUTTON_ACTION(packetData), ACTION_BUTTON_TYPE(packetData));
 }
 
 void WorldSession::HandleCompleteCinematic(WorldPacket& /*recvData*/)
 {
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_COMPLETE_CINEMATIC");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_COMPLETE_CINEMATIC");
+    GetPlayer()->SetWatchingCinematic(false);
 }
 
 void WorldSession::HandleNextCinematicCamera(WorldPacket& /*recvData*/)
 {
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_NEXT_CINEMATIC_CAMERA");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_NEXT_CINEMATIC_CAMERA");
 }
 
 void WorldSession::HandleMoveTimeSkippedOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_MOVE_TIME_SKIPPED");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_MOVE_TIME_SKIPPED");
 
     ObjectGuid guid;
     uint32 time;
     recvData >> time;
 
-    recvData.ReadGuidMask(guid, 5, 1, 3, 0, 2, 6, 7, 4);
+    guid[5] = recvData.ReadBit();
+    guid[1] = recvData.ReadBit();
+    guid[3] = recvData.ReadBit();
+    guid[7] = recvData.ReadBit();
+    guid[6] = recvData.ReadBit();
+    guid[0] = recvData.ReadBit();
+    guid[4] = recvData.ReadBit();
+    guid[2] = recvData.ReadBit();
 
-    recvData.ReadGuidBytes(guid, 3, 1, 2, 7, 6, 0, 5, 4);
+    recvData.ReadByteSeq(guid[7]);
+    recvData.ReadByteSeq(guid[1]);
+    recvData.ReadByteSeq(guid[2]);
+    recvData.ReadByteSeq(guid[4]);
+    recvData.ReadByteSeq(guid[3]);
+    recvData.ReadByteSeq(guid[6]);
+    recvData.ReadByteSeq(guid[0]);
     recvData.ReadByteSeq(guid[5]);
 
     //TODO!
 
     /*
+        uint64 guid;
+        uint32 time_skipped;
+        recvData >> guid;
+        recvData >> time_skipped;
+        sLog->outDebug(LOG_FILTER_PACKETIO, "WORLD: CMSG_MOVE_TIME_SKIPPED");
+
+        /// TODO
+        must be need use in Trinity
+        We substract server Lags to move time (AntiLags)
+        for exmaple
         GetPlayer()->ModifyLastMoveTime(-int32(time_skipped));
     */
-}
-
-void WorldSession::HandleFeatherFallAck(WorldPacket& recvData)
-{
-    TC_LOG_DEBUG("network", "WORLD: CMSG_MOVE_FEATHER_FALL_ACK");
-
-    // no used
-    recvData.rfinish();                       // prevent warnings spam
-}
-
-void WorldSession::HandleMoveUnRootAck(WorldPacket& recvData)
-{
-    // no used
-    recvData.rfinish();                       // prevent warnings spam
-/*
-    uint64 guid;
-    recvData >> guid;
-
-    // now can skip not our packet
-    if (_player->GetGUID() != guid)
-    {
-        recvData.rfinish();                   // prevent warnings spam
-        return;
-    }
-
-    TC_LOG_DEBUG("network", "WORLD: CMSG_FORCE_MOVE_UNROOT_ACK");
-
-    recvData.read_skip<uint32>();                          // unk
-
-    MovementInfo movementInfo;
-    movementInfo.guid = guid;
-    ReadMovementInfo(recvData, &movementInfo);
-    recvData.read_skip<float>();                           // unk2
-*/
-}
-
-void WorldSession::HandleMoveRootAck(WorldPacket& recvData)
-{
-    // no used
-    recvData.rfinish();                       // prevent warnings spam
-/*
-    uint64 guid;
-    recvData >> guid;
-
-    // now can skip not our packet
-    if (_player->GetGUID() != guid)
-    {
-        recvData.rfinish();                   // prevent warnings spam
-        return;
-    }
-
-    TC_LOG_DEBUG("network", "WORLD: CMSG_FORCE_MOVE_ROOT_ACK");
-
-    recvData.read_skip<uint32>();                          // unk
-
-    MovementInfo movementInfo;
-    ReadMovementInfo(recvData, &movementInfo);
-*/
 }
 
 void WorldSession::HandleSetActionBarToggles(WorldPacket& recvData)
@@ -1321,11 +1184,11 @@ void WorldSession::HandleSetActionBarToggles(WorldPacket& recvData)
     if (!GetPlayer())                                        // ignore until not logged (check needed because STATUS_AUTHED)
     {
         if (actionBar != 0)
-            TC_LOG_ERROR("network", "WorldSession::HandleSetActionBarToggles in not logged state with value: %u, ignored", uint32(actionBar));
+            sLog->outError(LOG_FILTER_NETWORKIO, "WorldSession::HandleSetActionBarToggles in not logged state with value: %u, ignored", uint32(actionBar));
         return;
     }
 
-    GetPlayer()->SetByteValue(PLAYER_FIELD_LIFETIME_MAX_RANK, 2, actionBar);
+    GetPlayer()->SetByteValue(PLAYER_FIELD_BYTES, 2, actionBar);
 }
 
 void WorldSession::HandlePlayedTime(WorldPacket& recvData)
@@ -1340,286 +1203,147 @@ void WorldSession::HandlePlayedTime(WorldPacket& recvData)
     SendPacket(&data);
 }
 
-void WorldSession::HandlePandarenFactionChoiceOpcode(WorldPacket& recvData)
-{
-    if (_player->getRace() != RACE_PANDAREN_NEUTRAL)
-    {
-        TC_LOG_ERROR("network", "Player '%s' (GUID: %u) sent CMSG_PANDAREN_CHOOSE_FACTION, but his race is %d. Race should be %d.",
-            _player->GetName().c_str(), _player->GetGUIDLow(), _player->getRace(), RACE_PANDAREN_NEUTRAL);
-        recvData.rfinish();
-        return;
-    }
-
-    uint32 race;
-    recvData >> race;
-
-    uint32 const* languageSpells;
-    WorldLocation location;
-    uint32 homebindLocation;
-
-    if (race)
-    {
-        race = RACE_PANDAREN_ALLIANCE;
-        languageSpells = pandarenLanguageSpellsAlliance;
-        location = WorldLocation(870, 3878.543213f, 2589.685547f, 757.201599f, 2.045576f);
-        homebindLocation = 9;
-    }
-    else
-    {
-        race = RACE_PANDAREN_HORDE;
-        languageSpells = pandarenLanguageSpellsHorde;
-        location = WorldLocation(870, 3878.543213f, 2589.685547f, 757.201599f, 2.045576f);
-        homebindLocation = 363;
-    }
-
-    _player->SetRace(race);
-    _player->setFactionForRace(race);
-    _player->TeleportTo(location);
-    _player->SetHomebind(location, homebindLocation);
-
-    for (uint8 i = 0; i < PANDAREN_FACTION_LANGUAGE_COUNT; i++)
-        _player->learnSpell(languageSpells[i], false);
-
-    WorldPacket data(SMSG_PANDAREN_FACTION_CHOSEN, 4 + 1);
-    data << (uint32)race;
-    data.WriteBit(1); // unk bool
-    data.FlushBits();
-    SendPacket(&data);
-
-    _player->GetReputationMgr().UpdateReputationFlags();
-
-    _player->GetReputationMgr().SendInitialReputations();
-    _player->SendFeatureSystemStatus();
-    _player->GetReputationMgr().SendForceReactions();
-}
-
 void WorldSession::HandleInspectOpcode(WorldPacket& recvData)
 {
-    ObjectGuid guid;
+    uint64 guid;
+    recvData >> guid;
 
-    recvData.ReadGuidMask(guid, 0, 3, 7, 2, 5, 1, 4, 6);
-    recvData.ReadGuidBytes(guid, 3, 5, 2, 4, 1, 6, 0, 7);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_INSPECT");
 
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_INSPECT");
+    _player->SetSelection(guid);
 
     Player* player = ObjectAccessor::FindPlayer(guid);
     if (!player)
-        return;
-
-    ObjectGuid GUIDInspectee = player->GetGUID();
-    Guild* guild = NULL;//sGuildMgr->GetGuildById(player->GetGuildId());
-    uint32 items = 0;
-    uint32 talentCount = 0;
-    uint32 glyphes = 0;
-    ObjectGuid gGuildId = guild ? guild->GetGUID() : 0;
-    ByteBuffer itemsBites, itemsBytes, talentsBytes, glyphesBytes;
-    uint32 const* talentTabIds = GetClassSpecializations(player->getClass());
-    uint32 spec = player->GetSpecializationId(player->GetActiveSpec());
-
-    WorldPacket data(SMSG_INSPECT_RESULTS_UPDATE);
-
-    data.WriteBit(0); // HasGuild
-    data.WriteGuidMask(GUIDInspectee, 2, 4, 3, 5, 7);
-
-    for (uint32 i = 0; i < EQUIPMENT_SLOT_END; ++i)
     {
-        if (const Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, i))
-        {
-            ObjectGuid CreatorGUID = item->GetUInt64Value(ITEM_FIELD_CREATOR);
-
-
-            itemsBites.WriteGuidMask(CreatorGUID, 1);
-            itemsBites.WriteBit(0); // unk88
-            itemsBites.WriteBit(0); // unk112
-            itemsBites.WriteGuidMask(CreatorGUID, 3);
-            itemsBites.WriteBits(0, 21); //itemsBites.WriteBits(0/*enchantments*/, 21);
-            itemsBites.WriteGuidMask(CreatorGUID, 2, 6, 4);
-            itemsBites.WriteBit(0); //itemsBites.WriteBit(/*enchantmentMask != */0);
-            itemsBites.WriteGuidMask(CreatorGUID, 0, 5, 7);
-
-            itemsBytes.WriteGuidBytes(CreatorGUID, 3);
-            itemsBytes << uint32(0);    // seed lenght ?
-            itemsBytes << uint32(item->GetEntry());
-            itemsBytes.WriteGuidBytes(CreatorGUID, 6, 4, 7, 2, 5);
-            itemsBytes << uint8(i);
-            itemsBytes.WriteGuidBytes(CreatorGUID, 0, 1);
-            
-            items++;
-        }
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_INSPECT: No player found from GUID: " UI64FMTD, guid);
+        return;
     }
 
-    data.WriteBits(items, 20);
-    data.WriteGuidMask(GUIDInspectee, 0);
-    data.FlushBits();
-    data.append(itemsBites);     
-    data.WriteBits(0, 23);
-    data.WriteBits(0, 23);
-    data.WriteGuidMask(GUIDInspectee, 6, 1);
-    data.WriteGuidBytes(GUIDInspectee, 1, 4, 2);
-    data.append(itemsBytes);
-    data.WriteGuidBytes(GUIDInspectee, 5);
-    data.WriteGuidBytes(GUIDInspectee, 0);
-    data << uint32(spec);
-    data.WriteGuidBytes(GUIDInspectee, 7, 3, 6);
+    uint32 talent_points = 41;
+    WorldPacket data(SMSG_INSPECT_TALENT, 8 + 4 + 1 + 1 + talent_points + 8 + 4 + 8 + 4);
+    data << player->GetGUID();
 
+    if (sWorld->getBoolConfig(CONFIG_TALENTS_INSPECTING) || _player->isGameMaster())
+        player->BuildPlayerTalentsInfoData(&data);
+    else
+    {
+        data << uint32(0);                                  // unspentTalentPoints
+        data << uint8(0);                                   // talentGroupCount
+        data << uint8(0);                                   // talentGroupIndex
+    }
+
+    player->BuildEnchantmentsInfoData(&data);
+    if (Guild* guild = sGuildMgr->GetGuildById(player->GetGuildId()))
+    {
+        data << uint64(guild->GetGUID());
+        data << uint32(guild->GetLevel());
+        data << uint64(guild->GetExperience());
+        data << uint32(guild->GetMembersCount());
+    }
     SendPacket(&data);
 }
-    /*
-
-    //itemsBytes.append(enchantBytes);
-            //if (false)  // unk88
-            //    itemsBytes << uint32(0);    // unk84
-
-                        //if (enchantmentMask != 0)
-            //    itemsBytes << uint16(enchantmentMask);
-
-                //if (guild)
-    //    data.WriteGuidMask(gGuildId, 7, 0, 5, 3, 2, 4, 6, 1);
-
-                //ByteBuffer enchantBytes;
-            //uint32 enchantments = 0;
-            //uint16 enchantmentMask = 0;
-
-            //for (uint8 j = 0; j < MAX_ENCHANTMENT_SLOT; ++j)
-            //{
-            //    if (uint32 enchId = item->GetEnchantmentId(EnchantmentSlot(j)))
-            //    {
-            //        enchantBytes << uint32(enchId);
-            //        enchantBytes << uint8(j);
-            //        enchantmentMask |= (1 << j);
-            //        enchantments++;
-            //    }
-            //}
-
-    //if (guild)
-    //{
-    //    data.WriteGuidBytes(gGuildId, 6, 2, 5, 0);
-    //    data << uint32(guild->GetMembersCount()); // unk36
-    //    data.WriteGuidBytes(gGuildId, 4, 7);
-    //    data << uint64(guild->GetExperience());
-    //    data.WriteGuidBytes(gGuildId, 1);
-    //    data << uint32(guild->GetLevel()); // unk32
-    //    data.WriteGuidBytes(gGuildId, 3);
-    //}
-    //data << uint16(0);
-    //data.append(glyphesBytes);
-
-    size_t pos = data.wpos();
-    size_t pos2 = data.wpos();
-
-    for (uint32 talentId = 0; talentId < sTalentStore.GetNumRows(); ++talentId)
-    {
-        TalentEntry const* talentInfo = sTalentStore.LookupEntry(talentId);
-        if (!talentInfo)
-            continue;
-
-        if (talentInfo->playerClass != player->getClass())
-            continue;
-
-        if (!player->HasTalent(talentInfo->SpellId, spec))
-            continue;
-
-        glyphesBytes << uint16(talentInfo->TalentID);
-
-        talentCount++;
-
-        for (uint8 j = 0; j < MAX_GLYPH_SLOT_INDEX; ++j)
-            data << uint16(player->GetGlyph(spec, j));
-
-        glyphes++;
-    }*/
-
-    //data.PutBits(pos, talentCount, 23);
-    //data.PutBits(pos2, glyphes, 23);
 
 void WorldSession::HandleInspectHonorStatsOpcode(WorldPacket& recvData)
 {
     ObjectGuid guid;
-
-    guid[0] = recvData.ReadBit();
-    guid[2] = recvData.ReadBit();
-    guid[5] = recvData.ReadBit();
     guid[1] = recvData.ReadBit();
-    guid[6] = recvData.ReadBit();
-    guid[4] = recvData.ReadBit();
-    guid[3] = recvData.ReadBit();
+    guid[5] = recvData.ReadBit();
     guid[7] = recvData.ReadBit();
+    guid[3] = recvData.ReadBit();
+    guid[2] = recvData.ReadBit();
+    guid[4] = recvData.ReadBit();
+    guid[0] = recvData.ReadBit();
+    guid[6] = recvData.ReadBit();
 
-    recvData.ReadByteSeq(guid[7]);
-    recvData.ReadByteSeq(guid[3]);
-    recvData.ReadByteSeq(guid[1]);
-    recvData.ReadByteSeq(guid[5]);
     recvData.ReadByteSeq(guid[4]);
+    recvData.ReadByteSeq(guid[7]);
     recvData.ReadByteSeq(guid[0]);
-    recvData.ReadByteSeq(guid[2]);
+    recvData.ReadByteSeq(guid[5]);
+    recvData.ReadByteSeq(guid[1]);
     recvData.ReadByteSeq(guid[6]);
-
+    recvData.ReadByteSeq(guid[2]);
+    recvData.ReadByteSeq(guid[3]);
     Player* player = ObjectAccessor::FindPlayer(guid);
 
     if (!player)
     {
-        TC_LOG_DEBUG("network", "CMSG_INSPECT_HONOR_STATS: No player found from GUID: " UI64FMTD, (uint64)guid);
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_INSPECT_HONOR_STATS: No player found from GUID: " UI64FMTD, (uint64)guid);
         return;
     }
 
     ObjectGuid playerGuid = player->GetGUID();
-    WorldPacket data(SMSG_INSPECT_HONOR_STATS, 8 + 1 + 4 + 4);
-
-    data << uint32(player->GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS));
-    data << uint16(player->GetUInt16Value(PLAYER_FIELD_YESTERDAY_HONORABLE_KILLS, 1));  // yesterday kills
-    data << uint16(player->GetUInt16Value(PLAYER_FIELD_YESTERDAY_HONORABLE_KILLS, 0));  // today kills
-    data << uint8(0);                                               // rank
-
-    data.WriteBit(playerGuid[2]);
-    data.WriteBit(playerGuid[1]);
-    data.WriteBit(playerGuid[6]);
+    WorldPacket data(SMSG_INSPECT_HONOR_STATS, 8+1+4+4);
     data.WriteBit(playerGuid[4]);
-    data.WriteBit(playerGuid[5]);
     data.WriteBit(playerGuid[3]);
-    data.WriteBit(playerGuid[7]);
+    data.WriteBit(playerGuid[6]);
+    data.WriteBit(playerGuid[2]);
+    data.WriteBit(playerGuid[5]);
     data.WriteBit(playerGuid[0]);
-
-    data.WriteByteSeq(playerGuid[1]);
-    data.WriteByteSeq(playerGuid[3]);
-    data.WriteByteSeq(playerGuid[6]);
-    data.WriteByteSeq(playerGuid[7]);
+    data.WriteBit(playerGuid[7]);
+    data.WriteBit(playerGuid[1]);
+    data << uint8(0);                                               // rank
+    data << uint16(player->GetUInt16Value(PLAYER_FIELD_KILLS, 1));  // yesterday kills
+    data << uint16(player->GetUInt16Value(PLAYER_FIELD_KILLS, 0));  // today kills
     data.WriteByteSeq(playerGuid[2]);
-    data.WriteByteSeq(playerGuid[4]);
-    data.WriteByteSeq(playerGuid[5]);
     data.WriteByteSeq(playerGuid[0]);
-
+    data.WriteByteSeq(playerGuid[6]);
+    data.WriteByteSeq(playerGuid[3]);
+    data.WriteByteSeq(playerGuid[4]);
+    data.WriteByteSeq(playerGuid[1]);
+    data.WriteByteSeq(playerGuid[5]);
+    data << uint32(player->GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS));
+    data.WriteByteSeq(playerGuid[7]);
     SendPacket(&data);
 }
 
 void WorldSession::HandleWorldTeleportOpcode(WorldPacket& recvData)
 {
-    uint32 time;
+    //uint32 time;
     uint32 mapid;
     float PositionX;
     float PositionY;
     float PositionZ;
     float Orientation;
+    ObjectGuid guid;
 
-    recvData >> time;                                      // time in m.sec.
+    //recvData >> time;                                      // time in m.sec.
     recvData >> mapid;
     recvData >> PositionX;
     recvData >> PositionY;
     recvData >> PositionZ;
     recvData >> Orientation;                               // o (3.141593 = 180 degrees)
 
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_WORLD_TELEPORT");
+    guid[6] = recvData.ReadBit();
+    guid[0] = recvData.ReadBit();
+    guid[2] = recvData.ReadBit();
+    guid[4] = recvData.ReadBit();
+    guid[3] = recvData.ReadBit();
+    guid[7] = recvData.ReadBit();
+    guid[1] = recvData.ReadBit();
+    guid[2] = recvData.ReadBit();
 
-    if (GetPlayer()->IsInFlight())
+    recvData.ReadByteSeq(guid[1]);
+    recvData.ReadByteSeq(guid[0]);
+    recvData.ReadByteSeq(guid[2]);
+    recvData.ReadByteSeq(guid[7]);
+    recvData.ReadByteSeq(guid[4]);
+    recvData.ReadByteSeq(guid[5]);
+    recvData.ReadByteSeq(guid[6]);
+    recvData.ReadByteSeq(guid[3]);
+
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Received CMSG_WORLD_TELEPORT");
+
+    if (GetPlayer()->isInFlight())
     {
-        TC_LOG_DEBUG("network", "Player '%s' (GUID: %u) in flight, ignore worldport command.",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Player '%s' (GUID: %u) in flight, ignore worldport command.",
             GetPlayer()->GetName().c_str(), GetPlayer()->GetGUIDLow());
         return;
     }
 
-    TC_LOG_DEBUG("network", "CMSG_WORLD_TELEPORT: Player = %s, Time = %u, map = %u, x = %f, y = %f, z = %f, o = %f",
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_WORLD_TELEPORT: Player = %s, Time = %u, map = %u, x = %f, y = %f, z = %f, o = %f",
         GetPlayer()->GetName().c_str(), time, mapid, PositionX, PositionY, PositionZ, Orientation);
 
-    if (HasPermission(rbac::RBAC_PERM_OPCODE_WORLD_TELEPORT))
+    if (AccountMgr::IsAdminAccount(GetSecurity()))
         GetPlayer()->TeleportTo(mapid, PositionX, PositionY, PositionZ, Orientation);
     else
         SendNotification(LANG_YOU_NOT_HAVE_PERMISSION);
@@ -1627,11 +1351,11 @@ void WorldSession::HandleWorldTeleportOpcode(WorldPacket& recvData)
 
 void WorldSession::HandleWhoisOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "Received opcode CMSG_WHOIS");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Received opcode CMSG_WHOIS");
     std::string charname;
     recvData >> charname;
 
-    if (!HasPermission(rbac::RBAC_PERM_OPCODE_WHOIS))
+    if (!AccountMgr::IsAdminAccount(GetSecurity()))
     {
         SendNotification(LANG_YOU_NOT_HAVE_PERMISSION);
         return;
@@ -1682,13 +1406,13 @@ void WorldSession::HandleWhoisOpcode(WorldPacket& recvData)
     data << msg;
     SendPacket(&data);
 
-    TC_LOG_DEBUG("network", "Received whois command from player %s for character %s",
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Received whois command from player %s for character %s",
         GetPlayer()->GetName().c_str(), charname.c_str());
 }
 
 void WorldSession::HandleComplainOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: CMSG_COMPLAIN");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: CMSG_COMPLAIN");
 
     uint8 spam_type;                                        // 0 - mail, 1 - chat
     uint64 spammer_guid;
@@ -1724,12 +1448,12 @@ void WorldSession::HandleComplainOpcode(WorldPacket& recvData)
     data << uint8(0); // value 0xC generates a "CalendarError" in client.
     SendPacket(&data);
 
-    TC_LOG_DEBUG("network", "REPORT SPAM: type %u, guid %u, unk1 %u, unk2 %u, unk3 %u, unk4 %u, message %s", spam_type, GUID_LOPART(spammer_guid), unk1, unk2, unk3, unk4, description.c_str());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "REPORT SPAM: type %u, guid %u, unk1 %u, unk2 %u, unk3 %u, unk4 %u, message %s", spam_type, GUID_LOPART(spammer_guid), unk1, unk2, unk3, unk4, description.c_str());
 }
 
 void WorldSession::HandleRealmSplitOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "CMSG_REALM_SPLIT");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_REALM_SPLIT");
 
     uint32 unk;
     std::string split_date = "01/01/01";
@@ -1742,30 +1466,29 @@ void WorldSession::HandleRealmSplitOpcode(WorldPacket& recvData)
     // 0x0 realm normal
     // 0x1 realm split
     // 0x2 realm split pending
-    data.WriteBits(split_date.size(), 7);
-    data.WriteString(split_date);
+    data << split_date;
     SendPacket(&data);
-    //TC_LOG_DEBUG("response sent %u", unk);
+    //sLog->outDebug("response sent %u", unk);
 }
 
 void WorldSession::HandleFarSightOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: CMSG_FAR_SIGHT");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: CMSG_FAR_SIGHT");
 
     bool apply;
     recvData >> apply;
 
     if (apply)
     {
-        TC_LOG_DEBUG("network", "Added FarSight " UI64FMTD " to player %u", _player->GetUInt64Value(PLAYER_FIELD_FARSIGHT_OBJECT), _player->GetGUIDLow());
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Added FarSight " UI64FMTD " to player %u", _player->GetUInt64Value(PLAYER_FARSIGHT), _player->GetGUIDLow());
         if (WorldObject* target = _player->GetViewpoint())
             _player->SetSeer(target);
         else
-            TC_LOG_ERROR("network", "Player %s (GUID: %u) requests non-existing seer " UI64FMTD, _player->GetName().c_str(), GUID_LOPART(_player->GetGUID()), _player->GetUInt64Value(PLAYER_FIELD_FARSIGHT_OBJECT));
+            sLog->outError(LOG_FILTER_NETWORKIO, "Player %s requests non-existing seer " UI64FMTD, _player->GetName().c_str(), _player->GetUInt64Value(PLAYER_FARSIGHT));
     }
     else
     {
-        TC_LOG_DEBUG("network", "Player %u set vision to self", _player->GetGUIDLow());
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Player %u set vision to self", _player->GetGUIDLow());
         _player->SetSeer(_player);
     }
 
@@ -1774,7 +1497,7 @@ void WorldSession::HandleFarSightOpcode(WorldPacket& recvData)
 
 void WorldSession::HandleSetTitleOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "CMSG_SET_TITLE");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_SET_TITLE");
 
     int32 title;
     recvData >> title;
@@ -1788,25 +1511,25 @@ void WorldSession::HandleSetTitleOpcode(WorldPacket& recvData)
     else
         title = 0;
 
-    GetPlayer()->SetUInt32Value(PLAYER_FIELD_PLAYER_TITLE, title);
+    GetPlayer()->SetUInt32Value(PLAYER_CHOSEN_TITLE, title);
 }
 
 void WorldSession::HandleTimeSyncResp(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "CMSG_TIME_SYNC_RESP");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_TIME_SYNC_RESP");
 
     uint32 counter, clientTicks;
     recvData >> counter >> clientTicks;
 
     if (counter != _player->m_timeSyncQueue.front())
-        TC_LOG_ERROR("network", "Wrong time sync counter from player %s (cheater?)", _player->GetName().c_str());
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "Wrong time sync counter from player %s (cheater?)", _player->GetName().c_str());
 
-    TC_LOG_DEBUG("network", "Time sync received: counter %u, client ticks %u, time since last sync %u", counter, clientTicks, clientTicks - _player->m_timeSyncClient);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Time sync received: counter %u, client ticks %u, time since last sync %u", counter, clientTicks, clientTicks - _player->m_timeSyncClient);
 
     uint32 ourTicks = clientTicks + (getMSTime() - _player->m_timeSyncServer);
 
     // diff should be small
-    TC_LOG_DEBUG("network", "Our ticks: %u, diff %u, latency %u", ourTicks, ourTicks - clientTicks, GetLatency());
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Our ticks: %u, diff %u, latency %u", ourTicks, ourTicks - clientTicks, GetLatency());
 
     _player->m_timeSyncClient = clientTicks;
     _player->m_timeSyncQueue.pop();
@@ -1814,7 +1537,7 @@ void WorldSession::HandleTimeSyncResp(WorldPacket& recvData)
 
 void WorldSession::HandleResetInstancesOpcode(WorldPacket& /*recvData*/)
 {
-    TC_LOG_DEBUG("network", "WORLD: CMSG_RESET_INSTANCES");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: CMSG_RESET_INSTANCES");
 
     if (Group* group = _player->GetGroup())
     {
@@ -1827,14 +1550,14 @@ void WorldSession::HandleResetInstancesOpcode(WorldPacket& /*recvData*/)
 
 void WorldSession::HandleSetDungeonDifficultyOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "MSG_SET_DUNGEON_DIFFICULTY");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "MSG_SET_DUNGEON_DIFFICULTY");
 
     uint32 mode;
     recvData >> mode;
 
     if (mode >= MAX_DUNGEON_DIFFICULTY)
     {
-        TC_LOG_DEBUG("network", "WorldSession::HandleSetDungeonDifficultyOpcode: player %d sent an invalid instance mode %d!", _player->GetGUIDLow(), mode);
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "WorldSession::HandleSetDungeonDifficultyOpcode: player %d sent an invalid instance mode %d!", _player->GetGUIDLow(), mode);
         return;
     }
 
@@ -1845,7 +1568,7 @@ void WorldSession::HandleSetDungeonDifficultyOpcode(WorldPacket& recvData)
     Map* map = _player->FindMap();
     if (map && map->IsDungeon())
     {
-        TC_LOG_DEBUG("network", "WorldSession::HandleSetDungeonDifficultyOpcode: player (Name: %s, GUID: %u) tried to reset the instance while player is inside!",
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "WorldSession::HandleSetDungeonDifficultyOpcode: player (Name: %s, GUID: %u) tried to reset the instance while player is inside!",
             _player->GetName().c_str(), _player->GetGUIDLow());
         return;
     }
@@ -1857,7 +1580,7 @@ void WorldSession::HandleSetDungeonDifficultyOpcode(WorldPacket& recvData)
         {
             for (GroupReference* itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
             {
-                Player* groupGuy = itr->GetSource();
+                Player* groupGuy = itr->getSource();
                 if (!groupGuy)
                     continue;
 
@@ -1866,7 +1589,7 @@ void WorldSession::HandleSetDungeonDifficultyOpcode(WorldPacket& recvData)
 
                 if (groupGuy->GetMap()->IsNonRaidDungeon())
                 {
-                    TC_LOG_DEBUG("network", "WorldSession::HandleSetDungeonDifficultyOpcode: player %d tried to reset the instance while group member (Name: %s, GUID: %u) is inside!",
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "WorldSession::HandleSetDungeonDifficultyOpcode: player %d tried to reset the instance while group member (Name: %s, GUID: %u) is inside!",
                         _player->GetGUIDLow(), groupGuy->GetName().c_str(), groupGuy->GetGUIDLow());
                     return;
                 }
@@ -1875,27 +1598,25 @@ void WorldSession::HandleSetDungeonDifficultyOpcode(WorldPacket& recvData)
             //_player->SendDungeonDifficulty(true);
             group->ResetInstances(INSTANCE_RESET_CHANGE_DIFFICULTY, false, _player);
             group->SetDungeonDifficulty(Difficulty(mode));
-			group->SendUpdate();
         }
     }
     else
     {
         _player->ResetInstances(INSTANCE_RESET_CHANGE_DIFFICULTY, false);
         _player->SetDungeonDifficulty(Difficulty(mode));
-        _player->SendDungeonDifficulty();
     }
 }
 
 void WorldSession::HandleSetRaidDifficultyOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "MSG_SET_RAID_DIFFICULTY");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "MSG_SET_RAID_DIFFICULTY");
 
     uint32 mode;
     recvData >> mode;
 
     if (mode >= MAX_RAID_DIFFICULTY)
     {
-        TC_LOG_ERROR("network", "WorldSession::HandleSetRaidDifficultyOpcode: player %d sent an invalid instance mode %d!", _player->GetGUIDLow(), mode);
+        sLog->outError(LOG_FILTER_NETWORKIO, "WorldSession::HandleSetRaidDifficultyOpcode: player %d sent an invalid instance mode %d!", _player->GetGUIDLow(), mode);
         return;
     }
 
@@ -1903,7 +1624,7 @@ void WorldSession::HandleSetRaidDifficultyOpcode(WorldPacket& recvData)
     Map* map = _player->FindMap();
     if (map && map->IsDungeon())
     {
-        TC_LOG_DEBUG("network", "WorldSession::HandleSetRaidDifficultyOpcode: player %d tried to reset the instance while inside!", _player->GetGUIDLow());
+        sLog->outDebug(LOG_FILTER_NETWORKIO, "WorldSession::HandleSetRaidDifficultyOpcode: player %d tried to reset the instance while inside!", _player->GetGUIDLow());
         return;
     }
 
@@ -1917,7 +1638,7 @@ void WorldSession::HandleSetRaidDifficultyOpcode(WorldPacket& recvData)
         {
             for (GroupReference* itr = group->GetFirstMember(); itr != NULL; itr = itr->next())
             {
-                Player* groupGuy = itr->GetSource();
+                Player* groupGuy = itr->getSource();
                 if (!groupGuy)
                     continue;
 
@@ -1926,7 +1647,7 @@ void WorldSession::HandleSetRaidDifficultyOpcode(WorldPacket& recvData)
 
                 if (groupGuy->GetMap()->IsRaid())
                 {
-                    TC_LOG_DEBUG("network", "WorldSession::HandleSetRaidDifficultyOpcode: player %d tried to reset the instance while inside!", _player->GetGUIDLow());
+                    sLog->outDebug(LOG_FILTER_NETWORKIO, "WorldSession::HandleSetRaidDifficultyOpcode: player %d tried to reset the instance while inside!", _player->GetGUIDLow());
                     return;
                 }
             }
@@ -1934,20 +1655,18 @@ void WorldSession::HandleSetRaidDifficultyOpcode(WorldPacket& recvData)
             //_player->SendDungeonDifficulty(true);
             group->ResetInstances(INSTANCE_RESET_CHANGE_DIFFICULTY, true, _player);
             group->SetRaidDifficulty(Difficulty(mode));
-			group->SendUpdate();
         }
     }
     else
     {
         _player->ResetInstances(INSTANCE_RESET_CHANGE_DIFFICULTY, true);
         _player->SetRaidDifficulty(Difficulty(mode));
-        _player->SendRaidDifficulty();
     }
 }
 
 void WorldSession::HandleCancelMountAuraOpcode(WorldPacket& /*recvData*/)
 {
-    TC_LOG_DEBUG("network", "WORLD: CMSG_CANCEL_MOUNT_AURA");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: CMSG_CANCEL_MOUNT_AURA");
 
     //If player is not mounted, so go out :)
     if (!_player->IsMounted())                              // not blizz like; no any messages on blizz
@@ -1956,7 +1675,7 @@ void WorldSession::HandleCancelMountAuraOpcode(WorldPacket& /*recvData*/)
         return;
     }
 
-    if (_player->IsInFlight())                               // not blizz like; no any messages on blizz
+    if (_player->isInFlight())                               // not blizz like; no any messages on blizz
     {
         ChatHandler(this).SendSysMessage(LANG_YOU_IN_FLIGHT);
         return;
@@ -1965,58 +1684,31 @@ void WorldSession::HandleCancelMountAuraOpcode(WorldPacket& /*recvData*/)
     _player->RemoveAurasByType(SPELL_AURA_MOUNTED); // Calls Dismount()
 }
 
-void WorldSession::HandleMoveSetCanFlyAckOpcode(WorldPacket& recvData)
-{
-    // fly mode on/off
-    TC_LOG_DEBUG("network", "WORLD: CMSG_MOVE_SET_CAN_FLY_ACK");
-
-    uint64 guid;                                            // guid - unused
-    recvData.readPackGUID(guid);
-
-    recvData.read_skip<uint32>();                          // unk
-
-    MovementInfo movementInfo;
-    movementInfo.guid = guid;
-    _player->ReadMovementInfo(recvData, &movementInfo);
-
-    recvData.read_skip<float>();                           // unk2
-
-    _player->m_mover->m_movementInfo.flags = movementInfo.GetMovementFlags();
-}
-
 void WorldSession::HandleRequestPetInfoOpcode(WorldPacket& /*recvData */)
 {
     /*
-        TC_LOG_DEBUG("network", "WORLD: CMSG_REQUEST_PET_INFO");
+        sLog->outDebug(LOG_FILTER_PACKETIO, "WORLD: CMSG_REQUEST_PET_INFO");
         recvData.hexlike();
     */
 }
 
 void WorldSession::HandleSetTaxiBenchmarkOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: CMSG_SET_TAXI_BENCHMARK_MODE");
-
     uint8 mode;
     recvData >> mode;
 
-    mode ? _player->SetFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_TAXI_BENCHMARK) : _player->RemoveFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_TAXI_BENCHMARK);
-
-    TC_LOG_DEBUG("network", "Client used \"/timetest %d\" command", mode);
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Client used \"/timetest %d\" command", mode);
 }
 
 void WorldSession::HandleQueryInspectAchievements(WorldPacket& recvData)
 {
-    ObjectGuid guid;
-    recvData.ReadGuidMask(guid, 2, 7, 1, 5, 4, 0, 3, 6);
+    uint64 guid;
+    recvData.readPackGUID(guid);
 
-    recvData.ReadGuidBytes(guid, 7, 2, 0, 4, 1, 5, 6, 3);
-
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "CMSG_QUERY_INSPECT_ACHIEVEMENTS [" UI64FMTD "] Inspected Player [" UI64FMTD "]", _player->GetGUID(), guid);
     Player* player = ObjectAccessor::FindPlayer(guid);
     if (!player)
-    {
-        TC_LOG_DEBUG("network", "CMSG_QUERY_INSPECT_ACHIEVEMENTS: Inspected Player " UI64FMTD, (uint64)guid);
         return;
-    }
 
     player->SendRespondInspectAchievements(_player);
 }
@@ -2033,7 +1725,7 @@ void WorldSession::HandleGuildAchievementProgressQuery(WorldPacket& recvData)
 void WorldSession::HandleWorldStateUITimerUpdate(WorldPacket& /*recvData*/)
 {
     // empty opcode
-    TC_LOG_DEBUG("network", "WORLD: CMSG_WORLD_STATE_UI_TIMER_UPDATE");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: CMSG_WORLD_STATE_UI_TIMER_UPDATE");
 
     WorldPacket data(SMSG_WORLD_STATE_UI_TIMER_UPDATE, 4);
     data << uint32(time(NULL));
@@ -2043,35 +1735,49 @@ void WorldSession::HandleWorldStateUITimerUpdate(WorldPacket& /*recvData*/)
 void WorldSession::HandleReadyForAccountDataTimes(WorldPacket& /*recvData*/)
 {
     // empty opcode
-    TC_LOG_DEBUG("network", "WORLD: CMSG_READY_FOR_ACCOUNT_DATA_TIMES");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: CMSG_READY_FOR_ACCOUNT_DATA_TIMES");
 
     SendAccountDataTimes(GLOBAL_CACHE_MASK);
 }
 
-void WorldSession::SendSetPhaseShift(std::set<uint32> const& phaseIds, std::set<uint32> const& terrainswaps, std::set<uint32> const& worldMapAreas)
+void WorldSession::SendSetPhaseShift(std::set<uint32> const& phaseIds, std::set<uint32> const& terrainswaps)
 {
     ObjectGuid guid = _player->GetGUID();
 
-    WorldPacket data(SMSG_SET_PHASE_SHIFT, 1 + 8 + 2 * phaseIds.size() + 4 + 2 * worldMapAreas.size() + 2 * terrainswaps.size() + 4);
-    data.WriteGuidMask(guid, 0, 3, 1, 4, 6, 2, 7, 5);
+    WorldPacket data(SMSG_SET_PHASE_SHIFT, 1 + 8 + 4 + 4 + 4 + 4 + 2 * phaseIds.size() + 4 + terrainswaps.size() * 2);
+    data.WriteBit(guid[2]);
+    data.WriteBit(guid[3]);
+    data.WriteBit(guid[1]);
+    data.WriteBit(guid[6]);
+    data.WriteBit(guid[4]);
+    data.WriteBit(guid[5]);
+    data.WriteBit(guid[0]);
+    data.WriteBit(guid[7]);
 
-    data.WriteGuidBytes(guid, 4, 3, 2);
+    data.WriteByteSeq(guid[7]);
+    data.WriteByteSeq(guid[4]);
 
-    data << uint32(phaseIds.size()) * 2;        // Phase.dbc ids
-    for (std::set<uint32>::const_iterator itr = phaseIds.begin(); itr != phaseIds.end(); ++itr)
-        data << uint16(*itr);
+    data << uint32(0);
+    //for (uint8 i = 0; i < worldMapAreaCount; ++i)
+    //    data << uint16(0);                    // WorldMapArea.dbc id (controls map display)
 
-    data.WriteGuidBytes(guid, 0, 6);
+    data.WriteByteSeq(guid[1]);
+
+    data << uint32(phaseIds.size() ? 0 : 8);  // flags (not phasemask)
+
+    data.WriteByteSeq(guid[2]);
+    data.WriteByteSeq(guid[6]);
 
     data << uint32(0);                          // Inactive terrain swaps
     //for (uint8 i = 0; i < inactiveSwapsCount; ++i)
     //    data << uint16(0);
 
-    data.WriteGuidBytes(guid, 1, 7);
-
-    data << uint32(worldMapAreas.size()) * 2;     // WorldMapArea.dbc id (controls map display)
-    for (std::set<uint32>::const_iterator itr = worldMapAreas.begin(); itr != worldMapAreas.end(); ++itr)
+    data << uint32(phaseIds.size()) * 2;        // Phase.dbc ids
+    for (std::set<uint32>::const_iterator itr = phaseIds.begin(); itr != phaseIds.end(); ++itr)
         data << uint16(*itr);
+
+    data.WriteByteSeq(guid[3]);
+    data.WriteByteSeq(guid[0]);
 
     data << uint32(terrainswaps.size()) * 2;    // Active terrain swaps
     for (std::set<uint32>::const_iterator itr = terrainswaps.begin(); itr != terrainswaps.end(); ++itr)
@@ -2079,32 +1785,24 @@ void WorldSession::SendSetPhaseShift(std::set<uint32> const& phaseIds, std::set<
 
     data.WriteByteSeq(guid[5]);
 
-    data << uint32(phaseIds.size() ? 0 : 8);  // flags (not phasemask)
-
     SendPacket(&data);
 }
 
 // Battlefield and Battleground
 void WorldSession::HandleAreaSpiritHealerQueryOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: CMSG_AREA_SPIRIT_HEALER_QUERY");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: CMSG_AREA_SPIRIT_HEALER_QUERY");
 
     Battleground* bg = _player->GetBattleground();
 
-    ObjectGuid guid;
-
-    uint8 bitOrder[8] = { 5, 6, 0, 4, 1, 2, 7, 3};
-    recvData.ReadBitInOrder(guid, bitOrder);
-
-    recvData.FlushBits();
-
-    recvData.ReadGuidBytes(guid, 0, 2, 6, 7, 1, 5, 3, 4);
+    uint64 guid;
+    recvData >> guid;
 
     Creature* unit = GetPlayer()->GetMap()->GetCreature(guid);
     if (!unit)
         return;
 
-    if (!unit->IsSpiritService())                            // it's not spirit service
+    if (!unit->isSpiritService())                            // it's not spirit service
         return;
 
     if (bg)
@@ -2116,34 +1814,18 @@ void WorldSession::HandleAreaSpiritHealerQueryOpcode(WorldPacket& recvData)
 
 void WorldSession::HandleAreaSpiritHealerQueueOpcode(WorldPacket& recvData)
 {
-    TC_LOG_DEBUG("network", "WORLD: CMSG_AREA_SPIRIT_HEALER_QUEUE");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: CMSG_AREA_SPIRIT_HEALER_QUEUE");
 
-    ObjectGuid guid;
     Battleground* bg = _player->GetBattleground();
 
-    guid[5] = recvData.ReadBit();
-    guid[4] = recvData.ReadBit();
-    guid[0] = recvData.ReadBit();
-    guid[2] = recvData.ReadBit();
-    guid[7] = recvData.ReadBit();
-    guid[1] = recvData.ReadBit();
-    guid[6] = recvData.ReadBit();
-    guid[3] = recvData.ReadBit();
-
-    recvData.ReadByteSeq(guid[1]);
-    recvData.ReadByteSeq(guid[7]);
-    recvData.ReadByteSeq(guid[6]);
-    recvData.ReadByteSeq(guid[2]);
-    recvData.ReadByteSeq(guid[4]);
-    recvData.ReadByteSeq(guid[3]);
-    recvData.ReadByteSeq(guid[0]);
-    recvData.ReadByteSeq(guid[5]);
+    uint64 guid;
+    recvData >> guid;
 
     Creature* unit = GetPlayer()->GetMap()->GetCreature(guid);
     if (!unit)
         return;
 
-    if (!unit->IsSpiritService())                            // it's not spirit service
+    if (!unit->isSpiritService())                            // it's not spirit service
         return;
 
     if (bg)
@@ -2155,7 +1837,7 @@ void WorldSession::HandleAreaSpiritHealerQueueOpcode(WorldPacket& recvData)
 
 void WorldSession::HandleHearthAndResurrect(WorldPacket& /*recvData*/)
 {
-    if (_player->IsInFlight())
+    if (_player->isInFlight())
         return;
 
     if (/*Battlefield* bf = */sBattlefieldMgr->GetBattlefieldToZoneId(_player->GetZoneId()))
@@ -2180,7 +1862,7 @@ void WorldSession::HandleInstanceLockResponse(WorldPacket& recvPacket)
 
     if (!_player->HasPendingBind())
     {
-        TC_LOG_INFO("network", "InstanceLockResponse: Player %s (guid %u) tried to bind himself/teleport to graveyard without a pending bind!",
+        sLog->outInfo(LOG_FILTER_NETWORKIO, "InstanceLockResponse: Player %s (guid %u) tried to bind himself/teleport to graveyard without a pending bind!",
             _player->GetName().c_str(), _player->GetGUIDLow());
         return;
     }
@@ -2198,102 +1880,94 @@ void WorldSession::HandleRequestHotfix(WorldPacket& recvPacket)
     uint32 type, count;
     recvPacket >> type;
 
-    DB2StorageBase const* store = GetDB2Storage(type);
-    if (!store)
-    {
-        TC_LOG_ERROR("network", "CMSG_REQUEST_HOTFIX: Received unknown hotfix type: %u", type);
-        recvPacket.rfinish();
-        return;
-    }
-
-    count = recvPacket.ReadBits(21);
+    count = recvPacket.ReadBits(23);
 
     ObjectGuid* guids = new ObjectGuid[count];
     for (uint32 i = 0; i < count; ++i)
     {
-        recvPacket.ReadGuidMask(guids[i], 6, 3, 0, 1, 4, 5, 7, 2);
+        guids[i][0] = recvPacket.ReadBit();
+        guids[i][4] = recvPacket.ReadBit();
+        guids[i][7] = recvPacket.ReadBit();
+        guids[i][2] = recvPacket.ReadBit();
+        guids[i][5] = recvPacket.ReadBit();
+        guids[i][3] = recvPacket.ReadBit();
+        guids[i][6] = recvPacket.ReadBit();
+        guids[i][1] = recvPacket.ReadBit();
     }
 
     uint32 entry;
     for (uint32 i = 0; i < count; ++i)
     {
+        recvPacket.ReadByteSeq(guids[i][5]);
+        recvPacket.ReadByteSeq(guids[i][6]);
+        recvPacket.ReadByteSeq(guids[i][7]);
+        recvPacket.ReadByteSeq(guids[i][0]);
         recvPacket.ReadByteSeq(guids[i][1]);
+        recvPacket.ReadByteSeq(guids[i][3]);
+        recvPacket.ReadByteSeq(guids[i][4]);
         recvPacket >> entry;
-        recvPacket.ReadGuidBytes(guids[i], 0, 5, 6, 4, 7, 2, 3);
+        recvPacket.ReadByteSeq(guids[i][2]);
 
-        // temp: this should be moved once broadcast text is properly implemented
-        if (type == DB2_REPLY_BroadcastText)
+        switch (type)
         {
-            SendBroadcastText(entry);
-            continue;
+            case DB2_HASH_ITEM:
+                SendItemDb2Reply(entry);
+                break;
+            case DB2_HASH_ITEM_SPARSE:
+                SendItemSparseDb2Reply(entry);
+                break;
+            case DB2_HASH_KEYCHAIN:
+                SendKeyChainDb2Reply(entry);
+                break; 
+            default:
+            {
+                WorldPacket data(SMSG_DB_REPLY, 4 * 4);
+                data << -int32(entry);
+                data << uint32(type);
+                data << uint32(time(NULL));
+                data << uint32(0);
+                SendPacket(&data);
+
+                sLog->outError(LOG_FILTER_NETWORKIO, "CMSG_REQUEST_HOTFIX: Received unknown hotfix type: %u, entry %u", type, entry);
+                recvPacket.rfinish();
+                break;
+            } 
         }
-
-        if (!store->HasRecord(entry))
-            continue;
-
-        ByteBuffer record;
-        store->WriteRecord(entry, (uint32)GetSessionDbcLocale(), record);
-
-        WorldPacket data(SMSG_DB_REPLY);
-        data << uint32(entry);
-        data << uint32(time(NULL));
-        data << uint32(type);
-        data << uint32(record.size());
-        data.append(record);
-
-        SendPacket(&data);
-
-        TC_LOG_DEBUG("network", "SMSG_DB_REPLY: Sent hotfix entry: %u type: %u", entry, type);
     }
 
     delete[] guids;
 }
 
-void WorldSession::SendBroadcastText(uint32 entry)
+void WorldSession::SendKeyChainDb2Reply(uint32 entry)
 {
-    /*
-     *  This is a hack fix! Still uses Gossip Id's instead of Broadcast Id's.
-     *  Major database changed required at some point.
-     */
+    WorldPacket data(SMSG_DB_REPLY, 44);
+    KeyChainEntry const* keyChain = sKeyChainStore.LookupEntry(entry);
+    if (!keyChain)
+    {
+        data << -int32(entry);      // entry
+        data << uint32(DB2_HASH_KEYCHAIN);
+        data << uint32(time(NULL)); // hotfix date
+        data << uint32(0);          // size of next block
+        return;
+    }
 
-    ByteBuffer buffer;
-    std::string defaultText = "Greetings, $n";
-
-    GossipText const* pGossip = sObjectMgr->GetGossipText(entry);
-
-    uint16 nrmTextLength = pGossip ? pGossip->Options[0].Text_0.length() : defaultText.length();
-    uint16 altTextLength = pGossip ? pGossip->Options[0].Text_1.length() : defaultText.length();
-
-    buffer << uint32(entry);
-    buffer << uint32(pGossip ? pGossip->Options[0].Language : 0);
-    buffer << uint16(nrmTextLength);
-
-    if (nrmTextLength)
-        buffer << std::string(pGossip ? pGossip->Options[0].Text_0 : defaultText);
-
-    buffer << uint16(altTextLength);
-
-    if (altTextLength)
-        buffer << std::string(pGossip ? pGossip->Options[0].Text_1 : defaultText);
-
-    for (int i = 0; i < MAX_GOSSIP_TEXT_OPTIONS; i++)
-        buffer << uint32(0);
-
-    buffer << uint32(1);
-
-    WorldPacket data(SMSG_DB_REPLY);
     data << uint32(entry);
-    data << uint32(time(NULL));
-    data << uint32(DB2_REPLY_BroadcastText);
-    data << uint32(buffer.size());
-    data.append(buffer);
+    data << uint32(DB2_HASH_KEYCHAIN);
+    data << uint32(sObjectMgr->GetHotfixDate(entry, DB2_HASH_KEYCHAIN));
+
+    ByteBuffer buff;
+    buff << uint32(entry);
+    buff.append(keyChain->Key, KEYCHAIN_SIZE);
+
+    data << uint32(buff.size());
+    data.append(buff);
 
     SendPacket(&data);
-}
+} 
 
 void WorldSession::HandleUpdateMissileTrajectory(WorldPacket& recvPacket)
 {
-    TC_LOG_DEBUG("network", "WORLD: CMSG_UPDATE_MISSILE_TRAJECTORY");
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: CMSG_UPDATE_MISSILE_TRAJECTORY");
 
     uint64 guid;
     uint32 spellId;
@@ -2345,182 +2019,236 @@ void WorldSession::HandleViolenceLevel(WorldPacket& recvPacket)
 
 void WorldSession::HandleObjectUpdateFailedOpcode(WorldPacket& recvPacket)
 {
-    ObjectGuid guid;
+     ObjectGuid guid;
+     guid[6] = recvPacket.ReadBit();
+     guid[7] = recvPacket.ReadBit();
+     guid[4] = recvPacket.ReadBit();
+     guid[0] = recvPacket.ReadBit();
+     guid[1] = recvPacket.ReadBit();
+     guid[5] = recvPacket.ReadBit();
+     guid[3] = recvPacket.ReadBit();
+     guid[2] = recvPacket.ReadBit();
 
-    recvPacket.ReadGuidMask(guid, 3, 5, 6, 0, 1, 2, 7, 4);
+     recvPacket.ReadByteSeq(guid[6]);
+     recvPacket.ReadByteSeq(guid[7]);
+     recvPacket.ReadByteSeq(guid[2]);
+     recvPacket.ReadByteSeq(guid[3]);
+     recvPacket.ReadByteSeq(guid[1]);
+     recvPacket.ReadByteSeq(guid[4]);
+     recvPacket.ReadByteSeq(guid[0]);
+     recvPacket.ReadByteSeq(guid[5]);
 
-    recvPacket.ReadGuidBytes(guid, 0, 6, 5, 7, 2, 1, 3, 4);
+     WorldObject* obj = ObjectAccessor::GetWorldObject(*GetPlayer(), guid);
 
-    WorldObject* obj = ObjectAccessor::GetWorldObject(*GetPlayer(), guid);
-    TC_LOG_ERROR("network", "Object update failed for object " UI64FMTD " (%s) for player %s (%u)", uint64(guid), obj ? obj->GetName().c_str() : "object-not-found", GetPlayerName().c_str(), GetGuidLow());
+     // this not hack, this can help unstuck chars, when they can't login after client crash. I think it's helpful.
+     if (!obj)
+         return;
+     
+     if (uint64(guid)==GetGuidLow() && GetPlayer())
+        GetPlayer()->TeleportTo(GetPlayer()->m_homebindMapId, GetPlayer()->m_homebindX, GetPlayer()->m_homebindY, GetPlayer()->m_homebindZ, GetPlayer()->GetOrientation());
 
-    // If create object failed for current player then client will be stuck on loading screen
-    //if (_player->GetGUID() == guid)
-    //{
-    //    LogoutPlayer(true);
-    //    return;
-    //}
-
-    // Pretend we've never seen this object
-    //_player->m_clientGUIDs.erase(guid);
 }
 
 void WorldSession::HandleSaveCUFProfiles(WorldPacket& recvPacket)
 {
-    TC_LOG_DEBUG("network", "WORLD: CMSG_SAVE_CUF_PROFILES");
+	sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: CMSG_SAVE_CUF_PROFILES");
 
-    uint8 count = (uint8)recvPacket.ReadBits(19);
+	uint8 count = (uint8)recvPacket.ReadBits(20);
 
-    if (count > MAX_CUF_PROFILES)
-    {
-        TC_LOG_ERROR("entities.player", "HandleSaveCUFProfiles - %s tried to save more than %i CUF profiles. Hacking attempt?", GetPlayerName().c_str(), MAX_CUF_PROFILES);
-        recvPacket.rfinish();
-        return;
-    }
+	if (count > MAX_CUF_PROFILES)
+	{
+		sLog->outError(LOG_FILTER_PLAYER, "HandleSaveCUFProfiles - %s tried to save more than %i CUF profiles. Hacking attempt?", GetPlayerName().c_str(), MAX_CUF_PROFILES);
+		recvPacket.rfinish();
+		return;
+	}
 
-    CUFProfile* profiles[MAX_CUF_PROFILES];
-    uint8 strlens[MAX_CUF_PROFILES];
+	CUFProfile* profiles[MAX_CUF_PROFILES];
+	uint8 strlens[MAX_CUF_PROFILES];
 
-    for (uint8 i = 0; i < count; ++i)
-    {
-        profiles[i] = new CUFProfile;
-        profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_SPEC_2,              recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_DISPLAY_MAIN_TANK_AND_ASSIST,      recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_DISPLAY_POWER_BAR,                 recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_10_PLAYERS,          recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_3_PLAYERS,           recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_UNK_156,                           recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_40_PLAYERS,          recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_2_PLAYERS,           recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_KEEP_GROUPS_TOGETHER,              recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_USE_CLASS_COLORS,                  recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_25_PLAYERS,          recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_UNK_145,                           recvPacket.ReadBit());
-        strlens[i] = (uint8)recvPacket.ReadBits(7);
-        profiles[i]->BoolOptions.set(CUF_DISPLAY_PETS,                      recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_PVP,                 recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_DISPLAY_ONLY_DISPELLABLE_DEBUFFS,  recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_DISPLAY_NON_BOSS_DEBUFFS,          recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_15_PLAYERS,          recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_UNK_157,                           recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_DISPLAY_BORDER,                    recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_DISPLAY_HORIZONTAL_GROUPS,         recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_SPEC_1,              recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_5_PLAYERS,           recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_PVE,                 recvPacket.ReadBit()); 
-        profiles[i]->BoolOptions.set(CUF_DISPLAY_HEAL_PREDICTION,           recvPacket.ReadBit());
-        profiles[i]->BoolOptions.set(CUF_DISPLAY_AGGRO_HIGHLIGHT,           recvPacket.ReadBit());
-    }
+	for (uint8 i = 0; i < count; ++i)
+	{
+		profiles[i] = new CUFProfile;
+		profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_SPEC_2, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_10_PLAYERS, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_UNK_157, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_DISPLAY_HEAL_PREDICTION, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_SPEC_1, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_PVP, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_DISPLAY_POWER_BAR, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_15_PLAYERS, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_40_PLAYERS, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_DISPLAY_PETS, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_5_PLAYERS, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_DISPLAY_ONLY_DISPELLABLE_DEBUFFS, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_2_PLAYERS, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_UNK_156, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_DISPLAY_NON_BOSS_DEBUFFS, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_DISPLAY_MAIN_TANK_AND_ASSIST, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_DISPLAY_AGGRO_HIGHLIGHT, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_3_PLAYERS, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_DISPLAY_BORDER, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_USE_CLASS_COLORS, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_UNK_145, recvPacket.ReadBit());
+		strlens[i] = (uint8)recvPacket.ReadBits(8);
+		profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_PVE, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_DISPLAY_HORIZONTAL_GROUPS, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_AUTO_ACTIVATE_25_PLAYERS, recvPacket.ReadBit());
+		profiles[i]->BoolOptions.set(CUF_KEEP_GROUPS_TOGETHER, recvPacket.ReadBit());
+	}
 
-    for (uint8 i = 0; i < count; ++i)
-    {
-        recvPacket >> profiles[i]->FrameHeight;
-        recvPacket >> profiles[i]->Unk146;
-        recvPacket >> profiles[i]->HealthText;
-        recvPacket >> profiles[i]->FrameWidth;
-        recvPacket >> profiles[i]->Unk148;
-        recvPacket >> profiles[i]->SortBy;
-        recvPacket >> profiles[i]->Unk150;
-        profiles[i]->ProfileName = recvPacket.ReadString(strlens[i]);
-        recvPacket >> profiles[i]->Unk147;
-        recvPacket >> profiles[i]->Unk152;
-        recvPacket >> profiles[i]->Unk154;
+	for (uint8 i = 0; i < count; ++i)
+	{
+		recvPacket >> profiles[i]->Unk146;
+		profiles[i]->ProfileName = recvPacket.ReadString(strlens[i]);
+		recvPacket >> profiles[i]->Unk152;
+		recvPacket >> profiles[i]->FrameHeight;
+		recvPacket >> profiles[i]->FrameWidth;
+		recvPacket >> profiles[i]->Unk150;
+		recvPacket >> profiles[i]->HealthText;
+		recvPacket >> profiles[i]->Unk147;
+		recvPacket >> profiles[i]->SortBy;
+		recvPacket >> profiles[i]->Unk154;
+		recvPacket >> profiles[i]->Unk148;
 
-        GetPlayer()->SaveCUFProfile(i, profiles[i]);
-    }
+		GetPlayer()->SaveCUFProfile(i, profiles[i]);
+	}
 
-    for (uint8 i = count; i < MAX_CUF_PROFILES; ++i)
-        GetPlayer()->SaveCUFProfile(i, NULL);
+	for (uint8 i = count; i < MAX_CUF_PROFILES; ++i)
+		GetPlayer()->SaveCUFProfile(i, NULL);
 }
 
 void WorldSession::SendLoadCUFProfiles()
 {
-    Player* player = GetPlayer();
+	Player* player = GetPlayer();
 
-    uint8 count = player->GetCUFProfilesCount();
+	uint8 count = player->GetCUFProfilesCount();
 
-    ByteBuffer byteBuffer(25 * count);
-    WorldPacket data(SMSG_LOAD_CUF_PROFILES, 5 * count + 25 * count);
+	ByteBuffer byteBuffer(25 * count);
+	WorldPacket data(SMSG_LOAD_CUF_PROFILES, 5 * count + 25 * count);
 
-    data.WriteBits(count, 19);
-    for (uint8 i = 0; i < MAX_CUF_PROFILES; ++i)
+	data.WriteBits(count, 20);
+	for (uint8 i = 0; i < MAX_CUF_PROFILES; ++i)
+	{
+		CUFProfile* profile = player->GetCUFProfile(i);
+		if (!profile)
+			continue;
+
+		data.WriteBit(profile->BoolOptions[CUF_UNK_157]);
+		data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_10_PLAYERS]);
+		data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_5_PLAYERS]);
+		data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_25_PLAYERS]);
+		data.WriteBit(profile->BoolOptions[CUF_DISPLAY_HEAL_PREDICTION]);
+		data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_PVE]);
+		data.WriteBit(profile->BoolOptions[CUF_DISPLAY_HORIZONTAL_GROUPS]);
+		data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_40_PLAYERS]);
+		data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_3_PLAYERS]);
+		data.WriteBit(profile->BoolOptions[CUF_DISPLAY_AGGRO_HIGHLIGHT]);
+		data.WriteBit(profile->BoolOptions[CUF_DISPLAY_BORDER]);
+		data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_2_PLAYERS]);
+		data.WriteBit(profile->BoolOptions[CUF_DISPLAY_NON_BOSS_DEBUFFS]);
+		data.WriteBit(profile->BoolOptions[CUF_DISPLAY_MAIN_TANK_AND_ASSIST]);
+		data.WriteBit(profile->BoolOptions[CUF_UNK_156]);
+		data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_SPEC_2]);
+		data.WriteBit(profile->BoolOptions[CUF_USE_CLASS_COLORS]);
+		data.WriteBit(profile->BoolOptions[CUF_DISPLAY_POWER_BAR]);
+		data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_SPEC_1]);
+		data.WriteBits(profile->ProfileName.size(), 8);
+		data.WriteBit(profile->BoolOptions[CUF_DISPLAY_ONLY_DISPELLABLE_DEBUFFS]);
+		data.WriteBit(profile->BoolOptions[CUF_KEEP_GROUPS_TOGETHER]);
+		data.WriteBit(profile->BoolOptions[CUF_UNK_145]);
+		data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_15_PLAYERS]);
+		data.WriteBit(profile->BoolOptions[CUF_DISPLAY_PETS]);
+		data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_PVP]);
+
+		byteBuffer << uint16(profile->Unk154);
+		byteBuffer << uint16(profile->FrameHeight);
+		byteBuffer << uint16(profile->Unk152);
+		byteBuffer << uint8(profile->Unk147);
+		byteBuffer << uint16(profile->Unk150);
+		byteBuffer << uint8(profile->Unk146);
+		byteBuffer << uint8(profile->HealthText);
+		byteBuffer << uint8(profile->SortBy);
+		byteBuffer << uint16(profile->FrameWidth);
+		byteBuffer << uint8(profile->Unk148);
+		byteBuffer.WriteString(profile->ProfileName);
+	}
+
+	data.FlushBits();
+	data.append(byteBuffer);
+	SendPacket(&data);
+}
+
+void WorldSession::HandleMountSpecialAnimOpcode(WorldPacket&)
+{
+    WorldPacket data(SMSG_MOUNTSPECIAL_ANIM, 8);
+    data << uint64(GetPlayer()->GetGUID());
+    GetPlayer()->SendMessageToSet(&data, false);
+}
+
+void WorldSession::HandleSummonResponseOpcode(WorldPacket& recvData)
+{
+    if (!_player->isAlive() || _player->isInCombat())
+        return;
+
+    uint64 summonerGuid;
+    bool agree;
+    recvData >> summonerGuid;
+    recvData >> agree;
+
+    _player->SummonIfPossible(agree);
+}
+
+void WorldSession::HandleChangePlayerDifficulty(WorldPacket& recvData)
+{
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "Received CMSG_CHANGEPLAYER_DIFFICULTY");
+
+    uint32 difficulty;
+
+    recvData >> difficulty;
+
+    uint32 result = 0;
+
+    switch(result)
     {
-        CUFProfile* profile = player->GetCUFProfile(i);
-        if (!profile)
-            continue;
+    case ERR_DIFFICULTY_CHANGE_COOLDOWN_S:
+    case ERR_DIFFICULTY_CHANGE_UPDATE_TIME:
+    case ERR_DIFFICULTY_CHANGE_UPDATE_MAP_DIFFICULTY_ENTRY:
+        {
+            uint32 time = 0;
+            uint32 difficultyMapId = 0;
+            uint32 cooldownTime = 0;
 
-        data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_SPEC_1]);
-        data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_3_PLAYERS]);
-        data.WriteBit(profile->BoolOptions[CUF_UNK_157]);
-        data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_10_PLAYERS]);
-        data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_40_PLAYERS]);
-        data.WriteBit(profile->BoolOptions[CUF_DISPLAY_BORDER]);
-        data.WriteBit(profile->BoolOptions[CUF_USE_CLASS_COLORS]);
-        data.WriteBit(profile->BoolOptions[CUF_KEEP_GROUPS_TOGETHER]);
-        data.WriteBit(profile->BoolOptions[CUF_DISPLAY_POWER_BAR]);
-        data.WriteBits(profile->ProfileName.size(), 7);
-        data.WriteBit(profile->BoolOptions[CUF_DISPLAY_PETS]);
-        data.WriteBit(profile->BoolOptions[CUF_DISPLAY_AGGRO_HIGHLIGHT]); 
-        data.WriteBit(profile->BoolOptions[CUF_UNK_145]);
-        data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_PVP]);
-        data.WriteBit(profile->BoolOptions[CUF_UNK_156]);
-        data.WriteBit(profile->BoolOptions[CUF_DISPLAY_MAIN_TANK_AND_ASSIST]);
-        data.WriteBit(profile->BoolOptions[CUF_DISPLAY_ONLY_DISPELLABLE_DEBUFFS]);
-        data.WriteBit(profile->BoolOptions[CUF_DISPLAY_HORIZONTAL_GROUPS]);
-        data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_SPEC_2]);
-        data.WriteBit(profile->BoolOptions[CUF_DISPLAY_HEAL_PREDICTION]);
-        data.WriteBit(profile->BoolOptions[CUF_DISPLAY_NON_BOSS_DEBUFFS]);
-        data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_25_PLAYERS]);
-        data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_PVE]);
-        data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_5_PLAYERS]);
-        data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_15_PLAYERS]);
-        data.WriteBit(profile->BoolOptions[CUF_AUTO_ACTIVATE_2_PLAYERS]);
-        
-        byteBuffer << uint16(profile->Unk152);
-        byteBuffer << uint16(profile->Unk154);
-        byteBuffer << uint8( profile->HealthText);
-        byteBuffer.WriteString(profile->ProfileName);
-        byteBuffer << uint8( profile->Unk147);
-        byteBuffer << uint8( profile->Unk146);
-        byteBuffer << uint16(profile->FrameHeight);
-        byteBuffer << uint8( profile->Unk148);
-        byteBuffer << uint8( profile->SortBy);
-        byteBuffer << uint16(profile->FrameWidth);
-        byteBuffer << uint16(profile->Unk150);
+            WorldPacket data(SMSG_PLAYER_DIFFICULTY_CHANGE, 8);
+            data << result;
+
+            if (result == ERR_DIFFICULTY_CHANGE_UPDATE_TIME)
+                data << time;
+            else if (result == ERR_DIFFICULTY_CHANGE_COOLDOWN_S)
+                data << cooldownTime;
+            else
+                data << difficultyMapId;
+
+            SendPacket(&data);
+            break;
+        }
+    case ERR_DIFFICULTY_CHANGE_OTHER_HEROIC_S:
+        {
+            uint64 guid = 0;
+
+            WorldPacket data(SMSG_PLAYER_DIFFICULTY_CHANGE);
+            data << result;
+            data.appendPackGUID(guid); //guid of the player which is locked
+
+            SendPacket(&data);
+            break;
+        }
+    default:
+        {
+            WorldPacket data(SMSG_PLAYER_DIFFICULTY_CHANGE,4);
+            data << result;
+
+            SendPacket(&data);
+            break;
+        }
     }
-
-    data.FlushBits();
-    data.append(byteBuffer);
-    SendPacket(&data);
-}
-
-void WorldSession::HandleRequestResearchHistory(WorldPacket& recvPacket)
-{
-    TC_LOG_DEBUG("network", "WORLD: CMSG_REQUEST_RESEARCH_HISTORY");
-
-    _player->SendResearchHistory();
-}
-
-void WorldSession::HandleSetPreferedCemetery(WorldPacket& recvData)
-{
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_SET_PREFERED_CEMETERY");
-
-    uint32 CemeteryId;
-    recvData >> CemeteryId;
-}
-
-void WorldSession::HandleCemeteryListRequest(WorldPacket& recvPacket)
-{
-    GetPlayer()->SendCemeteryList(false);
-}
-
-void WorldSession::HandleChangeCurrencyFlags(WorldPacket& recvPacket)
-{
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_SET_CURRENCY_FLAGS");
-
-    uint32 currencyId, flags;
-    recvPacket >> flags >> currencyId;
-
-    if (GetPlayer())
-        GetPlayer()->ModifyCurrencyFlag(currencyId, uint8(flags));
 }

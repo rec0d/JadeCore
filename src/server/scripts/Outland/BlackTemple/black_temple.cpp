@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -65,9 +63,9 @@ public:
 
     struct npc_spirit_of_olumAI : public ScriptedAI
     {
-        npc_spirit_of_olumAI(Creature* creature) : ScriptedAI(creature) { }
+        npc_spirit_of_olumAI(Creature* creature) : ScriptedAI(creature) {}
 
-        void sGossipSelect(Player* player, uint32 /*sender*/, uint32 action) override
+        void sGossipSelect(Player* player, uint32 /*sender*/, uint32 action)
         {
             if (action == 1)
             {
@@ -78,7 +76,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_spirit_of_olumAI(creature);
     }
@@ -100,22 +98,22 @@ public:
             instance = creature->GetInstanceScript();
         }
 
-        void Reset() override
+        void Reset()
         {
             events.ScheduleEvent(EVENT_GET_CHANNELERS, 3000);
             enteredCombat = false;
         }
 
-        void JustDied(Unit* /*killer*/) override { }
+        void JustDied(Unit* /*killer*/) { }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             events.ScheduleEvent(EVENT_CLEAVE, 5000);
             events.ScheduleEvent(EVENT_IGNORED, 7000);
             enteredCombat = true;
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(uint32 const diff)
         {
 
             if (!enteredCombat)
@@ -207,7 +205,7 @@ public:
             bool enteredCombat;
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_wrathbone_flayerAI(creature);
     }

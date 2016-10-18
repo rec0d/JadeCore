@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -38,13 +37,10 @@ EndContentData */
 #include "CombatAI.h"
 #include "Player.h"
 
-enum AlexstraszaWrGate
+enum eEnums
 {
-    // Quest
     QUEST_RETURN_TO_AG_A    = 12499,
     QUEST_RETURN_TO_AG_H    = 12500,
-
-    // Movie
     MOVIE_ID_GATES          = 14
 };
 
@@ -55,7 +51,7 @@ class npc_alexstrasza_wr_gate : public CreatureScript
 public:
     npc_alexstrasza_wr_gate() : CreatureScript("npc_alexstrasza_wr_gate") { }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (creature->IsQuestGiver())
             player->PrepareQuestMenu(creature->GetGUID());
@@ -67,7 +63,7 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         if (action == GOSSIP_ACTION_INFO_DEF+1)
@@ -117,29 +113,29 @@ public:
             if (!tree || !player)
                 return;
 
-            tree->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+            tree->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
 
             if (roll == 1) // friendly version
             {
                 tree->CastSpell(player, SPELL_CREATE_ITEM_BARK);
-                tree->AI()->Talk(SAY_WALKER_FRIENDLY, player);
+                tree->AI()->Talk(SAY_WALKER_FRIENDLY, player->GetGUID());
                 tree->DespawnOrUnsummon(1000);
             }
             else if (roll == 0) // enemy version
             {
-                tree->AI()->Talk(SAY_WALKER_ENEMY, player);
+                tree->AI()->Talk(SAY_WALKER_ENEMY, player->GetGUID());
                 tree->setFaction(FACTION_WALKER_ENEMY);
                 tree->Attack(player, true);
             }
         }
 
-        void Register() override
+        void Register()
         {
             OnEffectHitTarget += SpellEffectFn(spell_q12096_q12092_dummy_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
         }
     };
 
-    SpellScript* GetSpellScript() const override
+    SpellScript* GetSpellScript() const
     {
         return new spell_q12096_q12092_dummy_SpellScript();
     }
@@ -165,13 +161,13 @@ public:
             lothalor->DespawnOrUnsummon(4000);
         }
 
-        void Register() override
+        void Register()
         {
             OnEffectHitTarget += SpellEffectFn(spell_q12096_q12092_bark_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
         }
     };
 
-    SpellScript* GetSpellScript() const override
+    SpellScript* GetSpellScript() const
     {
         return new spell_q12096_q12092_bark_SpellScript();
     }
@@ -208,7 +204,7 @@ class npc_wyrmrest_defender : public CreatureScript
     public:
         npc_wyrmrest_defender() : CreatureScript("npc_wyrmrest_defender") { }
 
-        bool OnGossipHello(Player* player, Creature* creature) override
+        bool OnGossipHello(Player* player, Creature* creature)
         {
             if (player->GetQuestStatus(QUEST_DEFENDING_WYRMREST_TEMPLE) == QUEST_STATUS_INCOMPLETE)
             {
@@ -221,7 +217,7 @@ class npc_wyrmrest_defender : public CreatureScript
             return true;
         }
 
-        bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+        bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
         {
             player->PlayerTalkClass->ClearMenus();
             if (action == GOSSIP_ACTION_INFO_DEF+1)
@@ -244,7 +240,7 @@ class npc_wyrmrest_defender : public CreatureScript
 
             uint32 RenewRecoveryChecker;
 
-            void Reset() override
+            void Reset()
             {
                 hpWarningReady = true;
                 renewRecoveryCanCheck = false;
@@ -252,7 +248,7 @@ class npc_wyrmrest_defender : public CreatureScript
                 RenewRecoveryChecker = 0;
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 // Check system for Health Warning should happen first time whenever get under 30%,
                 // after it should be able to happen only after recovery of last renew is fully done (20 sec),
@@ -274,18 +270,18 @@ class npc_wyrmrest_defender : public CreatureScript
                 }
             }
 
-            void SpellHit(Unit* /*caster*/, SpellInfo const* spell) override
+            void SpellHit(Unit* /*caster*/, SpellInfo const* spell)
             {
                 switch (spell->Id)
                 {
                     case SPELL_WYRMREST_DEFENDER_MOUNT:
-                        Talk(WHISPER_MOUNTED, me->GetCharmerOrOwner());
+                        Talk(WHISPER_MOUNTED, me->GetCharmerOrOwnerGUID());
                         me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC);
                         me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
                         break;
                     // Both below are for checking low hp warning
                     case SPELL_DEFENDER_ON_LOW_HEALTH_EMOTE:
-                        Talk(BOSS_EMOTE_ON_LOW_HEALTH, me->GetCharmerOrOwner());
+                        Talk(BOSS_EMOTE_ON_LOW_HEALTH, me->GetCharmerOrOwnerGUID());
                         break;
                     case SPELL_RENEW:
                         if (!hpWarningReady && RenewRecoveryChecker <= 100)
@@ -298,7 +294,7 @@ class npc_wyrmrest_defender : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_wyrmrest_defenderAI(creature);
         }

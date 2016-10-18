@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -42,7 +40,7 @@ public:
 
     struct boss_galvangarAI : public ScriptedAI
     {
-        boss_galvangarAI(Creature* creature) : ScriptedAI(creature) { }
+        boss_galvangarAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 CleaveTimer;
         uint32 FrighteningShoutTimer;
@@ -51,7 +49,7 @@ public:
         uint32 MortalStrikeTimer;
         uint32 ResetTimer;
 
-        void Reset() override
+        void Reset()
         {
             CleaveTimer                     = urand(1 * IN_MILLISECONDS, 9 * IN_MILLISECONDS);
             FrighteningShoutTimer           = urand(2 * IN_MILLISECONDS, 19 * IN_MILLISECONDS);
@@ -61,17 +59,17 @@ public:
             ResetTimer                      = 5 * IN_MILLISECONDS;
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(YELL_AGGRO);
         }
 
-        void JustRespawned() override
+        void JustRespawned()
         {
             Reset();
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -121,7 +119,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_galvangarAI(creature);
     }

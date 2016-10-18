@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -111,7 +109,7 @@ struct boss_twinemperorsAI : public ScriptedAI
             return NULL;
     }
 
-    void DamageTaken(Unit* /*done_by*/, uint32 &damage) override
+    void DamageTaken(Unit* /*done_by*/, uint32 &damage)
     {
         Unit* pOtherBoss = GetOtherBoss();
         if (pOtherBoss)
@@ -123,40 +121,40 @@ struct boss_twinemperorsAI : public ScriptedAI
             if (ohealth <= 0)
             {
                 pOtherBoss->setDeathState(JUST_DIED);
-                pOtherBoss->SetFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+                pOtherBoss->SetFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
             }
         }
     }
 
-    void JustDied(Unit* /*killer*/) override
+    void JustDied(Unit* /*killer*/)
     {
         Creature* pOtherBoss = GetOtherBoss();
         if (pOtherBoss)
         {
             pOtherBoss->SetHealth(0);
             pOtherBoss->setDeathState(JUST_DIED);
-            pOtherBoss->SetFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+            pOtherBoss->SetFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
             CAST_AI(boss_twinemperorsAI, pOtherBoss->AI())->DontYellWhenDead = true;
         }
         if (!DontYellWhenDead)                              // I hope AI is not threaded
             DoPlaySoundToSet(me, IAmVeklor() ? SOUND_VL_DEATH : SOUND_VN_DEATH);
     }
 
-    void KilledUnit(Unit* /*victim*/) override
+    void KilledUnit(Unit* /*victim*/)
     {
         DoPlaySoundToSet(me, IAmVeklor() ? SOUND_VL_KILL : SOUND_VN_KILL);
     }
 
-    void EnterCombat(Unit* who) override
+    void EnterCombat(Unit* who)
     {
         DoZoneInCombat();
         Creature* pOtherBoss = GetOtherBoss();
         if (pOtherBoss)
         {
-            /// @todo we should activate the other boss location so he can start attackning even if nobody
+            // TODO: we should activate the other boss location so he can start attackning even if nobody
             // is near I dont know how to do that
             ScriptedAI* otherAI = CAST_AI(ScriptedAI, pOtherBoss->AI());
-            if (!pOtherBoss->IsInCombat())
+            if (!pOtherBoss->isInCombat())
             {
                 DoPlaySoundToSet(me, IAmVeklor() ? SOUND_VL_AGGRO : SOUND_VN_AGGRO);
                 otherAI->AttackStart(who);
@@ -165,7 +163,7 @@ struct boss_twinemperorsAI : public ScriptedAI
         }
     }
 
-    void SpellHit(Unit* caster, const SpellInfo* entry) override
+    void SpellHit(Unit* caster, const SpellInfo* entry)
     {
         if (caster == me)
             return;
@@ -294,13 +292,12 @@ struct boss_twinemperorsAI : public ScriptedAI
         }
     }
 
-    void MoveInLineOfSight(Unit* who) override
-
+    void MoveInLineOfSight(Unit* who)
     {
         if (!who || me->GetVictim())
             return;
 
-        if (me->CanCreatureAttack(who))
+        if (me->canCreatureAttack(who))
         {
             float attackRadius = me->GetAttackDistance(who);
             if (attackRadius < PULL_RANGE)
@@ -394,15 +391,15 @@ class boss_veknilash : public CreatureScript
 public:
     boss_veknilash() : CreatureScript("boss_veknilash") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_veknilashAI(creature);
+        return new boss_veknilashAI (creature);
     }
 
     struct boss_veknilashAI : public boss_twinemperorsAI
     {
         bool IAmVeklor() {return false;}
-        boss_veknilashAI(Creature* creature) : boss_twinemperorsAI(creature) { }
+        boss_veknilashAI(Creature* creature) : boss_twinemperorsAI(creature) {}
 
         uint32 UpperCut_Timer;
         uint32 UnbalancingStrike_Timer;
@@ -413,7 +410,7 @@ public:
 
         Creature* Summoned;
 
-        void Reset() override
+        void Reset()
         {
             TwinReset();
             UpperCut_Timer = urand(14000, 29000);
@@ -432,7 +429,7 @@ public:
             target->SetFullHealth();
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             //Return since we have no target
             if (!UpdateVictim())
@@ -480,15 +477,15 @@ class boss_veklor : public CreatureScript
 public:
     boss_veklor() : CreatureScript("boss_veklor") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_veklorAI(creature);
+        return new boss_veklorAI (creature);
     }
 
     struct boss_veklorAI : public boss_twinemperorsAI
     {
         bool IAmVeklor() {return true;}
-        boss_veklorAI(Creature* creature) : boss_twinemperorsAI(creature) { }
+        boss_veklorAI(Creature* creature) : boss_twinemperorsAI(creature) {}
 
         uint32 ShadowBolt_Timer;
         uint32 Blizzard_Timer;
@@ -500,7 +497,7 @@ public:
 
         Creature* Summoned;
 
-        void Reset() override
+        void Reset()
         {
             TwinReset();
             ShadowBolt_Timer = 0;
@@ -521,7 +518,7 @@ public:
             target->SetFullHealth();
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             //Return since we have no target
             if (!UpdateVictim())
@@ -582,7 +579,7 @@ public:
             //DoMeleeAttackIfReady();
         }
 
-        void AttackStart(Unit* who) override
+        void AttackStart(Unit* who)
         {
             if (!who)
                 return;

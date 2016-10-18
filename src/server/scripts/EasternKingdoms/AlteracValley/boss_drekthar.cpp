@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -47,7 +45,7 @@ public:
 
     struct boss_drektharAI : public ScriptedAI
     {
-        boss_drektharAI(Creature* creature) : ScriptedAI(creature) { }
+        boss_drektharAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 WhirlwindTimer;
         uint32 Whirlwind2Timer;
@@ -56,7 +54,7 @@ public:
         uint32 YellTimer;
         uint32 ResetTimer;
 
-        void Reset() override
+        void Reset()
         {
             WhirlwindTimer    = urand(1 * IN_MILLISECONDS, 20 * IN_MILLISECONDS);
             Whirlwind2Timer   = urand(1 * IN_MILLISECONDS, 20 * IN_MILLISECONDS);
@@ -66,18 +64,18 @@ public:
             YellTimer         = urand(20 * IN_MILLISECONDS, 30 * IN_MILLISECONDS); //20 to 30 seconds
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(YELL_AGGRO);
         }
 
-        void JustRespawned() override
+        void JustRespawned()
         {
             Reset();
             Talk(YELL_RESPAWN);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -127,7 +125,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_drektharAI(creature);
     }

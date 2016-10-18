@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -57,23 +55,22 @@ class npc_mageguard_dalaran : public CreatureScript
 public:
     npc_mageguard_dalaran() : CreatureScript("npc_mageguard_dalaran") { }
 
-    struct npc_mageguard_dalaranAI : public ScriptedAI
+    struct npc_mageguard_dalaranAI : public Scripted_NoMovementAI
     {
-        npc_mageguard_dalaranAI(Creature* creature) : ScriptedAI(creature)
+        npc_mageguard_dalaranAI(Creature* creature) : Scripted_NoMovementAI(creature)
         {
             creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
             creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_NORMAL, true);
             creature->ApplySpellImmune(0, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_MAGIC, true);
         }
 
-        void Reset()override { }
+        void Reset(){}
 
-        void EnterCombat(Unit* /*who*/)override { }
+        void EnterCombat(Unit* /*who*/){}
 
-        void AttackStart(Unit* /*who*/)override { }
+        void AttackStart(Unit* /*who*/){}
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
             if (!who || !who->IsInWorld() || who->GetZoneId() != 4395)
                 return;
@@ -83,7 +80,7 @@ public:
 
             Player* player = who->GetCharmerOrOwnerPlayerOrPlayerItself();
 
-            if (!player || player->IsGameMaster() || player->IsBeingTeleported() ||
+            if (!player || player->isGameMaster() || player->IsBeingTeleported() ||
                 // If player has Disguise aura for quest A Meeting With The Magister or An Audience With The Arcanist, do not teleport it away but let it pass
                 player->HasAura(SPELL_SUNREAVER_DISGUISE_FEMALE) || player->HasAura(SPELL_SUNREAVER_DISGUISE_MALE) ||
                 player->HasAura(SPELL_SILVER_COVENANT_DISGUISE_FEMALE) || player->HasAura(SPELL_SILVER_COVENANT_DISGUISE_MALE))
@@ -120,16 +117,118 @@ public:
             return;
         }
 
-        void UpdateAI(uint32 /*diff*/)override { }
+        void UpdateAI(const uint32 /*diff*/){}
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_mageguard_dalaranAI(creature);
+    }
+};
+
+/*######
+ ## npc_archmage_vargoth
+ ######*/
+
+enum eArchmageVargoth
+{
+    ZONE_DALARAN                 = 4395,
+    ITEM_ACANE_MAGIC_MASTERY     = 43824,
+    SPELL_CREATE_FAMILAR         = 61457,
+    SPELL_FAMILAR_PET            = 61472,
+    ITEM_FAMILAR_PET             = 44738
+};
+
+#define GOSSIP_TEXT_FAMILIAR_WELCOME "I have a book that might interest you. Would you like to take a look?"
+#define GOSSIP_TEXT_FAMILIAR_THANKS  "Thank you! I will be sure to notify you if I find anything else."
+
+class npc_archmage_vargoth: public CreatureScript
+{
+public:
+    npc_archmage_vargoth() : CreatureScript("npc_archmage_vargoth") {}
+
+    bool OnGossipHello(Player* player, Creature* creature)
+    {
+        if (creature->IsQuestGiver() && creature->GetZoneId() != ZONE_DALARAN)
+            player->PrepareQuestMenu(creature->GetGUID());
+
+        if (player->HasItemCount(ITEM_ACANE_MAGIC_MASTERY, 1, false))
+        {
+            if (!player->HasSpell(SPELL_FAMILAR_PET) && !player->HasItemCount(ITEM_FAMILAR_PET, 1, true))
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_TEXT_FAMILIAR_WELCOME, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+        }
+
+        player->SEND_GOSSIP_MENU(player->GetGossipTextId(creature), creature->GetGUID());
+
+        return true;
+    }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
+    {
+        switch (action)
+        {
+        case GOSSIP_ACTION_INFO_DEF + 1:
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_TEXT_FAMILIAR_THANKS, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 2);
+            player->SEND_GOSSIP_MENU(40006, creature->GetGUID());
+            break;
+        case GOSSIP_ACTION_INFO_DEF + 2:
+            creature->CastSpell(player, SPELL_CREATE_FAMILAR, false);
+            player->CLOSE_GOSSIP_MENU();
+            break;
+        }
+
+        return true;
+    }
+};
+
+/*######
+ ## npc_hira_snowdawn
+ ######*/
+
+enum eHiraSnowdawn
+{
+    SPELL_COLD_WEATHER_FLYING       = 54197
+};
+
+#define GOSSIP_TEXT_TRAIN_HIRA "I seek training to ride a steed."
+
+class npc_hira_snowdawn: public CreatureScript
+{
+public:
+    npc_hira_snowdawn() : CreatureScript("npc_hira_snowdawn") {}
+
+    bool OnGossipHello(Player* player, Creature* creature)
+    {
+        if (!creature->IsVendor() || !creature->IsTrainer())
+            return false;
+
+        player->ADD_GOSSIP_ITEM(GOSSIP_ICON_VENDOR, GOSSIP_TEXT_TRAIN_HIRA, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_TRAIN);
+
+        if (player->getLevel() >= 80 && player->HasSpell(SPELL_COLD_WEATHER_FLYING))
+        player->ADD_GOSSIP_ITEM(GOSSIP_ICON_VENDOR, GOSSIP_TEXT_BROWSE_GOODS, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_TRADE);
+
+        player->SEND_GOSSIP_MENU(player->GetGossipTextId(creature), creature->GetGUID());
+
+        return true;
+    }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
+    {
+        player->PlayerTalkClass->ClearMenus();
+
+        if (action == GOSSIP_ACTION_TRAIN)
+            player->GetSession()->SendTrainerList(creature->GetGUID());
+
+        if (action == GOSSIP_ACTION_TRADE)
+            player->GetSession()->SendListInventory(creature->GetGUID());
+
+        return true;
     }
 };
 
 void AddSC_dalaran()
 {
     new npc_mageguard_dalaran;
+    new npc_hira_snowdawn();
+    new npc_archmage_vargoth();
 }

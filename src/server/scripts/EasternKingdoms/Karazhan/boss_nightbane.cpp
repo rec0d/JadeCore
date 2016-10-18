@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -70,9 +69,9 @@ class boss_nightbane : public CreatureScript
 public:
     boss_nightbane() : CreatureScript("boss_nightbane") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_nightbaneAI(creature);
+        return new boss_nightbaneAI (creature);
     }
 
     struct boss_nightbaneAI : public ScriptedAI
@@ -110,7 +109,7 @@ public:
         uint32 WaitTimer;
         uint32 MovePhase;
 
-        void Reset() override
+        void Reset()
         {
             BellowingRoarTimer = 30000;
             CharredEarthTimer = 15000;
@@ -161,7 +160,7 @@ public:
             }
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             if (instance)
                 instance->SetData(TYPE_NIGHTBANE, IN_PROGRESS);
@@ -170,13 +169,13 @@ public:
            Talk(YELL_AGGRO);
         }
 
-        void AttackStart(Unit* who) override
+        void AttackStart(Unit* who)
         {
             if (!Intro && !Flying)
                 ScriptedAI::AttackStart(who);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             if (instance)
                 instance->SetData(TYPE_NIGHTBANE, DONE);
@@ -184,14 +183,13 @@ public:
             HandleTerraceDoors(true);
         }
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
             if (!Intro && !Flying)
                 ScriptedAI::MoveInLineOfSight(who);
         }
 
-        void MovementInform(uint32 type, uint32 id) override
+        void MovementInform(uint32 type, uint32 id)
         {
             if (type != POINT_MOTION_TYPE)
                 return;
@@ -237,7 +235,7 @@ public:
             }
         }
 
-        void JustSummoned(Creature* summoned) override
+        void JustSummoned(Creature* summoned)
         {
             summoned->AI()->AttackStart(me->GetVictim());
         }
@@ -262,7 +260,7 @@ public:
             Skeletons = false;
          }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             /* The timer for this was never setup apparently, not sure if the code works properly:
             if (WaitTimer <= diff)

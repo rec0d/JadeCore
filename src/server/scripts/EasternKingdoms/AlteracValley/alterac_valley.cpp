@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -79,16 +77,16 @@ SpellPair const _auraPairs[MAX_SPELL_PAIRS] =
     { NPC_ICEBLOOD_WARMASTER,       SPELL_ICEBLOOD_WARMASTER }
 };
 
-class npc_av_marshal_or_warmaster : public CreatureScript
+class mob_av_marshal_or_warmaster : public CreatureScript
 {
     public:
-        npc_av_marshal_or_warmaster() : CreatureScript("npc_av_marshal_or_warmaster") { }
+        mob_av_marshal_or_warmaster() : CreatureScript("mob_av_marshal_or_warmaster") { }
 
-        struct npc_av_marshal_or_warmasterAI : public ScriptedAI
+        struct mob_av_marshal_or_warmasterAI : public ScriptedAI
         {
-            npc_av_marshal_or_warmasterAI(Creature* creature) : ScriptedAI(creature) { }
+            mob_av_marshal_or_warmasterAI(Creature* creature) : ScriptedAI(creature) { }
 
-            void Reset() override
+            void Reset()
             {
                 events.Reset();
                 events.ScheduleEvent(EVENT_CHARGE_TARGET, urand(2 * IN_MILLISECONDS, 12 * IN_MILLISECONDS));
@@ -101,12 +99,12 @@ class npc_av_marshal_or_warmaster : public CreatureScript
                 _hasAura = false;
             }
 
-            void JustRespawned() override
+            void JustRespawned()
             {
                 Reset();
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 // I have a feeling this isn't blizzlike, but owell, I'm only passing by and cleaning up.
                 if (!_hasAura)
@@ -172,13 +170,13 @@ class npc_av_marshal_or_warmaster : public CreatureScript
             bool _hasAura;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return new npc_av_marshal_or_warmasterAI(creature);
+            return new mob_av_marshal_or_warmasterAI(creature);
         }
 };
 
 void AddSC_alterac_valley()
 {
-    new npc_av_marshal_or_warmaster();
+    new mob_av_marshal_or_warmaster();
 }

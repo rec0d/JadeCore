@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -61,7 +60,7 @@ public:
     {
         boss_talon_king_ikissAI(Creature* creature) : BossAI(creature, DATA_TALON_KING_IKISS) { }
 
-        void Reset() override
+        void Reset() 
         {
             _Reset();
             ArcaneVolley_Timer = 5000;
@@ -73,9 +72,9 @@ public:
             ManaShield = false;
         }
 
-        void MoveInLineOfSight(Unit* who) override
+        void MoveInLineOfSight(Unit* who) 
         {
-            if (!me->GetVictim() && me->CanCreatureAttack(who))
+            if (!me->GetVictim() && me->canCreatureAttack(who))
             {
                 if (!Intro && me->IsWithinDistInMap(who, 100))
                 {
@@ -95,25 +94,25 @@ public:
             }
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/) 
         {
             _EnterCombat();
             Talk(SAY_AGGRO);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/) 
         {
             _JustDied();
             Talk(SAY_DEATH);
         }
 
-        void KilledUnit(Unit* who) override
+        void KilledUnit(Unit* who) 
         {
             if (who->GetTypeId() == TYPEID_PLAYER)
                 Talk(SAY_SLAY);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(uint32 const diff) 
         {
             if (!UpdateVictim())
                 return;
@@ -201,7 +200,7 @@ public:
             bool Intro;
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const 
     {
         return GetSethekkHallsAI<boss_talon_king_ikissAI>(creature);
     }

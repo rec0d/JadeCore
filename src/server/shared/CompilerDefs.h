@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -54,6 +53,11 @@
 #  define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
 #else
 #  error "FATAL ERROR: Unknown compiler."
+#endif
+
+#if COMPILER == COMPILER_MICROSOFT
+#  pragma warning( disable : 4267 )                         // conversion from 'size_t' to 'int', possible loss of data
+#  pragma warning( disable : 4786 )                         // identifier was truncated to '255' characters in the debug information
 #endif
 
 #if defined(__cplusplus) && __cplusplus == 201103L

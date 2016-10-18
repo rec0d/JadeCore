@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -51,8 +50,8 @@ enum GuildFinderOptionsRoles
 
 enum GuildFinderOptionsLevel
 {
-    ANY_FINDER_LEVEL       = 0x1,
-    MAX_FINDER_LEVEL       = 0x2,
+    ANY_FINDER_LEVEL   = 0x1,
+    MAX_FINDER_LEVEL   = 0x2,
     ALL_GUILDFINDER_LEVELS = ANY_FINDER_LEVEL | MAX_FINDER_LEVEL
 };
 
@@ -73,8 +72,8 @@ struct MembershipRequest
         MembershipRequest(uint32 playerGUID, uint32 guildId, uint32 availability, uint32 classRoles, uint32 interests, std::string& comment, time_t submitTime) :
             _comment(comment), _guildId(guildId), _playerGUID(playerGUID), _availability(availability),
             _classRoles(classRoles), _interests(interests), _time(submitTime)  {}
-
-        MembershipRequest() : _guildId(0), _playerGUID(0), _availability(0), _classRoles(0),
+        
+          MembershipRequest() : _guildId(0), _playerGUID(0), _availability(0), _classRoles(0),
             _interests(0), _time(time(NULL)) {}
 
         uint32 GetGuildId() const      { return _guildId; }
@@ -85,7 +84,7 @@ struct MembershipRequest
         uint8 GetClass() const         { return sWorld->GetCharacterNameData(GetPlayerGUID())->m_class; }
         uint8 GetLevel() const         { return sWorld->GetCharacterNameData(GetPlayerGUID())->m_level; }
         time_t GetSubmitTime() const   { return _time; }
-        time_t GetExpiryTime() const   { return time_t(_time + 28 * 24 * 3600); } // Adding 28 days
+        time_t GetExpiryTime() const   { return time_t(_time + 30 * 24 * 3600); } // Adding 30 days
         std::string const& GetComment() const { return _comment; }
         std::string const& GetName() const    { return sWorld->GetCharacterNameData(GetPlayerGUID())->m_name; }
     private:
@@ -172,7 +171,7 @@ struct LFGuildSettings : public LFGuildPlayer
             LFGuildPlayer(guid, role, availability, interests, level, comment), _listed(listed), _team(team) {}
 
         LFGuildSettings(LFGuildSettings const& settings) :
-            LFGuildPlayer(settings), _listed(settings.IsListed()), _team(settings.GetTeam()) {}
+        LFGuildPlayer(settings), _listed(settings.IsListed()), _team(settings.GetTeam()) {}
 
 
         bool IsListed() const      { return _listed; }
@@ -180,8 +179,8 @@ struct LFGuildSettings : public LFGuildPlayer
 
         TeamId GetTeam() const     { return _team; }
     private:
-        bool _listed;
         TeamId _team;
+        bool _listed;
 };
 
 typedef std::map<uint32 /* guildGuid */, LFGuildSettings> LFGuildStore;
@@ -229,8 +228,9 @@ class GuildFinderMgr
          * @brief Removes all membership request from a player.
          * @param playerId The player's database guid whose application shall be deleted.
          */
-        void RemoveAllMembershipRequestsFromPlayer(uint32 playerId);
 
+        void RemoveAllMembershipRequestsFromPlayer(uint32 playerId);
+		
         /**
          * @brief Removes a membership request to a guild.
          * @param playerId The player's database guid whose application shall be deleted.
@@ -238,9 +238,9 @@ class GuildFinderMgr
          */
         void RemoveMembershipRequest(uint32 playerId, uint32 guildId);
 
-        /// Wipes everything related to a guild. Used when that guild is disbanded
+        /// wipes everything related to a guild. Used when that guild is disbanded
         void DeleteGuild(uint32 guildId);
-
+        
         /**
          * @brief Returns a set of membership requests for a guild
          * @param guildGuid The guild's database guid.
@@ -265,7 +265,7 @@ class GuildFinderMgr
 
         /// Counts the amount of pending membership requests, given the player's db guid.
         uint8 CountRequestsFromPlayer(uint32 playerId);
-
+ 
         void SendApplicantListUpdate(Guild& guild);
         void SendMembershipRequestListUpdate(Player& player);
 };

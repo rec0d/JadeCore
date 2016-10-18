@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -24,7 +24,6 @@
 
 enum BG_EY_Misc
 {
-    BG_EY_EVENT_START_BATTLE        = 13180, // Achievement: Flurry
     BG_EY_FLAG_RESPAWN_TIME         = (8*IN_MILLISECONDS),
     BG_EY_FPOINTS_TICK_TIME         = (2*IN_MILLISECONDS)
 };
@@ -83,7 +82,7 @@ enum BG_EY_Sounds
 enum BG_EY_Spells
 {
     BG_EY_NETHERSTORM_FLAG_SPELL        = 34976,
-    BG_EY_PLAYER_DROPPED_FLAG_SPELL     = 34991
+    BG_EY_PLAYER_DROPPED_FLAG_SPELL     = 34991 // Summon Object EffectMuscValueA = 184142
 };
 
 enum EYBattlegroundObjectEntry
@@ -220,6 +219,8 @@ enum EYBattlegroundObjectTypes
 #define BG_EY_NotEYWeekendHonorTicks    260
 #define BG_EY_EYWeekendHonorTicks       160
 
+#define EY_EVENT_START_BATTLE           13180 // Achievement: Flurry
+
 enum BG_EY_Score
 {
     BG_EY_WARNING_NEAR_VICTORY_SCORE    = 1400,
@@ -249,7 +250,7 @@ enum BG_EY_Objectives
 struct BattlegroundEYPointIconsStruct
 {
     BattlegroundEYPointIconsStruct(uint32 _WorldStateControlIndex, uint32 _WorldStateAllianceControlledIndex, uint32 _WorldStateHordeControlledIndex)
-        : WorldStateControlIndex(_WorldStateControlIndex), WorldStateAllianceControlledIndex(_WorldStateAllianceControlledIndex), WorldStateHordeControlledIndex(_WorldStateHordeControlledIndex) { }
+        : WorldStateControlIndex(_WorldStateControlIndex), WorldStateAllianceControlledIndex(_WorldStateAllianceControlledIndex), WorldStateHordeControlledIndex(_WorldStateHordeControlledIndex) {}
     uint32 WorldStateControlIndex;
     uint32 WorldStateAllianceControlledIndex;
     uint32 WorldStateHordeControlledIndex;
@@ -270,7 +271,7 @@ struct BattlegroundEYLosingPointStruct
         : SpawnNeutralObjectType(_SpawnNeutralObjectType),
         DespawnObjectTypeAlliance(_DespawnObjectTypeAlliance), MessageIdAlliance(_MessageIdAlliance),
         DespawnObjectTypeHorde(_DespawnObjectTypeHorde), MessageIdHorde(_MessageIdHorde)
-    { }
+    {}
 
     uint32 SpawnNeutralObjectType;
     uint32 DespawnObjectTypeAlliance;
@@ -286,7 +287,7 @@ struct BattlegroundEYCapturingPointStruct
         SpawnObjectTypeAlliance(_SpawnObjectTypeAlliance), MessageIdAlliance(_MessageIdAlliance),
         SpawnObjectTypeHorde(_SpawnObjectTypeHorde), MessageIdHorde(_MessageIdHorde),
         GraveYardId(_GraveYardId)
-    { }
+    {}
 
     uint32 DespawnNeutralObjectType;
     uint32 SpawnObjectTypeAlliance;
@@ -358,7 +359,7 @@ class BattlegroundEY : public Battleground
         void UpdateTeamScore(uint32 Team);
         void EndBattleground(uint32 winner);
         void UpdatePlayerScore(Player* Source, uint32 type, uint32 value, bool doAddHonor = true);
-        void FillInitialWorldStates(WorldStateBuilder& builder);
+        void FillInitialWorldStates(WorldPacket& data);
         void SetDroppedFlagGUID(uint64 guid, int32 /*TeamID*/ = -1)  { m_DroppedFlagGUID = guid;}
         uint64 GetDroppedFlagGUID() const          { return m_DroppedFlagGUID;}
 
@@ -367,7 +368,7 @@ class BattlegroundEY : public Battleground
         void EventPlayerDroppedFlag(Player* Source);
 
         /* achievement req. */
-        bool IsAllNodesControlledByTeam(uint32 team) const;
+        bool IsAllNodesConrolledByTeam(uint32 team) const;
 
         uint32 GetPrematureWinner();
     private:

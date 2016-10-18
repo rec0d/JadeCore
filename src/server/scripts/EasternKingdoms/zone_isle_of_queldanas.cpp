@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -45,34 +44,34 @@ enum ConvertedSentry
     SPELL_CONVERT_CREDIT    = 45009
 };
 
+
 class npc_converted_sentry : public CreatureScript
 {
 public:
     npc_converted_sentry() : CreatureScript("npc_converted_sentry") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_converted_sentryAI(creature);
+        return new npc_converted_sentryAI (creature);
     }
 
     struct npc_converted_sentryAI : public ScriptedAI
     {
-        npc_converted_sentryAI(Creature* creature) : ScriptedAI(creature) { }
+        npc_converted_sentryAI(Creature* creature) : ScriptedAI(creature) {}
 
         bool Credit;
         uint32 Timer;
 
-        void Reset() override
+        void Reset()
         {
             Credit = false;
             Timer = 2500;
         }
 
-        void MoveInLineOfSight(Unit* /*who*/) override { }
+        void MoveInLineOfSight(Unit* /*who*/) {}
+        void EnterCombat(Unit* /*who*/) {}
 
-        void EnterCombat(Unit* /*who*/) override { }
-
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!Credit)
             {
@@ -81,7 +80,7 @@ public:
                     Talk(SAY_CONVERTED);
 
                     DoCast(me, SPELL_CONVERT_CREDIT);
-                    if (me->IsPet())
+                    if (me->isPet())
                         me->ToPet()->SetDuration(7500);
                     Credit = true;
                 } else Timer -= diff;
@@ -104,31 +103,41 @@ class npc_greengill_slave : public CreatureScript
 public:
     npc_greengill_slave() : CreatureScript("npc_greengill_slave") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_greengill_slaveAI(creature);
     }
 
     struct npc_greengill_slaveAI : public ScriptedAI
     {
-        npc_greengill_slaveAI(Creature* creature) : ScriptedAI(creature) { }
+        npc_greengill_slaveAI(Creature* creature) : ScriptedAI(creature) {}
 
-        void EnterCombat(Unit* /*who*/) override { }
+        uint64 PlayerGUID;
 
-        void SpellHit(Unit* caster, SpellInfo const* spellInfo) override
+        void EnterCombat(Unit* /*who*/){}
+
+        void Reset()
         {
-            Player* player = caster->ToPlayer();
-            if (!player)
+        PlayerGUID = 0;
+        }
+
+        void SpellHit(Unit* caster, const SpellInfo* spell)
+        {
+            if (!caster)
                 return;
 
-            if (spellInfo->Id == ORB && !me->HasAura(ENRAGE))
+            if (caster->GetTypeId() == TYPEID_PLAYER && spell->Id == ORB && !me->HasAura(ENRAGE))
             {
-                if (player->GetQuestStatus(QUESTG) == QUEST_STATUS_INCOMPLETE)
-                    DoCast(player, 45110, true);
-
+                PlayerGUID = caster->GetGUID();
+                if (PlayerGUID)
+                {
+                    Player* player = Unit::GetPlayer(*me, PlayerGUID);
+                    if (player && player->GetQuestStatus(QUESTG) == QUEST_STATUS_INCOMPLETE)
+                        DoCast(player, 45110, true);
+                }
                 DoCast(me, ENRAGE);
-
-                if (Creature* Myrmidon = me->FindNearestCreature(DM, 70))
+                Unit* Myrmidon = me->FindNearestCreature(DM, 70);
+                if (Myrmidon)
                 {
                     me->AddThreat(Myrmidon, 100000.0f);
                     AttackStart(Myrmidon);
@@ -136,7 +145,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 /*diff*/) override
+        void UpdateAI(const uint32 /*diff*/)
         {
             DoMeleeAttackIfReady();
         }

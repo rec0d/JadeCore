@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -55,7 +55,7 @@ typedef std::map<uint32 /*condition id*/, GameEventFinishCondition> GameEventCon
 
 struct GameEventData
 {
-    GameEventData() : start(1), end(0), nextstart(0), occurence(0), length(0), holiday_id(HOLIDAY_NONE), state(GAMEEVENT_NORMAL) { }
+    GameEventData() : start(1), end(0), nextstart(0), occurence(0), length(0), holiday_id(HOLIDAY_NONE), state(GAMEEVENT_NORMAL) {}
     time_t start;           // occurs after this time
     time_t end;             // occurs before this time
     time_t nextstart;       // after this time the follow-up events count this phase completed
@@ -66,7 +66,6 @@ struct GameEventData
     GameEventConditionMap conditions;  // conditions to finish
     std::set<uint16 /*gameevent id*/> prerequisite_events;  // events that must be completed before starting this event
     std::string description;
-    uint8 announce;         // if 0 dont announce, if 1 announce, if 2 take config value
 
     bool isValid() const { return length > 0 || state > GAMEEVENT_NORMAL; }
 };
@@ -99,7 +98,7 @@ class GameEventMgr
 
     private:
         GameEventMgr();
-        ~GameEventMgr() { };
+        ~GameEventMgr() {};
 
     public:
         typedef std::set<uint16> ActiveEvents;
@@ -119,7 +118,7 @@ class GameEventMgr
         void StopEvent(uint16 event_id, bool overwrite = false);
         void HandleQuestComplete(uint32 quest_id);  // called on world event type quest completions
         void HandleWorldEventGossip(Player* player, Creature* c);
-        uint64 GetNPCFlag(Creature* cr);
+        uint32 GetNPCFlag(Creature* cr);
         uint32 GetNpcTextId(uint32 guid);
         uint16 GetEventIdForQuest(Quest const* quest) const;
     private:
@@ -157,7 +156,7 @@ class GameEventMgr
         typedef std::list<NPCVendorEntry> NPCVendorList;
         typedef std::vector<NPCVendorList> GameEventNPCVendorMap;
         typedef std::map<uint32 /*quest id*/, GameEventQuestToEventConditionNum> QuestIdToEventConditionMap;
-        typedef std::pair<uint64 /*guid*/, uint64 /*npcflag*/> GuidNPCFlagPair;
+        typedef std::pair<uint32 /*guid*/, uint32 /*npcflag*/> GuidNPCFlagPair;
         typedef std::list<GuidNPCFlagPair> NPCFlagList;
         typedef std::vector<NPCFlagList> GameEventNPCFlagMap;
         typedef std::vector<uint32> GameEventBitmask;

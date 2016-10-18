@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -38,7 +37,7 @@ class go_barrel_old_hillsbrad : public GameObjectScript
 public:
     go_barrel_old_hillsbrad() : GameObjectScript("go_barrel_old_hillsbrad") { }
 
-    bool OnGossipHello(Player* /*player*/, GameObject* go) override
+    bool OnGossipHello(Player* /*player*/, GameObject* go)
     {
         if (InstanceScript* instance = go->GetInstanceScript())
         {
@@ -108,14 +107,14 @@ class boss_lieutenant_drake : public CreatureScript
 public:
     boss_lieutenant_drake() : CreatureScript("boss_lieutenant_drake") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_lieutenant_drakeAI(creature);
+        return new boss_lieutenant_drakeAI (creature);
     }
 
     struct boss_lieutenant_drakeAI : public ScriptedAI
     {
-        boss_lieutenant_drakeAI(Creature* creature) : ScriptedAI(creature) { }
+        boss_lieutenant_drakeAI(Creature* creature) : ScriptedAI(creature) {}
 
         bool CanPatrol;
         uint32 wpId;
@@ -125,7 +124,7 @@ public:
         uint32 MortalStrike_Timer;
         uint32 ExplodingShout_Timer;
 
-        void Reset() override
+        void Reset()
         {
             CanPatrol = true;
             wpId = 0;
@@ -136,24 +135,24 @@ public:
             ExplodingShout_Timer = 25000;
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(SAY_AGGRO);
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_SLAY);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Talk(SAY_DEATH);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
-            /// @todo make this work
+            //TODO: make this work
             if (CanPatrol && wpId == 0)
             {
                 me->GetMotionMaster()->MovePoint(DrakeWP[0].wpId, DrakeWP[0].x, DrakeWP[0].y, DrakeWP[0].z);

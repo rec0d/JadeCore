@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -45,7 +44,7 @@ enum Midnight
 
     MOUNTED_DISPLAYID           = 16040,
 
-    //Attumen (@todo Use the summoning spell instead of Creature id. It works, but is not convenient for us)
+    //Attumen (TODO: Use the summoning spell instead of Creature id. It works, but is not convenient for us)
     SUMMON_ATTUMEN              = 15550,
 };
 
@@ -54,9 +53,9 @@ class boss_attumen : public CreatureScript
 public:
     boss_attumen() : CreatureScript("boss_attumen") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_attumenAI(creature);
+        return new boss_attumenAI (creature);
     }
 
     struct boss_attumenAI : public ScriptedAI
@@ -80,34 +79,34 @@ public:
         uint32 ChargeTimer;                                     //only when mounted
         uint32 ResetTimer;
 
-        void Reset() override
+        void Reset()
         {
             ResetTimer = 0;
         }
 
-        void EnterEvadeMode() override
+        void EnterEvadeMode()
         {
             ScriptedAI::EnterEvadeMode();
             ResetTimer = 2000;
         }
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/) {}
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_KILL);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Talk(SAY_DEATH);
             if (Unit* midnight = Unit::GetUnit(*me, Midnight))
                 midnight->Kill(midnight);
         }
 
-        void UpdateAI(uint32 diff) override;
+        void UpdateAI(const uint32 diff);
 
-        void SpellHit(Unit* /*source*/, const SpellInfo* spell) override
+        void SpellHit(Unit* /*source*/, const SpellInfo* spell)
         {
             if (spell->Mechanic == MECHANIC_DISARM)
                 Talk(SAY_DISARMED);
@@ -120,20 +119,20 @@ class boss_midnight : public CreatureScript
 public:
     boss_midnight() : CreatureScript("boss_midnight") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_midnightAI(creature);
     }
 
     struct boss_midnightAI : public ScriptedAI
     {
-        boss_midnightAI(Creature* creature) : ScriptedAI(creature) { }
+        boss_midnightAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint64 Attumen;
         uint8 Phase;
         uint32 Mount_Timer;
 
-        void Reset() override
+        void Reset()
         {
             Phase = 1;
             Attumen = 0;
@@ -143,18 +142,18 @@ public:
             me->SetVisible(true);
         }
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/) {}
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             if (Phase == 2)
             {
                 if (Unit* unit = Unit::GetUnit(*me, Attumen))
-                    Talk(SAY_MIDNIGHT_KILL, unit);
+                    Talk(SAY_MIDNIGHT_KILL, unit->GetGUID());
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -167,7 +166,7 @@ public:
                     Attumen = attumen->GetGUID();
                     attumen->AI()->AttackStart(me->GetVictim());
                     SetMidnight(attumen, me->GetGUID());
-                    Talk(SAY_APPEAR, attumen);
+                    Talk(SAY_APPEAR, Attumen);
                 }
             }
             else if (Phase == 2 && HealthBelowPct(25))
@@ -205,7 +204,7 @@ public:
 
         void Mount(Unit* pAttumen)
         {
-            Talk(SAY_MOUNT, pAttumen);
+            Talk(SAY_MOUNT, pAttumen->GetGUID());
             Phase = 3;
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
             pAttumen->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
@@ -235,7 +234,7 @@ public:
     };
 };
 
-void boss_attumen::boss_attumenAI::UpdateAI(uint32 diff)
+void boss_attumen::boss_attumenAI::UpdateAI(const uint32 diff)
 {
     if (ResetTimer)
     {
@@ -279,7 +278,7 @@ void boss_attumen::boss_attumenAI::UpdateAI(uint32 diff)
         RandomYellTimer = urand(30000, 60000);
     } else RandomYellTimer -= diff;
 
-    if (me->GetUInt32Value(UNIT_FIELD_DISPLAY_ID) == MOUNTED_DISPLAYID)
+    if (me->GetUInt32Value(UNIT_FIELD_DISPLAYID) == MOUNTED_DISPLAYID)
     {
         if (ChargeTimer <= diff)
         {

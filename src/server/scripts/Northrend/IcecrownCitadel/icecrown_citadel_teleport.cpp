@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,7 +29,7 @@ class icecrown_citadel_teleport : public GameObjectScript
     public:
         icecrown_citadel_teleport() : GameObjectScript("icecrown_citadel_teleport") { }
 
-        bool OnGossipHello(Player* player, GameObject* go) override
+        bool OnGossipHello(Player* player, GameObject* go)
         {
             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Teleport to Light's Hammer.", GOSSIP_SENDER_ICC_PORT, LIGHT_S_HAMMER_TELEPORT);
             if (InstanceScript* instance = go->GetInstanceScript())
@@ -44,16 +42,18 @@ class icecrown_citadel_teleport : public GameObjectScript
                     player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Teleport to the Deathbringer's Rise.", GOSSIP_SENDER_ICC_PORT, DEATHBRINGER_S_RISE_TELEPORT);
                 if (instance->GetData(DATA_COLDFLAME_JETS) == DONE)
                     player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Teleport to the Upper Spire.", GOSSIP_SENDER_ICC_PORT, UPPER_SPIRE_TELEPORT);
-                /// @todo Gauntlet event before Sindragosa
+                // TODO: Gauntlet event before Sindragosa
                 if (instance->GetBossState(DATA_VALITHRIA_DREAMWALKER) == DONE)
                     player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Teleport to Sindragosa's Lair", GOSSIP_SENDER_ICC_PORT, SINDRAGOSA_S_LAIR_TELEPORT);
+		if (instance->GetBossState(DATA_SINDRAGOSA) == DONE)
+                    player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Teleport to Frozen's Throne", GOSSIP_SENDER_ICC_PORT, FROZEN_THRONE_TELEPORT);
             }
 
             player->SEND_GOSSIP_MENU(player->GetGossipTextId(go), go->GetGUID());
             return true;
         }
 
-        bool OnGossipSelect(Player* player, GameObject* /*go*/, uint32 sender, uint32 action) override
+        bool OnGossipSelect(Player* player, GameObject* /*go*/, uint32 sender, uint32 action)
         {
             player->PlayerTalkClass->ClearMenus();
             player->CLOSE_GOSSIP_MENU();
@@ -61,7 +61,7 @@ class icecrown_citadel_teleport : public GameObjectScript
             if (!spell)
                 return false;
 
-            if (player->IsInCombat())
+            if (player->isInCombat())
             {
                 Spell::SendCastResult(player, spell, 0, SPELL_FAILED_AFFECTING_COMBAT);
                 return true;
@@ -79,9 +79,9 @@ class at_frozen_throne_teleport : public AreaTriggerScript
     public:
         at_frozen_throne_teleport() : AreaTriggerScript("at_frozen_throne_teleport") { }
 
-        bool OnTrigger(Player* player, AreaTriggerEntry const* /*areaTrigger*/) override
+        bool OnTrigger(Player* player, AreaTriggerEntry const* /*areaTrigger*/)
         {
-            if (player->IsInCombat())
+            if (player->isInCombat())
             {
                 if (SpellInfo const* spell = sSpellMgr->GetSpellInfo(FROZEN_THRONE_TELEPORT))
                     Spell::SendCastResult(player, spell, 0, SPELL_FAILED_AFFECTING_COMBAT);

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,7 +15,19 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
+/* ScriptData
+SDName: Boss_Hydromancer_Thespia
+SD%Complete: 80
+SDComment: Needs additional adjustments (when instance script is adjusted)
+SDCategory: Coilfang Resevoir, The Steamvault
+EndScriptData */
+
+/* ContentData
+boss_hydromancer_thespia
+mob_coilfang_waterelemental
+EndContentData */
+
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "steam_vault.h"
@@ -41,9 +52,9 @@ class boss_hydromancer_thespia : public CreatureScript
 public:
     boss_hydromancer_thespia() : CreatureScript("boss_hydromancer_thespia") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_thespiaAI(creature);
+        return new boss_thespiaAI (creature);
     }
 
     struct boss_thespiaAI : public ScriptedAI
@@ -59,38 +70,38 @@ public:
         uint32 LungBurst_Timer;
         uint32 EnvelopingWinds_Timer;
 
-        void Reset() override
+        void Reset()
         {
             LightningCloud_Timer = 15000;
             LungBurst_Timer = 7000;
             EnvelopingWinds_Timer = 9000;
 
             if (instance)
-                instance->SetBossState(DATA_HYDROMANCER_THESPIA, NOT_STARTED);
+                instance->SetData(TYPE_HYDROMANCER_THESPIA, NOT_STARTED);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Talk(SAY_DEAD);
 
             if (instance)
-                instance->SetBossState(DATA_HYDROMANCER_THESPIA, DONE);
+                instance->SetData(TYPE_HYDROMANCER_THESPIA, DONE);
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_SLAY);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(SAY_AGGRO);
 
             if (instance)
-                instance->SetBossState(DATA_HYDROMANCER_THESPIA, IN_PROGRESS);
+                instance->SetData(TYPE_HYDROMANCER_THESPIA, IN_PROGRESS);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -136,30 +147,30 @@ public:
 
 };
 
-class npc_coilfang_waterelemental : public CreatureScript
+class mob_coilfang_waterelemental : public CreatureScript
 {
 public:
-    npc_coilfang_waterelemental() : CreatureScript("npc_coilfang_waterelemental") { }
+    mob_coilfang_waterelemental() : CreatureScript("mob_coilfang_waterelemental") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_coilfang_waterelementalAI(creature);
+        return new mob_coilfang_waterelementalAI (creature);
     }
 
-    struct npc_coilfang_waterelementalAI : public ScriptedAI
+    struct mob_coilfang_waterelementalAI : public ScriptedAI
     {
-        npc_coilfang_waterelementalAI(Creature* creature) : ScriptedAI(creature) { }
+        mob_coilfang_waterelementalAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 WaterBoltVolley_Timer;
 
-        void Reset() override
+        void Reset()
         {
             WaterBoltVolley_Timer = 3000+rand()%3000;
         }
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/) { }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -179,5 +190,5 @@ public:
 void AddSC_boss_hydromancer_thespia()
 {
     new boss_hydromancer_thespia();
-    new npc_coilfang_waterelemental();
+    new mob_coilfang_waterelemental();
 }

@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -41,20 +39,17 @@ public:
     {
         static ChatCommand guildCommandTable[] =
         {
-            { "create",   rbac::RBAC_PERM_COMMAND_GUILD_CREATE,   true, &HandleGuildCreateCommand,           "", NULL },
-            { "delete",   rbac::RBAC_PERM_COMMAND_GUILD_DELETE,   true, &HandleGuildDeleteCommand,           "", NULL },
-            { "invite",   rbac::RBAC_PERM_COMMAND_GUILD_INVITE,   true, &HandleGuildInviteCommand,           "", NULL },
-            { "uninvite", rbac::RBAC_PERM_COMMAND_GUILD_UNINVITE, true, &HandleGuildUninviteCommand,         "", NULL },
-            { "rank",     rbac::RBAC_PERM_COMMAND_GUILD_RANK,     true, &HandleGuildRankCommand,             "", NULL },
-            { "rename",   rbac::RBAC_PERM_COMMAND_GUILD_RENAME,   true, &HandleGuildRenameCommand,           "", NULL },
-			{ "givexp",   rbac::RBAC_PERM_COMMAND_GUILD_GIVEXP,   true, &HandleGuildXpCommand,               "", NULL },
-            { "levelup",  rbac::RBAC_PERM_COMMAND_GUILD_LEVELUP,  true, &HandleGuildLevelUpCommand,          "", NULL },
-            { NULL,       0,                               false, NULL,                                "", NULL }
+            { "create",         SEC_GAMEMASTER,     true,  &HandleGuildCreateCommand,           "", NULL },
+            { "delete",         SEC_GAMEMASTER,     true,  &HandleGuildDeleteCommand,           "", NULL },
+            { "invite",         SEC_GAMEMASTER,     true,  &HandleGuildInviteCommand,           "", NULL },
+            { "uninvite",       SEC_GAMEMASTER,     true,  &HandleGuildUninviteCommand,         "", NULL },
+            { "rank",           SEC_GAMEMASTER,     true,  &HandleGuildRankCommand,             "", NULL },
+            { NULL,             0,                  false, NULL,                                "", NULL }
         };
         static ChatCommand commandTable[] =
         {
-            { "guild", rbac::RBAC_PERM_COMMAND_GUILD,  true, NULL, "", guildCommandTable },
-            { NULL,    0,                       false, NULL, "", NULL }
+            { "guild",          SEC_ADMINISTRATOR,  true, NULL,                                 "", guildCommandTable },
+            { NULL,             0,                  false, NULL,                                "", NULL }
         };
         return commandTable;
     }
@@ -123,7 +118,6 @@ public:
             return false;
 
         targetGuild->Disband();
-        delete targetGuild;
 
         return true;
     }
@@ -170,7 +164,7 @@ public:
         if (!targetGuild)
             return false;
 
-        targetGuild->DeleteMember(targetGuid, false, true, true);
+        targetGuild->DeleteMember(targetGuid, false, true);
         return true;
     }
 
@@ -198,140 +192,6 @@ public:
 
         uint8 newRank = uint8(atoi(rankStr));
         return targetGuild->ChangeMemberRank(targetGuid, newRank);
-    }
-
-    static bool HandleGuildRenameCommand(ChatHandler* handler, char const* _args)
-    {
-        if (!*_args)
-            return false;
-
-        char *args = (char *)_args;
-
-        char const* oldGuildStr = handler->extractQuotedArg(args);
-        if (!oldGuildStr)
-        {
-            handler->SendSysMessage(LANG_BAD_VALUE);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        char const* newGuildStr = handler->extractQuotedArg(strtok(NULL, ""));
-        if (!newGuildStr)
-        {
-            handler->SendSysMessage(LANG_INSERT_GUILD_NAME);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        Guild* guild = sGuildMgr->GetGuildByName(oldGuildStr);
-        if (!guild)
-        {
-            handler->PSendSysMessage(LANG_COMMAND_COULDNOTFIND, oldGuildStr);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        if (sGuildMgr->GetGuildByName(newGuildStr))
-        {
-            handler->PSendSysMessage(LANG_GUILD_RENAME_ALREADY_EXISTS, newGuildStr);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        if (!guild->SetName(newGuildStr))
-        {
-            handler->SendSysMessage(LANG_BAD_VALUE);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        handler->PSendSysMessage(LANG_GUILD_RENAME_DONE, oldGuildStr, newGuildStr);
-        return true;
-    }
-
-	static bool HandleGuildXpCommand(ChatHandler* handler, char const* args)
-    {
-        if (!*args)
-            return false;
-
-        Guild* targetGuild;
-        uint32 amount = 0;
-
-        if (*args == '"')
-        {
-            char* guildStr = handler->extractQuotedArg((char*)args);
-            if (!guildStr)
-                return false;
-
-            targetGuild = sGuildMgr->GetGuildByName(guildStr);
-        }
-        else
-        {
-            if (!handler->getSelectedPlayer())
-                return false;
-
-            Player* target = handler->getSelectedPlayer();
-
-            if (!target->GetGuildId())
-                return false;
-
-            targetGuild = sGuildMgr->GetGuildById(target->GetGuildId());
-        }
-
-        amount = (uint32)atoi(args);
-
-        if (!targetGuild)
-            return false;
-
-        targetGuild->GiveXP(amount, handler->GetSession() ? handler->GetSession()->GetPlayer() : NULL);
-        return true;
-    }
-
-    static bool HandleGuildLevelUpCommand(ChatHandler* handler, char const* args)
-    {
-        if (!*args)
-            return false;
-
-        Guild* targetGuild;
-        uint32 amount = 0;
-
-        if (*args == '"')
-        {
-            char* guildStr = handler->extractQuotedArg((char*)args);
-            if (!guildStr)
-                return false;
-
-            targetGuild = sGuildMgr->GetGuildByName(guildStr);
-        }
-        else
-        {
-            if (!handler->getSelectedPlayer())
-                return false;
-
-            Player* target = handler->getSelectedPlayer();
-
-            if (!target->GetGuildId())
-                return false;
-
-            targetGuild = sGuildMgr->GetGuildById(target->GetGuildId());
-        }
-
-        amount = (uint32)atoi(args);
-
-        if (!targetGuild)
-            return false;
-
-        uint32 experience = 0;
-
-        for (uint8 i = 0; i < amount; ++i)
-        {
-            if (targetGuild->GetLevel() >= sWorld->getIntConfig(CONFIG_GUILD_MAX_LEVEL))
-                break;
-
-            experience = sGuildMgr->GetXPForGuildLevel(targetGuild->GetLevel()) - targetGuild->GetExperience();
-            targetGuild->GiveXP(experience, handler->GetSession() ? handler->GetSession()->GetPlayer() : NULL);
-        }
-        return true;
     }
 };
 

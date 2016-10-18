@@ -1,28 +1,19 @@
-# Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
-# Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
-# Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+# Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
 #
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.
+# This file is free software; as a special exception the author gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
 #
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-# more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program. If not, see <http://www.gnu.org/licenses/>.
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+file(GLOB_RECURSE scripts_Examples Examples/*.cpp Examples/*.h)
+source_group(Examples FILES ${scripts_Examples})
 
 set(scripts_STAT_SRCS
   ${scripts_STAT_SRCS}
-  Examples/example_misc.cpp
-  Examples/example_gossip_codebox.cpp
-  Examples/example_escort.cpp
-  Examples/example_creature.cpp
-  Examples/example_spell.cpp
-  Examples/example_commandscript.cpp
+  ${scripts_Examples}
 )
 
 message("  -> Prepared: Examples")

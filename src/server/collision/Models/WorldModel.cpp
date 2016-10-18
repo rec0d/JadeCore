@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -85,7 +84,7 @@ namespace VMAP
     class TriBoundFunc
     {
         public:
-            TriBoundFunc(std::vector<Vector3> &vert): vertices(vert.begin()) { }
+            TriBoundFunc(std::vector<Vector3> &vert): vertices(vert.begin()) {}
             void operator()(const MeshTriangle &tri, G3D::AABox &out) const
             {
                 G3D::Vector3 lo = vertices[tri.idx0];
@@ -206,48 +205,35 @@ namespace VMAP
 
     bool WmoLiquid::writeToFile(FILE* wf)
     {
-        bool result = false;
-        if (fwrite(&iTilesX, sizeof(uint32), 1, wf) == 1 &&
-            fwrite(&iTilesY, sizeof(uint32), 1, wf) == 1 &&
-            fwrite(&iCorner, sizeof(Vector3), 1, wf) == 1 &&
-            fwrite(&iType, sizeof(uint32), 1, wf) == 1)
-        {
-            uint32 size = (iTilesX + 1) * (iTilesY + 1);
-            if (fwrite(iHeight, sizeof(float), size, wf) == size)
-            {
-                size = iTilesX*iTilesY;
-                result = fwrite(iFlags, sizeof(uint8), size, wf) == size;
-            }
-        }
-
+        bool result = true;
+        if (result && fwrite(&iTilesX, sizeof(uint32), 1, wf) != 1) result = false;
+        if (result && fwrite(&iTilesY, sizeof(uint32), 1, wf) != 1) result = false;
+        if (result && fwrite(&iCorner, sizeof(Vector3), 1, wf) != 1) result = false;
+        if (result && fwrite(&iType, sizeof(uint32), 1, wf) != 1) result = false;
+        uint32 size = (iTilesX + 1)*(iTilesY + 1);
+        if (result && fwrite(iHeight, sizeof(float), size, wf) != size) result = false;
+        size = iTilesX*iTilesY;
+        if (result && fwrite(iFlags, sizeof(uint8), size, wf) != size) result = false;
         return result;
     }
 
     bool WmoLiquid::readFromFile(FILE* rf, WmoLiquid* &out)
     {
-        bool result = false;
+        bool result = true;
         WmoLiquid* liquid = new WmoLiquid();
-
-        if (fread(&liquid->iTilesX, sizeof(uint32), 1, rf) == 1 &&
-            fread(&liquid->iTilesY, sizeof(uint32), 1, rf) == 1 &&
-            fread(&liquid->iCorner, sizeof(Vector3), 1, rf) == 1 &&
-            fread(&liquid->iType, sizeof(uint32), 1, rf) == 1)
-        {
-            uint32 size = (liquid->iTilesX + 1) * (liquid->iTilesY + 1);
-            liquid->iHeight = new float[size];
-            if (fread(liquid->iHeight, sizeof(float), size, rf) == size)
-            {
-                size = liquid->iTilesX * liquid->iTilesY;
-                liquid->iFlags = new uint8[size];
-                result = fread(liquid->iFlags, sizeof(uint8), size, rf) == size;
-            }
-        }
-
+        if (result && fread(&liquid->iTilesX, sizeof(uint32), 1, rf) != 1) result = false;
+        if (result && fread(&liquid->iTilesY, sizeof(uint32), 1, rf) != 1) result = false;
+        if (result && fread(&liquid->iCorner, sizeof(Vector3), 1, rf) != 1) result = false;
+        if (result && fread(&liquid->iType, sizeof(uint32), 1, rf) != 1) result = false;
+        uint32 size = (liquid->iTilesX + 1)*(liquid->iTilesY + 1);
+        liquid->iHeight = new float[size];
+        if (result && fread(liquid->iHeight, sizeof(float), size, rf) != size) result = false;
+        size = liquid->iTilesX * liquid->iTilesY;
+        liquid->iFlags = new uint8[size];
+        if (result && fread(liquid->iFlags, sizeof(uint8), size, rf) != size) result = false;
         if (!result)
             delete liquid;
-        else
-            out = liquid;
-
+        out = liquid;
         return result;
     }
 
@@ -361,7 +347,7 @@ namespace VMAP
     struct GModelRayCallback
     {
         GModelRayCallback(const std::vector<MeshTriangle> &tris, const std::vector<Vector3> &vert):
-            vertices(vert.begin()), triangles(tris.begin()), hit(false) { }
+            vertices(vert.begin()), triangles(tris.begin()), hit(false) {}
         bool operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool /*pStopAtFirstHit*/)
         {
             bool result = IntersectTriangle(triangles[entry], vertices, ray, distance);
@@ -421,7 +407,7 @@ namespace VMAP
 
     struct WModelRayCallBack
     {
-        WModelRayCallBack(const std::vector<GroupModel> &mod): models(mod.begin()), hit(false) { }
+        WModelRayCallBack(const std::vector<GroupModel> &mod): models(mod.begin()), hit(false) {}
         bool operator()(const G3D::Ray& ray, uint32 entry, float& distance, bool pStopAtFirstHit)
         {
             bool result = models[entry].IntersectRay(ray, distance, pStopAtFirstHit);
@@ -447,7 +433,7 @@ namespace VMAP
     class WModelAreaCallback {
         public:
             WModelAreaCallback(const std::vector<GroupModel> &vals, const Vector3 &down):
-                prims(vals.begin()), hit(vals.end()), minVol(G3D::inf()), zDist(G3D::inf()), zVec(down) { }
+                prims(vals.begin()), hit(vals.end()), minVol(G3D::inf()), zDist(G3D::inf()), zVec(down) {}
             std::vector<GroupModel>::const_iterator prims;
             std::vector<GroupModel>::const_iterator hit;
             float minVol;

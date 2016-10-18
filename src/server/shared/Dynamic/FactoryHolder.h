@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -34,8 +33,8 @@ class FactoryHolder
         friend class ACE_Singleton<FactoryHolderRegistry, ACE_Null_Mutex>;
         typedef ACE_Singleton<FactoryHolderRegistry, ACE_Null_Mutex> FactoryHolderRepository;
 
-        FactoryHolder(Key k) : i_key(k) { }
-        virtual ~FactoryHolder() { }
+        FactoryHolder(Key k) : i_key(k) {}
+        virtual ~FactoryHolder() {}
         inline Key key() const { return i_key; }
 
         void RegisterSelf(void) { FactoryHolderRepository::instance()->InsertItem(this, i_key); }
@@ -55,7 +54,7 @@ template<class T>
 class Permissible
 {
     public:
-        virtual ~Permissible() { }
+        virtual ~Permissible() {}
         virtual int Permit(const T *) const = 0;
 };
 #endif

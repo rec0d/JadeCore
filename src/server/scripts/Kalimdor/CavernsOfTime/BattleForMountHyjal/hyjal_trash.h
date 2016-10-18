@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,6 +14,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 #ifndef SC_HYJAL_TRASH_AI_H
 #define SC_HYJAL_TRASH_AI_H
 
@@ -28,7 +27,7 @@ struct hyjal_trashAI : public npc_escortAI
 {
     hyjal_trashAI(Creature* creature);
 
-    void UpdateAI(uint32 diff);
+    void UpdateAI(const uint32 diff);
 
     void JustDied(Unit* /*killer*/);
 

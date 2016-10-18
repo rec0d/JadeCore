@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -257,7 +255,7 @@ class npc_arthas : public CreatureScript
 public:
     npc_arthas() : CreatureScript("npc_arthas") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         npc_arthasAI* ai = CAST_AI(npc_arthas::npc_arthasAI, creature->AI());
@@ -296,11 +294,11 @@ public:
         }
         player->CLOSE_GOSSIP_MENU();
         ai->SetDespawnAtFar(true);
-        creature->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+        creature->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         npc_arthasAI* ai = CAST_AI(npc_arthas::npc_arthasAI, creature->AI());
 
@@ -344,7 +342,7 @@ public:
         return true;
     }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_arthasAI(creature);
     }
@@ -381,7 +379,7 @@ public:
 
         uint32 exorcismTimer;
 
-        void Reset() override
+        void Reset()
         {
             utherGUID = 0;
             jainaGUID = 0;
@@ -408,7 +406,7 @@ public:
                     case NOT_STARTED:
                         bStepping = true;
                         step = 0;
-                        me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                        me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                         bossEvent = DATA_MEATHOOK_EVENT;
                         gossipStep = 0;
                         break;
@@ -419,12 +417,12 @@ public:
             }
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             DoCast(me, SPELL_ARTHAS_AURA);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             if (instance)
                 instance->SetData(DATA_ARTHAS_EVENT, FAIL);
@@ -472,7 +470,7 @@ public:
             ++step;
         }
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId)
         {
             switch (waypointId)
             {
@@ -498,7 +496,7 @@ public:
                     break;
                 case 8:
                     gossipStep = 1;
-                    me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                    me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                     SetHoldState(true);
                     break;
                 case 12:
@@ -523,7 +521,7 @@ public:
                     break;
                 case 20:
                     gossipStep = 2;
-                    me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                    me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                     SetRun(false);
                     SetHoldState(true);
                     break;
@@ -569,7 +567,7 @@ public:
                     SetRun(true);
                     SetDespawnAtFar(false);
                     gossipStep = 4;
-                    me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                    me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                     SetHoldState(true);
                     break;
                 case 47:
@@ -585,13 +583,13 @@ public:
                     break;
                 case 54:
                     gossipStep = 5;
-                    me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                    me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                     SetHoldState(true);
                     break;
              }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             npc_escortAI::UpdateAI(diff);
 
@@ -1071,7 +1069,7 @@ public:
                         case 72:
                         case 74:
                         case 76:
-                            if (me->IsInCombat())
+                            if (me->isInCombat())
                                 phaseTimer = 1000;
                             else
                             {
@@ -1085,7 +1083,7 @@ public:
                             }
                             break;
                         case 78:
-                            if (me->IsInCombat())
+                            if (me->isInCombat())
                                 phaseTimer = 1000;
                             else
                             {
@@ -1135,7 +1133,7 @@ public:
                                 if (instance->GetData(DATA_EPOCH_EVENT) == DONE)
                                 {
                                     gossipStep = 3;
-                                    me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                                    me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                                     bStepping = false;
                                     bossEvent = DATA_MAL_GANIS_EVENT;
                                     JumpToNextStep(15000);
@@ -1245,7 +1243,7 @@ class npc_crate_helper : public CreatureScript
                 _marked = false;
             }
 
-            void SpellHit(Unit* /*caster*/, SpellInfo const* spell) override
+            void SpellHit(Unit* /*caster*/, SpellInfo const* spell)
             {
                 if (spell->Id == SPELL_ARCANE_DISRUPTION && !_marked)
                 {
@@ -1264,7 +1262,7 @@ class npc_crate_helper : public CreatureScript
             bool _marked;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_crate_helperAI(creature);
         }

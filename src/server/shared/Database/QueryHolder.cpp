@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,7 +24,7 @@ bool SQLQueryHolder::SetQuery(size_t index, const char *sql)
 {
     if (m_queries.size() <= index)
     {
-        TC_LOG_ERROR("sql.sql", "Query index (%u) out of range (size: %u) for query: %s", uint32(index), (uint32)m_queries.size(), sql);
+        sLog->outError(LOG_FILTER_SQL, "Query index (%u) out of range (size: %u) for query: %s", uint32(index), (uint32)m_queries.size(), sql);
         return false;
     }
 
@@ -46,7 +44,7 @@ bool SQLQueryHolder::SetPQuery(size_t index, const char *format, ...)
 {
     if (!format)
     {
-        TC_LOG_ERROR("sql.sql", "Query (index: %u) is empty.", uint32(index));
+        sLog->outError(LOG_FILTER_SQL, "Query (index: %u) is empty.", uint32(index));
         return false;
     }
 
@@ -58,7 +56,7 @@ bool SQLQueryHolder::SetPQuery(size_t index, const char *format, ...)
 
     if (res == -1)
     {
-        TC_LOG_ERROR("sql.sql", "SQL Query truncated (and not execute) for format: %s", format);
+        sLog->outError(LOG_FILTER_SQL, "SQL Query truncated (and not execute) for format: %s", format);
         return false;
     }
 
@@ -69,7 +67,7 @@ bool SQLQueryHolder::SetPreparedQuery(size_t index, PreparedStatement* stmt)
 {
     if (m_queries.size() <= index)
     {
-        TC_LOG_ERROR("sql.sql", "Query index (%u) out of range (size: %u) for prepared statement", uint32(index), (uint32)m_queries.size());
+        sLog->outError(LOG_FILTER_SQL, "Query index (%u) out of range (size: %u) for prepared statement", uint32(index), (uint32)m_queries.size());
         return false;
     }
 
@@ -171,9 +169,6 @@ void SQLQueryHolder::SetSize(size_t size)
 
 bool SQLQueryHolderTask::Execute()
 {
-    //the result can't be ready as we are processing it right now
-    ASSERT(!m_result.ready());
-
     if (!m_holder)
         return false;
 

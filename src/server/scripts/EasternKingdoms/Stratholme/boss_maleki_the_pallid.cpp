@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,23 +27,19 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "stratholme.h"
 
-enum Spells
-{
-    SPELL_FROSTBOLT     = 17503,
-    SPELL_DRAINLIFE     = 20743,
-    SPELL_DRAIN_MANA    = 17243,
-    SPELL_ICETOMB       = 16869
-
-};
+#define SPELL_FROSTBOLT    17503
+#define SPELL_DRAINLIFE    20743
+#define SPELL_DRAIN_MANA    17243
+#define SPELL_ICETOMB    16869
 
 class boss_maleki_the_pallid : public CreatureScript
 {
 public:
     boss_maleki_the_pallid() : CreatureScript("boss_maleki_the_pallid") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_maleki_the_pallidAI(creature);
+        return new boss_maleki_the_pallidAI (creature);
     }
 
     struct boss_maleki_the_pallidAI : public ScriptedAI
@@ -60,24 +55,24 @@ public:
         uint32 IceTomb_Timer;
         uint32 DrainLife_Timer;
 
-        void Reset() override
+        void Reset()
         {
             Frostbolt_Timer = 1000;
             IceTomb_Timer = 16000;
             DrainLife_Timer = 31000;
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             if (instance)
                 instance->SetData(TYPE_PALLID, IN_PROGRESS);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             //Return since we have no target
             if (!UpdateVictim())

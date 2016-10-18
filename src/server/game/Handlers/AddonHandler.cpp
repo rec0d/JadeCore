@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -22,9 +22,13 @@
 #include "Opcodes.h"
 #include "Log.h"
 
-AddonHandler::AddonHandler() { }
+AddonHandler::AddonHandler()
+{
+}
 
-AddonHandler::~AddonHandler() { }
+AddonHandler::~AddonHandler()
+{
+}
 
 bool AddonHandler::BuildAddonPacket(WorldPacket* source, WorldPacket* target)
 {
@@ -74,7 +78,7 @@ bool AddonHandler::BuildAddonPacket(WorldPacket* source, WorldPacket* target)
 
             AddOnPacked >> enabled >> crc >> unk2;
 
-            TC_LOG_DEBUG("network", "ADDON: Name: %s, Enabled: 0x%x, CRC: 0x%x, Unknown2: 0x%x", addonName.c_str(), enabled, crc, unk2);
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "ADDON: Name: %s, Enabled: 0x%x, CRC: 0x%x, Unknown2: 0x%x", addonName.c_str(), enabled, crc, unk2);
 
             uint8 state = (enabled ? 2 : 1);
             *target << uint8(state);
@@ -128,11 +132,11 @@ bool AddonHandler::BuildAddonPacket(WorldPacket* source, WorldPacket* target)
         *target << uint32(count);
 
         if (AddOnPacked.rpos() != AddOnPacked.size())
-            TC_LOG_DEBUG("network", "packet under read!");
+            sLog->outDebug(LOG_FILTER_NETWORKIO, "packet under read!");
     }
     else
     {
-        TC_LOG_ERROR("network", "Addon packet uncompress error :(");
+        sLog->outError(LOG_FILTER_NETWORKIO, "Addon packet uncompress error :(");
         return false;
     }
     return true;

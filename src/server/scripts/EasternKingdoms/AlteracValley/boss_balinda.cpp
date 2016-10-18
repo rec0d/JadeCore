@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,6 +14,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 
@@ -44,26 +43,26 @@ enum WaterElementalSpells
     SPELL_WATERBOLT                               = 46983
 };
 
-class npc_water_elemental : public CreatureScript
+class mob_water_elemental : public CreatureScript
 {
 public:
-    npc_water_elemental() : CreatureScript("npc_water_elemental") { }
+    mob_water_elemental() : CreatureScript("mob_water_elemental") { }
 
-    struct npc_water_elementalAI : public ScriptedAI
+    struct mob_water_elementalAI : public ScriptedAI
     {
-        npc_water_elementalAI(Creature* creature) : ScriptedAI(creature) { }
+        mob_water_elementalAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 waterBoltTimer;
         uint64 balindaGUID;
         uint32 resetTimer;
 
-        void Reset() override
+        void Reset()
         {
             waterBoltTimer            = 3 * IN_MILLISECONDS;
             resetTimer                = 5 * IN_MILLISECONDS;
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -80,16 +79,16 @@ public:
                 if (Creature* pBalinda = Unit::GetCreature(*me, balindaGUID))
                     if (me->GetDistance2d(pBalinda->GetHomePosition().GetPositionX(), pBalinda->GetHomePosition().GetPositionY()) > 50)
                         EnterEvadeMode();
-                resetTimer = 5 * IN_MILLISECONDS;
+                    resetTimer = 5 * IN_MILLISECONDS;
             } else resetTimer -= diff;
 
             DoMeleeAttackIfReady();
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_water_elementalAI(creature);
+        return new mob_water_elementalAI(creature);
     }
 };
 
@@ -100,7 +99,7 @@ public:
 
     struct boss_balindaAI : public ScriptedAI
     {
-        boss_balindaAI(Creature* creature) : ScriptedAI(creature), summons(me) { }
+        boss_balindaAI(Creature* creature) : ScriptedAI(creature), summons(me) {}
 
         uint32 arcaneExplosionTimer;
         uint32 coneOfColdTimer;
@@ -111,7 +110,7 @@ public:
 
         SummonList summons;
 
-        void Reset() override
+        void Reset()
         {
             arcaneExplosionTimer      = urand(5 * IN_MILLISECONDS, 15 * IN_MILLISECONDS);
             coneOfColdTimer           = 8 * IN_MILLISECONDS;
@@ -123,30 +122,30 @@ public:
             summons.DespawnAll();
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(YELL_AGGRO);
         }
 
-        void JustRespawned() override
+        void JustRespawned()
         {
             Reset();
         }
 
-        void JustSummoned(Creature* summoned) override
+        void JustSummoned(Creature* summoned)
         {
-            CAST_AI(npc_water_elemental::npc_water_elementalAI, summoned->AI())->balindaGUID = me->GetGUID();
+            CAST_AI(mob_water_elemental::mob_water_elementalAI, summoned->AI())->balindaGUID = me->GetGUID();
             summoned->AI()->AttackStart(SelectTarget(SELECT_TARGET_RANDOM, 0, 50, true));
             summoned->setFaction(me->getFaction());
             summons.Summon(summoned);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             summons.DespawnAll();
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -197,7 +196,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_balindaAI(creature);
     }
@@ -206,5 +205,5 @@ public:
 void AddSC_boss_balinda()
 {
     new boss_balinda;
-    new npc_water_elemental;
+    new mob_water_elemental;
 };

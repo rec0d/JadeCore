@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -58,14 +57,14 @@ class instance_blackfathom_deeps : public InstanceMapScript
 public:
     instance_blackfathom_deeps() : InstanceMapScript("instance_blackfathom_deeps", 48) { }
 
-    InstanceScript* GetInstanceScript(InstanceMap* map) const override
+    InstanceScript* GetInstanceScript(InstanceMap* map) const
     {
         return new instance_blackfathom_deeps_InstanceMapScript(map);
     }
 
     struct instance_blackfathom_deeps_InstanceMapScript : public InstanceScript
     {
-        instance_blackfathom_deeps_InstanceMapScript(Map* map) : InstanceScript(map) { }
+        instance_blackfathom_deeps_InstanceMapScript(Map* map) : InstanceScript(map) {}
 
         uint64 twilightLordKelrisGUID;
         uint64 shrine1GUID;
@@ -80,7 +79,7 @@ public:
         uint8 countFires;
         uint8 deathTimes;
 
-        void Initialize() override
+        void Initialize()
         {
             memset(&encounter, 0, sizeof(encounter));
 
@@ -96,7 +95,7 @@ public:
             deathTimes = 0;
         }
 
-        void OnCreatureCreate(Creature* creature) override
+        void OnCreatureCreate(Creature* creature)
         {
             switch (creature->GetEntry())
             {
@@ -109,7 +108,7 @@ public:
             }
         }
 
-        void OnGameObjectCreate(GameObject* go) override
+        void OnGameObjectCreate(GameObject* go)
         {
             switch (go->GetEntry())
             {
@@ -128,12 +127,12 @@ public:
                 case GO_SHRINE_OF_GELIHAST:
                     shrineOfGelihastGUID = go->GetGUID();
                     if (encounter[0] != DONE)
-                        go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                        go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
                     break;
                 case GO_ALTAR_OF_THE_DEEPS:
                     altarOfTheDeepsGUID = go->GetGUID();
                     if (encounter[3] != DONE)
-                        go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                        go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
                     break;
                 case GO_AKU_MAI_DOOR:
                     if (encounter[2] == DONE)
@@ -143,7 +142,7 @@ public:
             }
         }
 
-        void SetData(uint32 type, uint32 data) override
+        void SetData(uint32 type, uint32 data)
         {
             switch (type)
             {
@@ -151,14 +150,14 @@ public:
                     encounter[0] = data;
                     if (data == DONE)
                         if (GameObject* go = instance->GetGameObject(shrineOfGelihastGUID))
-                            go->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                            go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
                     break;
                 case TYPE_AKU_MAI:
                     encounter[3] = data;
                     if (data == DONE)
                         if (GameObject* go = instance->GetGameObject(altarOfTheDeepsGUID))
                         {
-                            go->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                            go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
                             go->SummonCreature(NPC_MORRIDUNE, SpawnsLocation[4], TEMPSUMMON_CORPSE_TIMED_DESPAWN, 300000);
                         }
                     break;
@@ -213,7 +212,7 @@ public:
             }
         }
 
-        uint32 GetData(uint32 type) const override
+        uint32 GetData(uint32 type) const
         {
             switch (type)
             {
@@ -234,7 +233,7 @@ public:
             return 0;
         }
 
-        uint64 GetData64(uint32 data) const override
+        uint64 GetData64(uint32 data) const
         {
             switch (data)
             {

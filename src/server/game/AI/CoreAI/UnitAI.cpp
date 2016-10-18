@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -32,6 +32,12 @@ void UnitAI::AttackStart(Unit* victim)
         me->GetMotionMaster()->MoveChase(victim);
 }
 
+void UnitAI::AttackStart(Unit* victim, uint32 spellId)
+{
+    if (victim && me->Attack(victim, true))
+        me->GetMotionMaster()->MoveChase(victim);
+}
+
 void UnitAI::AttackStartCaster(Unit* victim, float dist)
 {
     if (victim && me->Attack(victim, false))
@@ -49,6 +55,8 @@ void UnitAI::DoMeleeAttackIfReady()
     {
         me->AttackerStateUpdate(victim);
         me->resetAttackTimer();
+        if (me->getAttackTimer(OFF_ATTACK) < 500 && me->GetAttackTime(OFF_ATTACK)* me->m_modAttackSpeedPct[OFF_ATTACK] >= 500)
+            me->setAttackTimer(OFF_ATTACK, me->GetAttackTime(OFF_ATTACK)/2);
     }
 
     if (me->haveOffhandWeapon() && me->isAttackReady(OFF_ATTACK) && me->IsWithinMeleeRange(victim))
@@ -76,14 +84,14 @@ bool UnitAI::DoSpellAttackIfReady(uint32 spell)
     return false;
 }
 
-Unit* UnitAI::SelectTarget(SelectAggroTarget targetType, uint32 position, float dist, bool playerOnly, int32 aura, bool checkObscuredVision)
+Unit* UnitAI::SelectTarget(SelectAggroTarget targetType, uint32 position, float dist, bool playerOnly, int32 aura)
 {
-    return SelectTarget(targetType, position, DefaultTargetSelector(me, dist, playerOnly, aura, checkObscuredVision));
+    return SelectTarget(targetType, position, DefaultTargetSelector(me, dist, playerOnly, aura));
 }
 
-void UnitAI::SelectTargetList(std::list<Unit*>& targetList, uint32 num, SelectAggroTarget targetType, float dist, bool playerOnly, int32 aura, bool checkObscuredVision)
+void UnitAI::SelectTargetList(std::list<Unit*>& targetList, uint32 num, SelectAggroTarget targetType, float dist, bool playerOnly, int32 aura)
 {
-    SelectTargetList(targetList, DefaultTargetSelector(me, dist, playerOnly, aura, checkObscuredVision), num, targetType);
+    SelectTargetList(targetList, DefaultTargetSelector(me, dist, playerOnly, aura), num, targetType);
 }
 
 float UnitAI::DoGetSpellMaxRange(uint32 spellId, bool positive)
@@ -94,7 +102,7 @@ float UnitAI::DoGetSpellMaxRange(uint32 spellId, bool positive)
 
 void UnitAI::DoAddAuraToAllHostilePlayers(uint32 spellid)
 {
-    if (me->IsInCombat())
+    if (me->isInCombat())
     {
         ThreatContainer::StorageType threatlist = me->getThreatManager().getThreatList();
         for (ThreatContainer::StorageType::const_iterator itr = threatlist.begin(); itr != threatlist.end(); ++itr)
@@ -103,12 +111,13 @@ void UnitAI::DoAddAuraToAllHostilePlayers(uint32 spellid)
                 if (unit->GetTypeId() == TYPEID_PLAYER)
                     me->AddAura(spellid, unit);
         }
-    }
+    }else
+        return;
 }
 
 void UnitAI::DoCastToAllHostilePlayers(uint32 spellid, bool triggered)
 {
-    if (me->IsInCombat())
+    if (me->isInCombat())
     {
         ThreatContainer::StorageType threatlist = me->getThreatManager().getThreatList();
         for (ThreatContainer::StorageType::const_iterator itr = threatlist.begin(); itr != threatlist.end(); ++itr)
@@ -117,51 +126,42 @@ void UnitAI::DoCastToAllHostilePlayers(uint32 spellid, bool triggered)
                 if (unit->GetTypeId() == TYPEID_PLAYER)
                     me->CastSpell(unit, spellid, triggered);
         }
-    }
+    }else
+        return;
 }
 
-void UnitAI::DoCast(uint32 spellId, bool checkObscuredVision)
+void UnitAI::DoCast(uint32 spellId)
 {
     Unit* target = NULL;
-
+    //sLog->outError(LOG_FILTER_GENERAL, "aggre %u %u", spellId, (uint32)AISpellInfo[spellId].target);
     switch (AISpellInfo[spellId].target)
     {
         default:
-        case AITARGET_SELF:
-            target = me;
-            break;
-        case AITARGET_VICTIM:
-            target = me->GetVictim();
-            break;
+        case AITARGET_SELF:     target = me; break;
+        case AITARGET_VICTIM:   target = me->GetVictim(); break;
         case AITARGET_ENEMY:
         {
-            if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId))
-            {
-                bool playerOnly = spellInfo->AttributesEx3 & SPELL_ATTR3_ONLY_TARGET_PLAYERS;
-                target = SelectTarget(SELECT_TARGET_RANDOM, 0, spellInfo->GetMaxRange(false), playerOnly);
-            }
+            const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+            bool playerOnly = spellInfo->AttributesEx3 & SPELL_ATTR3_ONLY_TARGET_PLAYERS;
+            //float range = GetSpellMaxRange(spellInfo, false);
+            target = SelectTarget(SELECT_TARGET_RANDOM, 0, spellInfo->GetMaxRange(false), playerOnly);
             break;
         }
-        case AITARGET_ALLY:
-            target = me;
-            break;
-        case AITARGET_BUFF:
-            target = me;
-            break;
+        case AITARGET_ALLY:     target = me; break;
+        case AITARGET_BUFF:     target = me; break;
         case AITARGET_DEBUFF:
         {
-            if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId))
-            {
-                bool playerOnly = spellInfo->AttributesEx3 & SPELL_ATTR3_ONLY_TARGET_PLAYERS;
-                float range = spellInfo->GetMaxRange(false);
+            const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(spellId);
+            bool playerOnly = spellInfo->AttributesEx3 & SPELL_ATTR3_ONLY_TARGET_PLAYERS;
+            float range = spellInfo->GetMaxRange(false);
 
-                DefaultTargetSelector targetSelector(me, range, playerOnly, -(int32)spellId, checkObscuredVision);
-                if (!(spellInfo->AuraInterruptFlags & AURA_INTERRUPT_FLAG_NOT_VICTIM)
-                    && targetSelector(me->GetVictim()))
-                    target = me->GetVictim();
-                else
-                    target = SelectTarget(SELECT_TARGET_RANDOM, 0, targetSelector);
-            }
+            DefaultTargetSelector targetSelector(me, range, playerOnly, -(int32)spellId);
+            if (!(spellInfo->Attributes & SPELL_ATTR0_BREAKABLE_BY_DAMAGE)
+                && !(spellInfo->AuraInterruptFlags & AURA_INTERRUPT_FLAG_NOT_VICTIM)
+                && targetSelector(me->GetVictim()))
+                target = me->GetVictim();
+            else
+                target = SelectTarget(SELECT_TARGET_RANDOM, 0, targetSelector);
             break;
         }
     }
@@ -192,6 +192,37 @@ void UnitAI::DoCastAOE(uint32 spellId, bool triggered)
         return;
 
     me->CastSpell((Unit*)NULL, spellId, triggered);
+}
+
+void UnitAI::DoCastDelayed(Unit* victim, uint32 spellId, uint32 delay, bool triggered)
+{
+	struct DelayedCast : public BasicEvent
+	{
+		DelayedCast(Unit *caster, Unit *target, uint32 spellId, bool triggered) : BasicEvent(),
+		_caster(caster), _target(target), _spellId(spellId), _triggered(triggered) {}
+
+		bool Execute(uint64, uint32)
+		{
+			_caster->CastSpell(_target, _spellId, _triggered);
+			return true;
+		}
+
+		Unit *_caster;
+		Unit *_target;
+		uint32 _spellId;
+		bool _triggered;
+	};
+
+	me->m_Events.AddEvent(new DelayedCast(me, victim, spellId, triggered), me->m_Events.CalculateTime(delay));
+}
+
+void UnitAI::DoCastRandom(uint32 spellId, float dist, bool triggered, int32 aura, uint32 position)
+{
+    if (me->HasUnitState(UNIT_STATE_CASTING) && !triggered)
+        return;
+
+    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, position, dist, true, aura))
+        me->CastSpell(target, spellId, triggered);
 }
 
 #define UPDATE_TARGET(a) {if (AIInfo->target<a) AIInfo->target=a;}
@@ -248,10 +279,7 @@ void UnitAI::FillAISpellInfo()
 }
 
 //Enable PlayerAI when charmed
-void PlayerAI::OnCharmed(bool apply)
-{
-    me->IsAIEnabled = apply;
-}
+void PlayerAI::OnCharmed(bool apply) { me->IsAIEnabled = apply; }
 
 void SimpleCharmedAI::UpdateAI(const uint32 /*diff*/)
 {
@@ -269,7 +297,7 @@ void SimpleCharmedAI::UpdateAI(const uint32 /*diff*/)
             }
     }
 
-    if (!charmer->IsInCombat())
+    if (!charmer->isInCombat())
         me->GetMotionMaster()->MoveFollow(charmer, PET_FOLLOW_DIST, me->GetFollowAngle());
 
     Unit* target = me->GetVictim();

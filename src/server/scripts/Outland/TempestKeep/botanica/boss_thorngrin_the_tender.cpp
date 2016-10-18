@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -56,14 +54,14 @@ class boss_thorngrin_the_tender : public CreatureScript
         {
             boss_thorngrin_the_tenderAI(Creature* creature) : BossAI(creature, DATA_THORNGRIN_THE_TENDER) { }
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 _phase1 = true;
                 _phase2 = true;
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 _EnterCombat();
                 Talk(SAY_AGGRO);
@@ -72,18 +70,18 @@ class boss_thorngrin_the_tender : public CreatureScript
                 events.ScheduleEvent(EVENT_ENRAGE, 12000);
             }
 
-            void KilledUnit(Unit* /*victim*/) override
+            void KilledUnit(Unit* /*victim*/)
             {
                 Talk(SAY_KILL);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 _JustDied();
                 Talk(SAY_DEATH);
             }
 
-            void DamageTaken(Unit* /*killer*/, uint32 &damage) override
+            void DamageTaken(Unit* /*killer*/, uint32 &damage)
             {
                 if (me->HealthBelowPctDamaged(50, damage) && _phase1)
                 {
@@ -97,7 +95,7 @@ class boss_thorngrin_the_tender : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -142,7 +140,7 @@ class boss_thorngrin_the_tender : public CreatureScript
             bool _phase2;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_thorngrin_the_tenderAI(creature);
         }

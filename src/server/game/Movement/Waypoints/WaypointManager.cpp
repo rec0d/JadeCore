@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -22,7 +22,9 @@
 #include "MapManager.h"
 #include "Log.h"
 
-WaypointMgr::WaypointMgr() { }
+WaypointMgr::WaypointMgr()
+{
+}
 
 WaypointMgr::~WaypointMgr()
 {
@@ -41,12 +43,12 @@ void WaypointMgr::Load()
 {
     uint32 oldMSTime = getMSTime();
 
-    //                                                0    1         2           3          4            5           6        7      8           9
-    QueryResult result = WorldDatabase.Query("SELECT id, point, position_x, position_y, position_z, orientation, move_flag, delay, action, action_chance FROM waypoint_data ORDER BY id, point");
+    //                                                0    1         2           3          4            5           6        7      8           9         10
+    QueryResult result = WorldDatabase.Query("SELECT id, point, position_x, position_y, position_z, orientation, move_flag, delay, action, action_chance, inverse_formation_angle FROM waypoint_data ORDER BY id, point");
 
     if (!result)
     {
-        TC_LOG_ERROR("server.loading", ">> Loaded 0 waypoints. DB table `waypoint_data` is empty!");
+        sLog->outError(LOG_FILTER_SERVER_LOADING, ">> Loaded 0 waypoints. DB table `waypoint_data` is empty!");
         return;
     }
 
@@ -77,13 +79,13 @@ void WaypointMgr::Load()
         wp->delay = fields[7].GetUInt32();
         wp->event_id = fields[8].GetUInt32();
         wp->event_chance = fields[9].GetInt16();
-
+        wp->inverse_formation_angle = fields[10].GetBool();
         path.push_back(wp);
         ++count;
     }
     while (result->NextRow());
 
-    TC_LOG_INFO("server.loading", ">> Loaded %u waypoints in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+    sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded %u waypoints in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
 void WaypointMgr::ReloadPath(uint32 id)
@@ -130,6 +132,7 @@ void WaypointMgr::ReloadPath(uint32 id)
         wp->delay = fields[6].GetUInt32();
         wp->event_id = fields[7].GetUInt32();
         wp->event_chance = fields[8].GetUInt8();
+        wp->inverse_formation_angle = fields[9].GetBool();
 
         path.push_back(wp);
 

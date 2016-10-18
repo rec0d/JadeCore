@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -51,21 +49,18 @@ class npc_warmage_violetstand : public CreatureScript
 public:
     npc_warmage_violetstand() : CreatureScript("npc_warmage_violetstand") { }
 
-    struct npc_warmage_violetstandAI : public ScriptedAI
+    struct npc_warmage_violetstandAI : public Scripted_NoMovementAI
     {
-        npc_warmage_violetstandAI(Creature* creature) : ScriptedAI(creature)
-        {
-            SetCombatMovement(false);
-        }
+        npc_warmage_violetstandAI(Creature* creature) : Scripted_NoMovementAI(creature){}
 
         uint64 uiTargetGUID;
 
-        void Reset() override
+        void Reset()
         {
             uiTargetGUID = 0;
         }
 
-        void UpdateAI(uint32 /*uiDiff*/) override
+        void UpdateAI(const uint32 /*uiDiff*/)
         {
             if (me->IsNonMeleeSpellCasted(false))
                 return;
@@ -105,7 +100,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_warmage_violetstandAI(creature);
     }

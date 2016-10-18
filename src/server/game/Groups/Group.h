@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -19,12 +19,15 @@
 #ifndef TRINITYCORE_GROUP_H
 #define TRINITYCORE_GROUP_H
 
+#include "Battleground.h"
 #include "DBCEnums.h"
 #include "GroupRefManager.h"
 #include "LootMgr.h"
 #include "QueryResult.h"
 #include "SharedDefines.h"
-#include "RatedInfo.h"
+#include "Player.h"
+#include "Battlefield.h"
+#include "BattlefieldMgr.h"
 
 class Battlefield;
 class Battleground;
@@ -44,7 +47,6 @@ struct MapEntry;
 #define MAXRAIDSIZE 40
 #define MAX_RAID_SUBGROUPS MAXRAIDSIZE/MAXGROUPSIZE
 #define TARGETICONCOUNT 8
-#define WORLD_MARKER_COUNT 5
 
 enum RollVote
 {
@@ -118,14 +120,26 @@ enum GroupUpdateFlags
     GROUP_UPDATE_FLAG_PET_AURAS         = 0x00080000,       // [see GROUP_UPDATE_FLAG_AURAS]
     GROUP_UPDATE_FLAG_VEHICLE_SEAT      = 0x00100000,       // int32 (vehicle seat id)
     GROUP_UPDATE_FLAG_PHASE             = 0x00200000,       // int32 (unk), uint32 (phase count), for (count) uint16(phaseId)
+    GROUP_UPDATE_FLAG_UNK400000         = 0x00400000,
+    GROUP_UPDATE_FLAG_UNK800000         = 0x00800000,
+    GROUP_UPDATE_FLAG_UNK1000000        = 0x01000000,
+    GROUP_UPDATE_FLAG_UNK2000000        = 0x02000000,
+    GROUP_UPDATE_FLAG_UNK4000000        = 0x04000000,
+    GROUP_UPDATE_FLAG_UNK8000000        = 0x08000000,
+    GROUP_UPDATE_FLAG_UNK10000000       = 0x10000000,
+    GROUP_UPDATE_FLAG_UNK20000000       = 0x20000000,
+    GROUP_UPDATE_FLAG_UNK40000000       = 0x40000000,
 
     GROUP_UPDATE_PET = GROUP_UPDATE_FLAG_PET_GUID | GROUP_UPDATE_FLAG_PET_NAME | GROUP_UPDATE_FLAG_PET_MODEL_ID |
                        GROUP_UPDATE_FLAG_PET_CUR_HP | GROUP_UPDATE_FLAG_PET_MAX_HP | GROUP_UPDATE_FLAG_PET_POWER_TYPE |
                        GROUP_UPDATE_FLAG_PET_CUR_POWER | GROUP_UPDATE_FLAG_PET_MAX_POWER | GROUP_UPDATE_FLAG_PET_AURAS, // all pet flags
-    GROUP_UPDATE_FULL = GROUP_UPDATE_FLAG_STATUS | GROUP_UPDATE_FLAG_CUR_HP | GROUP_UPDATE_FLAG_MAX_HP |
-                        GROUP_UPDATE_FLAG_POWER_TYPE | GROUP_UPDATE_FLAG_CUR_POWER | GROUP_UPDATE_FLAG_MAX_POWER |
-                        GROUP_UPDATE_FLAG_LEVEL | GROUP_UPDATE_FLAG_ZONE | GROUP_UPDATE_FLAG_POSITION |
-                        GROUP_UPDATE_FLAG_AURAS | GROUP_UPDATE_PET | GROUP_UPDATE_FLAG_PHASE // all known flags, except UNK100 and VEHICLE_SEAT
+    GROUP_UPDATE_FULL = GROUP_UPDATE_FLAG_STATUS | GROUP_UPDATE_FLAG_CUR_HP | GROUP_UPDATE_FLAG_MAX_HP | 
+                        GROUP_UPDATE_FLAG_CUR_POWER | GROUP_UPDATE_FLAG_MAX_POWER | GROUP_UPDATE_FLAG_LEVEL |
+                        GROUP_UPDATE_FLAG_ZONE | GROUP_UPDATE_FLAG_UNK100 | GROUP_UPDATE_FLAG_POSITION | 
+                        GROUP_UPDATE_FLAG_AURAS | GROUP_UPDATE_FLAG_PHASE | GROUP_UPDATE_FLAG_POWER_TYPE |
+                        GROUP_UPDATE_FLAG_UNK400000 | GROUP_UPDATE_FLAG_UNK800000 | GROUP_UPDATE_FLAG_UNK1000000 |
+                        GROUP_UPDATE_FLAG_UNK2000000 | GROUP_UPDATE_FLAG_UNK4000000 | GROUP_UPDATE_FLAG_UNK8000000 |
+                        GROUP_UPDATE_FLAG_UNK10000000 | GROUP_UPDATE_FLAG_UNK20000000 | GROUP_UPDATE_FLAG_UNK40000000
 };
 
 class Roll : public LootValidatorRef
@@ -158,11 +172,11 @@ struct InstanceGroupBind
     bool perm;
     /* permanent InstanceGroupBinds exist if the leader has a permanent
        PlayerInstanceBind for the same instance. */
-    InstanceGroupBind() : save(NULL), perm(false) { }
+    InstanceGroupBind() : save(NULL), perm(false) {}
 };
 
 /** request member stats checken **/
-/// @todo uninvite people that not accepted invite
+/** todo: uninvite people that not accepted invite **/
 class Group
 {
     public:
@@ -173,15 +187,8 @@ class Group
             uint8       group;
             uint8       flags;
             uint8       roles;
-            bool        readyCheckHasResponded;
+            uint32      guildId;
         };
-
-        struct WorldMarkerPosition
-        {
-            Position    position;
-            uint32      mapID;
-        };
-
         typedef std::list<MemberSlot> MemberSlotList;
         typedef MemberSlotList::const_iterator member_citerator;
 
@@ -221,6 +228,7 @@ class Group
         bool isBGGroup()   const;
         bool isBFGroup()   const;
         bool IsCreated()   const;
+        bool IsGuildGroup(uint32 guildId, bool AllInSameMap = false, bool AllInSameInstanceId = false);
         uint64 GetLeaderGUID() const;
         uint64 GetGUID() const;
         uint32 GetLowGUID() const;
@@ -236,8 +244,6 @@ class Group
         bool IsLeader(uint64 guid) const;
         uint64 GetMemberGUID(const std::string& name);
         bool IsAssistant(uint64 guid) const;
-        bool ReadyCheckInProgress() const { return _readyCheckInProgress; }
-        bool ReadyCheckAllResponded() const;
 
         Player* GetInvited(uint64 guid) const;
         Player* GetInvited(const std::string& name) const;
@@ -251,8 +257,10 @@ class Group
         GroupReference* GetFirstMember() { return m_memberMgr.getFirst(); }
         GroupReference const* GetFirstMember() const { return m_memberMgr.getFirst(); }
         uint32 GetMembersCount() const { return m_memberSlots.size(); }
+        uint8 GetGuildMembersCount(uint64 guid) const;
 
         uint8 GetMemberGroup(uint64 guid) const;
+        uint8 GetGroupType() { return m_groupType; }
 
         void ConvertToLFG();
         void ConvertToRaid();
@@ -261,21 +269,14 @@ class Group
         void SetBattlegroundGroup(Battleground* bg);
         void SetBattlefieldGroup(Battlefield* bf);
         GroupJoinBattlegroundResult CanJoinBattlegroundQueue(Battleground const* bgOrTemplate, BattlegroundQueueTypeId bgQueueTypeId, uint32 MinPlayerCount, uint32 MaxPlayerCount, bool isRated, uint32 arenaSlot);
-        GroupRatedStats GetRatedStats(RatedType ratedType);
 
         void ChangeMembersGroup(uint64 guid, uint8 group);
         void ChangeMembersGroup(Player* player, uint8 group);
-        void SetTargetIcon(uint8 iconID, ObjectGuid whoGuid, ObjectGuid targetGuid);
-        
-        // Raid Markers
-        void SetWorldMarker(uint8 slot, const Position& pos, uint32 mapID);
-        void ClearWorldMarker(uint8 slot);
-        void SendWorldMarkerUpdate();
-
+        void SetTargetIcon(uint8 id, uint64 whoGuid, uint64 targetGuid);
         void SetGroupMemberFlag(uint64 guid, bool apply, GroupMemberFlags flag);
+        void SetEveryoneAssistant(Group* group, bool active);
+        void UpdateGuildAchievementCriteria(AchievementCriteriaTypes type, uint32 miscValue1, uint32 miscValue2, uint32 miscValue3, Unit* unit, WorldObject* rewardSource);
         void RemoveUniqueGroupMemberFlag(GroupMemberFlags flag);
-        void SetMemberRole(uint64 guid, uint32 role);
-        uint32 GetMemberRole(uint64 guid) const;
 
         Difficulty GetDifficulty(bool isRaid) const;
         Difficulty GetDungeonDifficulty() const;
@@ -286,17 +287,13 @@ class Group
         bool InCombatToInstance(uint32 instanceId);
         void ResetInstances(uint8 method, bool isRaid, Player* SendMsgTo);
 
-        void ReadyCheck(bool state) { _readyCheckInProgress = state; }
-        void ReadyCheckMemberHasResponded(uint64 guid);
-        void ReadyCheckResetResponded();
-
         // -no description-
         //void SendInit(WorldSession* session);
         void SendTargetIconList(WorldSession* session);
         void SendUpdate();
         void SendUpdateToPlayer(uint64 playerGUID, MemberSlot* slot = NULL);
         void UpdatePlayerOutOfRange(Player* player);
-        void SendReadyCheckCompleted();
+        void LogoutPlayerOutOfRange(Player* player);
                                                             // ignore: GUID of player that will be ignored
         void BroadcastPacket(WorldPacket* packet, bool ignorePlayersInBGRaid, int group = -1, uint64 ignore = 0);
         void BroadcastAddonMessagePacket(WorldPacket* packet, const std::string& prefix, bool ignorePlayersInBGRaid, int group = -1, uint64 ignore = 0);
@@ -310,8 +307,8 @@ class Group
         bool isRollLootActive() const;
         void SendLootStartRoll(uint32 CountDown, uint32 mapid, const Roll &r);
         void SendLootStartRollToPlayer(uint32 countDown, uint32 mapId, Player* p, bool canNeed, Roll const& r);
-        void SendLootRoll(uint64 SourceGuid, uint64 TargetGuid, uint8 RollNumber, uint8 RollType, const Roll &r);
-        void SendLootRollWon(uint64 SourceGuid, uint64 TargetGuid, uint8 RollNumber, uint8 RollType, const Roll &r);
+        void SendLootRoll(uint64 SourceGuid, uint64 TargetGuid, uint32 RollNumber, uint8 RollType, const Roll &r);
+        void SendLootRollWon(uint64 SourceGuid, uint64 TargetGuid, uint32 RollNumber, uint8 RollType, const Roll &r);
         void SendLootAllPassed(Roll const& roll);
         void SendLooter(Creature* creature, Player* pLooter);
         void GroupLoot(Loot* loot, WorldObject* pLootedObject);
@@ -333,11 +330,23 @@ class Group
         InstanceGroupBind* GetBoundInstance(Player* player);
         InstanceGroupBind* GetBoundInstance(Map* aMap);
         InstanceGroupBind* GetBoundInstance(MapEntry const* mapEntry);
-        InstanceGroupBind* GetBoundInstance(Difficulty difficulty, uint32 mapId);
         BoundInstancesMap& GetBoundInstances(Difficulty difficulty);
+
+        //RaidMarker System
+        void SetMarker(uint8 slot,const Position & destTarget, Unit* caster, SpellInfo const* spell);
+        void RemoveMarker(uint8 slot);
+        void SendRaidMarkerChanged();
 
         // FG: evil hacks
         void BroadcastGroupUpdate(void);
+
+        // Use for guild system
+        bool IsGuildGroupFor(Player *player);
+        uint32 GetMembersCountOfGuild(uint32 guildId);
+        uint32 GetNeededMembersOfSameGuild(uint8 arenaType, Map const *map);
+        float GetGuildXpRateForPlayer(Player *player);
+        void UpdateGuildFor(uint64 guid, uint32 guildId);
+        bool MemberLevelIsInRange(uint32 levelMin, uint32 levelMax);
 
     protected:
         bool _setMembersGroup(uint64 guid, uint8 group);
@@ -360,6 +369,7 @@ class Group
         Difficulty          m_raidDifficulty;
         Battleground*       m_bgGroup;
         Battlefield*        m_bfGroup;
+        uint64              m_markers[6];  
         uint64              m_targetIcons[TARGETICONCOUNT];
         LootMethod          m_lootMethod;
         ItemQualities       m_lootThreshold;
@@ -371,9 +381,5 @@ class Group
         uint32              m_counter;                      // used only in SMSG_GROUP_LIST
         uint32              m_maxEnchantingLevel;
         uint32              m_dbStoreId;                    // Represents the ID used in database (Can be reused by other groups if group was disbanded)
-        bool                _readyCheckInProgress;
-
-        std::map<uint8, WorldMarkerPosition*> m_worldMarkers;
 };
-
 #endif

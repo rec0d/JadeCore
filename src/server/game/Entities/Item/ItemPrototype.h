@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -73,10 +73,9 @@ enum ItemModType
     ITEM_MOD_SHADOW_RESISTANCE        = 54,
     ITEM_MOD_NATURE_RESISTANCE        = 55,
     ITEM_MOD_ARCANE_RESISTANCE        = 56,
-    ITEM_MOD_PVP_POWER                = 57
 };
 
-#define MAX_ITEM_MOD                    58
+#define MAX_ITEM_MOD                    57
 
 enum ItemSpelltriggerType
 {
@@ -108,8 +107,10 @@ enum ItemBondingType
 
 #define MAX_BIND_TYPE                             6
 
-/* /// @todo: Requiring actual cases in which using (an) item isn't allowed while shapeshifted. Else, this flag would need an implementation.
-    ITEM_PROTO_FLAG_USABLE_WHEN_SHAPESHIFTED    = 0x00800000, // Item can be used in shapeshift forms */
+/* TODO
+    // need to know cases when using item is not allowed in shapeshift
+    ITEM_PROTO_FLAG_USABLE_WHEN_SHAPESHIFTED    = 0x00800000, // Item can be used in shapeshift forms
+*/
 
 enum ItemProtoFlags
 {
@@ -146,6 +147,9 @@ enum ItemProtoFlags
     ITEM_PROTO_FLAG_UNK11                       = 0x40000000, // ?
     ITEM_PROTO_FLAG_BOP_TRADEABLE               = 0x80000000  // bound item that can be traded
 };
+
+/* TODO
+*/
 
 enum ItemFieldFlags
 {
@@ -208,9 +212,11 @@ enum ItemFlagsCustom
 
 enum CurrencyFlags
 {
-    CURRENCY_FLAG_TRADEABLE         = 0x01,
-    CURRENCY_FLAG_HIGH_PRECISION    = 0x08,
-    CURRENCY_FLAG_HAS_SEASON_COUNT  = 0x80, // guessed
+    CURRENCY_FLAG_TRADEABLE          = 0x01,
+    // ...
+    CURRENCY_FLAG_HIGH_PRECISION     = 0x08,
+    // ...
+    CURRENCY_FLAG_COUNT_SEASON_TOTAL = 0x80,
 };
 
 enum CurrencyCategory
@@ -245,7 +251,6 @@ enum BAG_FAMILY_MASK
     BAG_FAMILY_MASK_CURRENCY_TOKENS           = 0x00002000,
     BAG_FAMILY_MASK_QUEST_ITEMS               = 0x00004000,
     BAG_FAMILY_MASK_FISHING_SUPP              = 0x00008000,
-    BAG_FAMILY_MASK_COOKING_SUPP              = 0x00010000,
 };
 
 enum SocketColor
@@ -254,7 +259,7 @@ enum SocketColor
     SOCKET_COLOR_RED                            = 2,
     SOCKET_COLOR_YELLOW                         = 4,
     SOCKET_COLOR_BLUE                           = 8,
-    SOCKET_COLOR_HYDRAULIC                      = 16, // SHA SOKETS
+    SOCKET_COLOR_HYDRAULIC                      = 16, // not used
     SOCKET_COLOR_COGWHEEL                       = 32,
 };
 
@@ -313,11 +318,10 @@ enum ItemClass
     ITEM_CLASS_KEY                              = 13,
     ITEM_CLASS_PERMANENT                        = 14, // OBSOLETE
     ITEM_CLASS_MISCELLANEOUS                    = 15,
-    ITEM_CLASS_GLYPH                            = 16,
-    ITEM_CLASS_BATTLE_PET                       = 17
+    ITEM_CLASS_GLYPH                            = 16
 };
 
-#define MAX_ITEM_CLASS                            18
+#define MAX_ITEM_CLASS                            17
 
 enum ItemSubclassConsumable
 {
@@ -345,11 +349,10 @@ enum ItemSubclassContainer
     ITEM_SUBCLASS_MINING_CONTAINER              = 6,
     ITEM_SUBCLASS_LEATHERWORKING_CONTAINER      = 7,
     ITEM_SUBCLASS_INSCRIPTION_CONTAINER         = 8,
-    ITEM_SUBCLASS_TACKLE_CONTAINER              = 9,
-    ITEM_SUBCLASS_COOKING_CONTAINER             = 10
+    ITEM_SUBCLASS_TACKLE_CONTAINER              = 9
 };
 
-#define MAX_ITEM_SUBCLASS_CONTAINER               11
+#define MAX_ITEM_SUBCLASS_CONTAINER               10
 
 enum ItemSubclassWeapon
 {
@@ -547,27 +550,10 @@ enum ItemSubclassGlyph
     ITEM_SUBCLASS_GLYPH_SHAMAN                  = 7,
     ITEM_SUBCLASS_GLYPH_MAGE                    = 8,
     ITEM_SUBCLASS_GLYPH_WARLOCK                 = 9,
-    ITEM_SUBCLASS_GLYPH_MONK                    = 10,
     ITEM_SUBCLASS_GLYPH_DRUID                   = 11
 };
 
 #define MAX_ITEM_SUBCLASS_GLYPH                   12
-
-enum ItemSubclassBattlePet
-{
-    ITEM_SUBCLASS_BATTLE_PET_AQUATIC            = 1,
-    ITEM_SUBCLASS_BATTLE_PET_BEAST              = 2,
-    ITEM_SUBCLASS_BATTLE_PET_CRITTER            = 3,
-    ITEM_SUBCLASS_BATTLE_PET_DRAGONKIN          = 4,
-    ITEM_SUBCLASS_BATTLE_PET_ELEMENTAL          = 5,
-    ITEM_SUBCLASS_BATTLE_PET_FLYING             = 6,
-    ITEM_SUBCLASS_BATTLE_PET_HUMANOID           = 7,
-    ITEM_SUBCLASS_BATTLE_PET_MAGICAL            = 8,
-    ITEM_SUBCLASS_BATTLE_PET_MECHANICAL         = 9,
-    ITEM_SUBCLASS_BATTLE_PET_UNDEAD             = 10
-};
-
-#define MAX_ITEM_SUBCLASS_BATTLE_PET              1
 
 const uint32 MaxItemSubclassValues[MAX_ITEM_CLASS] =
 {
@@ -587,8 +573,7 @@ const uint32 MaxItemSubclassValues[MAX_ITEM_CLASS] =
     MAX_ITEM_SUBCLASS_KEY,
     MAX_ITEM_SUBCLASS_PERMANENT,
     MAX_ITEM_SUBCLASS_JUNK,
-    MAX_ITEM_SUBCLASS_GLYPH,
-    MAX_ITEM_SUBCLASS_BATTLE_PET
+    MAX_ITEM_SUBCLASS_GLYPH
 };
 
 inline uint8 ItemSubClassToDurabilityMultiplierId(uint32 ItemClass, uint32 ItemSubClass)
@@ -655,7 +640,6 @@ struct ItemTemplate
     uint32 Quality;
     uint32 Flags;
     uint32 Flags2;
-    uint32 Flags3;
     float Unk430_1;
     float Unk430_2;
     uint32 BuyCount;

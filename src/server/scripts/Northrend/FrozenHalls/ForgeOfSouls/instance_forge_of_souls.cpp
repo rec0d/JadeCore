@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -46,11 +43,11 @@ class instance_forge_of_souls : public InstanceMapScript
                 teamInInstance = 0;
             }
 
-            void OnCreatureCreate(Creature* creature) override
+            void OnCreatureCreate(Creature* creature)
             {
                 Map::PlayerList const &players = instance->GetPlayers();
                 if (!players.isEmpty())
-                    if (Player* player = players.begin()->GetSource())
+                    if (Player* player = players.begin()->getSource())
                         teamInInstance = player->GetTeam();
 
                 switch (creature->GetEntry())
@@ -76,7 +73,7 @@ class instance_forge_of_souls : public InstanceMapScript
                 }
             }
 
-            uint32 GetData(uint32 type) const override
+            uint32 GetData(uint32 type) const
             {
                 switch (type)
                 {
@@ -89,7 +86,7 @@ class instance_forge_of_souls : public InstanceMapScript
                 return 0;
             }
 
-            uint64 GetData64(uint32 type) const override
+            uint64 GetData64(uint32 type) const
             {
                 switch (type)
                 {
@@ -104,7 +101,7 @@ class instance_forge_of_souls : public InstanceMapScript
                 return 0;
             }
 
-            std::string GetSaveData() override
+            std::string GetSaveData()
             {
                 OUT_SAVE_INST_DATA;
 
@@ -115,7 +112,7 @@ class instance_forge_of_souls : public InstanceMapScript
                 return saveStream.str();
             }
 
-            void Load(const char* in) override
+            void Load(const char* in)
             {
                 if (!in)
                 {
@@ -152,7 +149,7 @@ class instance_forge_of_souls : public InstanceMapScript
             uint32 teamInInstance;
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const
         {
             return new instance_forge_of_souls_InstanceScript(map);
         }

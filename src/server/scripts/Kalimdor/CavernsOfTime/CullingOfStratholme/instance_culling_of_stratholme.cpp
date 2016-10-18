@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -47,7 +45,7 @@ class instance_culling_of_stratholme : public InstanceMapScript
     public:
         instance_culling_of_stratholme() : InstanceMapScript("instance_culling_of_stratholme", 595) { }
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const
         {
             return new instance_culling_of_stratholme_InstanceMapScript(map);
         }
@@ -72,7 +70,7 @@ class instance_culling_of_stratholme : public InstanceMapScript
                 _crateCount = 0;
             }
 
-            bool IsEncounterInProgress() const override
+            bool IsEncounterInProgress() const
             {
                 for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
                     if (_encounterState[i] == IN_PROGRESS)
@@ -81,16 +79,16 @@ class instance_culling_of_stratholme : public InstanceMapScript
                 return false;
             }
 
-            void FillInitialWorldStates(WorldStateBuilder& builder) override
+            void FillInitialWorldStates(WorldPacket& data)
             {
-                builder.AppendState(WORLDSTATE_SHOW_CRATES, 1);
-                builder.AppendState(WORLDSTATE_CRATES_REVEALED, _crateCount);
-                builder.AppendState(WORLDSTATE_WAVE_COUNT, 0);
-                builder.AppendState(WORLDSTATE_TIME_GUARDIAN, 25);
-                builder.AppendState(WORLDSTATE_TIME_GUARDIAN_SHOW, 0);
+                data << uint32(WORLDSTATE_SHOW_CRATES) << uint32(1);
+                data << uint32(WORLDSTATE_CRATES_REVEALED) << uint32(_crateCount);
+                data << uint32(WORLDSTATE_WAVE_COUNT) << uint32(0);
+                data << uint32(WORLDSTATE_TIME_GUARDIAN) << uint32(25);
+                data << uint32(WORLDSTATE_TIME_GUARDIAN_SHOW) << uint32(0);
             }
 
-            void OnCreatureCreate(Creature* creature) override
+            void OnCreatureCreate(Creature* creature)
             {
                 switch (creature->GetEntry())
                 {
@@ -118,7 +116,7 @@ class instance_culling_of_stratholme : public InstanceMapScript
                 }
             }
 
-            void OnGameObjectCreate(GameObject* go) override
+            void OnGameObjectCreate(GameObject* go)
             {
                 switch (go->GetEntry())
                 {
@@ -140,12 +138,12 @@ class instance_culling_of_stratholme : public InstanceMapScript
                     case GO_MALGANIS_CHEST_H:
                         _malGanisChestGUID = go->GetGUID();
                         if (_encounterState[3] == DONE)
-                            go->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_INTERACT_COND);
+                            go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
                         break;
                 }
             }
 
-            void SetData(uint32 type, uint32 data) override
+            void SetData(uint32 type, uint32 data)
             {
                 switch (type)
                 {
@@ -172,7 +170,7 @@ class instance_culling_of_stratholme : public InstanceMapScript
                             case DONE:
                                 HandleGameObject(_exitGateGUID, true);
                                 if (GameObject* go = instance->GetGameObject(_malGanisChestGUID))
-                                    go->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_INTERACT_COND);
+                                    go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
                                 break;
                         }
                         break;
@@ -189,8 +187,8 @@ class instance_culling_of_stratholme : public InstanceMapScript
                             // Summon Chromie and global whisper
                             if (Creature* chromie = instance->SummonCreature(NPC_CHROMIE_2, ChromieSummonPos))
                                 if (!instance->GetPlayers().isEmpty())
-                                    if (Player* player = instance->GetPlayers().getFirst()->GetSource())
-                                        sCreatureTextMgr->SendChat(chromie, SAY_CRATES_COMPLETED, player, CHAT_MSG_ADDON, LANG_ADDON, TEXT_RANGE_MAP);
+                                    if (Player* player = instance->GetPlayers().getFirst()->getSource())
+                                        sCreatureTextMgr->SendChat(chromie, SAY_CRATES_COMPLETED, player->GetGUID(), CHAT_MSG_ADDON, LANG_ADDON, TEXT_RANGE_MAP);
                         }
                         DoUpdateWorldState(WORLDSTATE_CRATES_REVEALED, _crateCount);
                         break;
@@ -200,7 +198,7 @@ class instance_culling_of_stratholme : public InstanceMapScript
                     SaveToDB();
             }
 
-            uint32 GetData(uint32 type) const override
+            uint32 GetData(uint32 type) const
             {
                 switch (type)
                 {
@@ -220,7 +218,7 @@ class instance_culling_of_stratholme : public InstanceMapScript
                 return 0;
             }
 
-            uint64 GetData64(uint32 identifier) const override
+            uint64 GetData64(uint32 identifier) const
             {
                 switch (identifier)
                 {
@@ -250,7 +248,7 @@ class instance_culling_of_stratholme : public InstanceMapScript
                 return 0;
             }
 
-            std::string GetSaveData() override
+            std::string GetSaveData()
             {
                 OUT_SAVE_INST_DATA;
 
@@ -262,7 +260,7 @@ class instance_culling_of_stratholme : public InstanceMapScript
                 return saveStream.str();
             }
 
-            void Load(const char* in) override
+            void Load(const char* in)
             {
                 if (!in)
                 {

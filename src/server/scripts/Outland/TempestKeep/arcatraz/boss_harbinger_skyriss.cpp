@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -33,7 +32,7 @@ EndContentData */
 #include "ScriptedCreature.h"
 #include "arcatraz.h"
 
-enum Says
+enum eSays
 {
     SAY_INTRO              = 0,
     SAY_AGGRO              = 1,
@@ -44,19 +43,16 @@ enum Says
     SAY_DEATH              = 6
 };
 
-enum Spells
+enum eSpells
 {
-    SPELL_FEAR              = 39415,
-    SPELL_MIND_REND         = 36924,
-    H_SPELL_MIND_REND       = 39017,
-    SPELL_DOMINATION        = 37162,
-    H_SPELL_DOMINATION      = 39019,
-    H_SPELL_MANA_BURN       = 39020,
-    SPELL_66_ILLUSION       = 36931,                       //entry 21466
-    SPELL_33_ILLUSION       = 36932,                       //entry 21467
-
-    SPELL_MIND_REND_IMAGE   = 36929,
-    H_SPELL_MIND_REND_IMAGE = 39021
+    SPELL_FEAR             = 39415,
+    SPELL_MIND_REND        = 36924,
+    H_SPELL_MIND_REND      = 39017,
+    SPELL_DOMINATION       = 37162,
+    H_SPELL_DOMINATION     = 39019,
+    H_SPELL_MANA_BURN      = 39020,
+    SPELL_66_ILLUSION      = 36931,                       //entry 21466
+    SPELL_33_ILLUSION      = 36932,                       //entry 21467
 };
 
 class boss_harbinger_skyriss : public CreatureScript
@@ -88,7 +84,7 @@ class boss_harbinger_skyriss : public CreatureScript
             uint32 Domination_Timer;
             uint32 ManaBurn_Timer;
 
-            void Reset() override
+            void Reset()
             {
                 if (!Intro)
                     me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
@@ -104,8 +100,7 @@ class boss_harbinger_skyriss : public CreatureScript
                 ManaBurn_Timer = 25000;
             }
 
-            void MoveInLineOfSight(Unit* who) override
-
+            void MoveInLineOfSight(Unit* who)
             {
                 if (!Intro)
                     return;
@@ -113,16 +108,16 @@ class boss_harbinger_skyriss : public CreatureScript
                 ScriptedAI::MoveInLineOfSight(who);
             }
 
-            void EnterCombat(Unit* /*who*/) override { }
+            void EnterCombat(Unit* /*who*/) {}
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 Talk(SAY_DEATH);
                 if (instance)
                     instance->SetData(TYPE_HARBINGERSKYRISS, DONE);
             }
 
-            void JustSummoned(Creature* summon) override
+            void JustSummoned(Creature* summon)
             {
                 if (!summon)
                     return;
@@ -135,7 +130,7 @@ class boss_harbinger_skyriss : public CreatureScript
                         summon->AI()->AttackStart(target);
             }
 
-            void KilledUnit(Unit* victim) override
+            void KilledUnit(Unit* victim)
             {
                 //won't yell killing pet/other unit
                 if (victim->GetEntry() == 21436)
@@ -157,7 +152,7 @@ class boss_harbinger_skyriss : public CreatureScript
                     DoCast(me, SPELL_33_ILLUSION);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (!Intro)
                 {
@@ -274,11 +269,14 @@ class boss_harbinger_skyriss : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return new boss_harbinger_skyrissAI(creature);
+            return new boss_harbinger_skyrissAI (creature);
         }
 };
+
+#define SPELL_MIND_REND_IMAGE   36929
+#define H_SPELL_MIND_REND_IMAGE 39021
 
 class boss_harbinger_skyriss_illusion : public CreatureScript
 {
@@ -290,14 +288,14 @@ class boss_harbinger_skyriss_illusion : public CreatureScript
         }
         struct boss_harbinger_skyriss_illusionAI : public ScriptedAI
         {
-            boss_harbinger_skyriss_illusionAI(Creature* creature) : ScriptedAI(creature) { }
+            boss_harbinger_skyriss_illusionAI(Creature* creature) : ScriptedAI(creature) {}
 
-            void Reset() override { }
+            void Reset() { }
 
-            void EnterCombat(Unit* /*who*/) override { }
+            void EnterCombat(Unit* /*who*/) { }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_harbinger_skyriss_illusionAI(creature);
         }

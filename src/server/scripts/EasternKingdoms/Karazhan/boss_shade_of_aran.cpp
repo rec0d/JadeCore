@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -85,9 +84,9 @@ class boss_shade_of_aran : public CreatureScript
 public:
     boss_shade_of_aran() : CreatureScript("boss_shade_of_aran") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_aranAI(creature);
+        return new boss_aranAI (creature);
     }
 
     struct boss_aranAI : public ScriptedAI
@@ -124,7 +123,7 @@ public:
         bool Drinking;
         bool DrinkInturrupted;
 
-        void Reset() override
+        void Reset()
         {
             SecondarySpellTimer = 5000;
             NormalCastTimer = 0;
@@ -156,12 +155,12 @@ public:
             }
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_KILL);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Talk(SAY_DEATH);
 
@@ -172,7 +171,7 @@ public:
             }
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(SAY_AGGRO);
 
@@ -196,7 +195,7 @@ public:
             {
                 Unit* target = Unit::GetUnit(*me, (*itr)->getUnitGuid());
                 //only on alive players
-                if (target && target->IsAlive() && target->GetTypeId() == TYPEID_PLAYER)
+                if (target && target->isAlive() && target->GetTypeId() == TYPEID_PLAYER)
                     targets.push_back(target);
             }
 
@@ -218,7 +217,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -479,13 +478,13 @@ public:
                 DoMeleeAttackIfReady();
         }
 
-        void DamageTaken(Unit* /*pAttacker*/, uint32 &damage) override
+        void DamageTaken(Unit* /*pAttacker*/, uint32 &damage)
         {
             if (!DrinkInturrupted && Drinking && damage)
                 DrinkInturrupted = true;
         }
 
-        void SpellHit(Unit* /*pAttacker*/, const SpellInfo* Spell) override
+        void SpellHit(Unit* /*pAttacker*/, const SpellInfo* Spell)
         {
             //We only care about interrupt effects and only if they are durring a spell currently being casted
             if ((Spell->Effects[0].Effect != SPELL_EFFECT_INTERRUPT_CAST &&
@@ -509,30 +508,30 @@ public:
     };
 };
 
-class npc_aran_elemental : public CreatureScript
+class mob_aran_elemental : public CreatureScript
 {
 public:
-    npc_aran_elemental() : CreatureScript("npc_aran_elemental") { }
+    mob_aran_elemental() : CreatureScript("mob_aran_elemental") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new water_elementalAI(creature);
+        return new water_elementalAI (creature);
     }
 
     struct water_elementalAI : public ScriptedAI
     {
-        water_elementalAI(Creature* creature) : ScriptedAI(creature) { }
+        water_elementalAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 CastTimer;
 
-        void Reset() override
+        void Reset()
         {
             CastTimer = 2000 + (rand()%3000);
         }
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/) {}
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -549,5 +548,5 @@ public:
 void AddSC_boss_shade_of_aran()
 {
     new boss_shade_of_aran();
-    new npc_aran_elemental();
+    new mob_aran_elemental();
 }

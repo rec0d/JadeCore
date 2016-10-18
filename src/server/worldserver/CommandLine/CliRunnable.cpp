@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -40,7 +39,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-char* command_finder(const char* text, int state)
+char * command_finder(const char* text, int state)
 {
     static int idx, len;
     const char* ret;
@@ -71,18 +70,19 @@ char* command_finder(const char* text, int state)
     return ((char*)NULL);
 }
 
-char** cli_completion(const char* text, int start, int /*end*/)
+char ** cli_completion(const char * text, int start, int /*end*/)
 {
-    char** matches = NULL;
+    char ** matches;
+    matches = (char**)NULL;
 
-    if (start)
-        rl_bind_key('\t', rl_abort);
-    else
+    if (start == 0)
         matches = rl_completion_matches((char*)text, &command_finder);
-    return matches;
+    else
+        rl_bind_key('\t', rl_abort);
+    return (matches);
 }
 
-int cli_hook_func()
+int cli_hook_func(void)
 {
        if (World::IsStopped())
            rl_done = 1;
@@ -135,13 +135,13 @@ int kb_hit_return()
 void CliRunnable::run()
 {
     ///- Display the list of available CLI functions then beep
-    //TC_LOG_INFO("server.worldserver", "");
+    //sLog->outInfo(LOG_FILTER_WORLDSERVER, "");
 #if PLATFORM != PLATFORM_WINDOWS
     rl_attempted_completion_function = cli_completion;
     rl_event_hook = cli_hook_func;
 #endif
 
-    if (sConfigMgr->GetBoolDefault("BeepAtStart", true))
+    if (ConfigMgr::GetBoolDefault("BeepAtStart", true))
         printf("\a");                                       // \a = Alert
 
     // print this here the first time
@@ -176,8 +176,6 @@ void CliRunnable::run()
             {
 #if PLATFORM == PLATFORM_WINDOWS
                 printf("JC>");
-#else
-                free(command_str);
 #endif
                 continue;
             }
@@ -187,8 +185,6 @@ void CliRunnable::run()
             {
 #if PLATFORM == PLATFORM_WINDOWS
                 printf("JC>");
-#else
-                free(command_str);
 #endif
                 continue;
             }
@@ -197,7 +193,6 @@ void CliRunnable::run()
             sWorld->QueueCliCommand(new CliCommandHolder(NULL, command.c_str(), &utf8print, &commandFinished));
 #if PLATFORM != PLATFORM_WINDOWS
             add_history(command.c_str());
-            free(command_str);
 #endif
         }
         else if (feof(stdin))

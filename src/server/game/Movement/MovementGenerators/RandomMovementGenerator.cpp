@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -37,7 +37,9 @@ void RandomMovementGenerator<Creature>::_setRandomLocation(Creature* creature)
 {
     float respX, respY, respZ, respO, destX, destY, destZ, travelDistZ;
     creature->GetHomePosition(respX, respY, respZ, respO);
-    Map const* map = creature->GetBaseMap();
+    Map const* map = creature->GetBaseSwapMap();
+    if (map == NULL)
+        map = creature->GetBaseMap();
 
     // For 2D/3D system selection
     //bool is_land_ok  = creature.CanWalk();                // not used?
@@ -99,10 +101,7 @@ void RandomMovementGenerator<Creature>::_setRandomLocation(Creature* creature)
     if (is_air_ok)
         i_nextMoveTime.Reset(0);
     else
-        if (roll_chance_i(50))
-            i_nextMoveTime.Reset(urand(5000, 10000));
-        else
-            i_nextMoveTime.Reset(urand(50, 400));
+        i_nextMoveTime.Reset(urand(500, 10000));
 
     creature->AddUnitState(UNIT_STATE_ROAMING_MOVE);
 
@@ -119,7 +118,7 @@ void RandomMovementGenerator<Creature>::_setRandomLocation(Creature* creature)
 template<>
 void RandomMovementGenerator<Creature>::DoInitialize(Creature* creature)
 {
-    if (!creature->IsAlive())
+    if (!creature->isAlive())
         return;
 
     if (!wander_distance)

@@ -1,20 +1,17 @@
-/*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+/* Copyright (C) 2008 - 2009 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 #include "BattlefieldMgr.h"
@@ -43,7 +40,7 @@ enum WGqueuenpctext
     WG_NPCQUEUE_TEXT_A_NOWAR            = 14782,
     WG_NPCQUEUE_TEXT_A_QUEUE            = 14791,
     WG_NPCQUEUE_TEXT_A_WAR              = 14781,
-    WG_NPCQUEUE_TEXTOPTION_JOIN         = 20077,
+    WG_NPCQUEUE_TEXTOPTION_JOIN         = -1850507,
 };
 
 enum Spells
@@ -118,12 +115,12 @@ class npc_wg_demolisher_engineer : public CreatureScript
     public:
         npc_wg_demolisher_engineer() : CreatureScript("npc_wg_demolisher_engineer") { }
 
-        bool OnGossipHello(Player* player, Creature* creature) override
+        bool OnGossipHello(Player* player, Creature* creature)
         {
             if (creature->IsQuestGiver())
                 player->PrepareQuestMenu(creature->GetGUID());
 
-            if (CanBuild(creature))
+            if (canBuild(creature))
             {
                 if (player->HasAura(SPELL_CORPORAL))
                     player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_HELLO_DEMO1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF);
@@ -141,11 +138,11 @@ class npc_wg_demolisher_engineer : public CreatureScript
             return true;
         }
 
-        bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+        bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
         {
             player->CLOSE_GOSSIP_MENU();
 
-            if (CanBuild(creature))
+            if (canBuild(creature))
             {
                 switch (action - GOSSIP_ACTION_INFO_DEF)
                 {
@@ -166,7 +163,7 @@ class npc_wg_demolisher_engineer : public CreatureScript
         }
 
     private:
-        bool CanBuild(Creature* creature)
+        bool canBuild(Creature* creature)
         {
             Battlefield* wintergrasp = sBattlefieldMgr->GetBattlefieldByBattleId(BATTLEFIELD_BATTLEID_WG);
             if (!wintergrasp)
@@ -189,7 +186,7 @@ class npc_wg_spirit_guide : public CreatureScript
     public:
         npc_wg_spirit_guide() : CreatureScript("npc_wg_spirit_guide") { }
 
-        bool OnGossipHello(Player* player, Creature* creature) override
+        bool OnGossipHello(Player* player, Creature* creature)
         {
             if (creature->IsQuestGiver())
                 player->PrepareQuestMenu(creature->GetGUID());
@@ -207,7 +204,7 @@ class npc_wg_spirit_guide : public CreatureScript
             return true;
         }
 
-        bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action) override
+        bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action)
         {
             player->CLOSE_GOSSIP_MENU();
 
@@ -227,14 +224,14 @@ class npc_wg_spirit_guide : public CreatureScript
         {
             npc_wg_spirit_guideAI(Creature* creature) : ScriptedAI(creature) { }
 
-            void UpdateAI(uint32 /*diff*/) override
+            void UpdateAI(uint32 const /*diff*/)
             {
                 if (!me->HasUnitState(UNIT_STATE_CASTING))
                     DoCast(me, SPELL_CHANNEL_SPIRIT_HEAL);
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_wg_spirit_guideAI(creature);
         }
@@ -245,7 +242,7 @@ class npc_wg_queue : public CreatureScript
     public:
         npc_wg_queue() : CreatureScript("npc_wg_queue") { }
 
-        bool OnGossipHello(Player* player, Creature* creature) override
+        bool OnGossipHello(Player* player, Creature* creature)
         {
             if (creature->IsQuestGiver())
                 player->PrepareQuestMenu(creature->GetGUID());
@@ -274,7 +271,7 @@ class npc_wg_queue : public CreatureScript
             return true;
         }
 
-        bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 /*action*/) override
+        bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 /*action*/)
         {
             player->CLOSE_GOSSIP_MENU();
 
@@ -303,7 +300,7 @@ class go_wg_vehicle_teleporter : public GameObjectScript
         {
             go_wg_vehicle_teleporterAI(GameObject* gameObject) : GameObjectAI(gameObject), _checkTimer(1000) { }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 diff)
             {
                 if (_checkTimer <= diff)
                 {
@@ -324,7 +321,7 @@ class go_wg_vehicle_teleporter : public GameObjectScript
               uint32 _checkTimer;
         };
 
-        GameObjectAI* GetAI(GameObject* go) const override
+        GameObjectAI* GetAI(GameObject* go) const
         {
             return new go_wg_vehicle_teleporterAI(go);
         }
@@ -335,21 +332,15 @@ class npc_wg_quest_giver : public CreatureScript
     public:
         npc_wg_quest_giver() : CreatureScript("npc_wg_quest_giver") { }
 
-        bool OnGossipHello(Player* player, Creature* creature) override
+        bool OnGossipHello(Player* player, Creature* creature)
         {
+            if (creature->IsQuestGiver())
+                player->PrepareQuestMenu(creature->GetGUID());
+
             Battlefield* wintergrasp = sBattlefieldMgr->GetBattlefieldByBattleId(BATTLEFIELD_BATTLEID_WG);
             if (!wintergrasp)
                 return true;
 
-            if (creature->IsVendor())
-            {
-                player->ADD_GOSSIP_ITEM_DB(Player::GetDefaultGossipMenuForSource(creature), 0, GOSSIP_SENDER_MAIN, GOSSIP_OPTION_VENDOR);
-                player->PlayerTalkClass->GetGossipMenu().AddGossipMenuItemData(0, 0, 0);
-            }
-
-            /// @todo: move this to conditions or something else
-
-            // Player::PrepareQuestMenu(guid)
             if (creature->IsQuestGiver())
             {
                 QuestRelationBounds objectQR = sObjectMgr->GetCreatureQuestRelationBounds(creature->GetEntry());
@@ -377,9 +368,6 @@ class npc_wg_quest_giver : public CreatureScript
                     if (!quest)
                         continue;
 
-                    if (!player->CanTakeQuest(quest, false))
-                        continue;
-
                     switch (questId)
                     {
                         // Horde attacker
@@ -389,8 +377,15 @@ class npc_wg_quest_giver : public CreatureScript
                         case QUEST_FUELING_THE_DEMOLISHERS_HORDE_ATT:
                         case QUEST_HEALING_WITH_ROSES_HORDE_ATT:
                         case QUEST_DEFEND_THE_SIEGE_HORDE_ATT:
-                            if (wintergrasp->GetAttackerTeam() != TEAM_HORDE)
-                                continue;
+                            if (wintergrasp->GetAttackerTeam() == TEAM_HORDE)
+                            {
+                                QuestStatus status = player->GetQuestStatus(questId);
+
+                                if (quest->IsAutoComplete() && player->CanTakeQuest(quest, false))
+                                    qm.AddMenuItem(questId, 4);
+                                else if (status == QUEST_STATUS_NONE && player->CanTakeQuest(quest, false))
+                                    qm.AddMenuItem(questId, 2);
+                            }
                             break;
                         // Horde defender
                         case QUEST_BONES_AND_ARROWS_HORDE_DEF:
@@ -400,8 +395,15 @@ class npc_wg_quest_giver : public CreatureScript
                         case QUEST_HEALING_WITH_ROSES_HORDE_DEF:
                         case QUEST_TOPPLING_THE_TOWERS_HORDE_DEF:
                         case QUEST_STOP_THE_SIEGE_HORDE_DEF:
-                            if (wintergrasp->GetDefenderTeam() != TEAM_HORDE)
-                                continue;
+                            if (wintergrasp->GetDefenderTeam() == TEAM_HORDE)
+                            {
+                                QuestStatus status = player->GetQuestStatus(questId);
+
+                                if (quest->IsAutoComplete() && player->CanTakeQuest(quest, false))
+                                    qm.AddMenuItem(questId, 4);
+                                else if (status == QUEST_STATUS_NONE && player->CanTakeQuest(quest, false))
+                                    qm.AddMenuItem(questId, 2);
+                            }
                             break;
                         // Alliance attacker
                         case QUEST_BONES_AND_ARROWS_ALLIANCE_ATT:
@@ -409,8 +411,15 @@ class npc_wg_quest_giver : public CreatureScript
                         case QUEST_NO_MERCY_FOR_THE_MERCILESS_ALLIANCE_ATT:
                         case QUEST_DEFEND_THE_SIEGE_ALLIANCE_ATT:
                         case QUEST_A_RARE_HERB_ALLIANCE_ATT:
-                            if (wintergrasp->GetAttackerTeam() != TEAM_ALLIANCE)
-                                continue;
+                            if (wintergrasp->GetAttackerTeam() == TEAM_ALLIANCE)
+                            {
+                                QuestStatus status = player->GetQuestStatus(questId);
+
+                                if (quest->IsAutoComplete() && player->CanTakeQuest(quest, false))
+                                    qm.AddMenuItem(questId, 4);
+                                else if (status == QUEST_STATUS_NONE && player->CanTakeQuest(quest, false))
+                                    qm.AddMenuItem(questId, 2);
+                            }
                             break;
                         // Alliance defender
                         case QUEST_BONES_AND_ARROWS_ALLIANCE_DEF:
@@ -419,20 +428,27 @@ class npc_wg_quest_giver : public CreatureScript
                         case QUEST_SHOUTHERN_SABOTAGE_ALLIANCE_DEF:
                         case QUEST_STOP_THE_SIEGE_ALLIANCE_DEF:
                         case QUEST_A_RARE_HERB_ALLIANCE_DEF:
-                            if (wintergrasp->GetDefenderTeam() != TEAM_ALLIANCE)
-                                continue;
+                            if (wintergrasp->GetDefenderTeam() == TEAM_ALLIANCE)
+                            {
+                                QuestStatus status = player->GetQuestStatus(questId);
+
+                                if (quest->IsAutoComplete() && player->CanTakeQuest(quest, false))
+                                    qm.AddMenuItem(questId, 4);
+                                else if (status == QUEST_STATUS_NONE && player->CanTakeQuest(quest, false))
+                                    qm.AddMenuItem(questId, 2);
+                            }
                             break;
                         default:
+                            QuestStatus status = player->GetQuestStatus(questId);
+
+                            if (quest->IsAutoComplete() && player->CanTakeQuest(quest, false))
+                                qm.AddMenuItem(questId, 4);
+                            else if (status == QUEST_STATUS_NONE && player->CanTakeQuest(quest, false))
+                                qm.AddMenuItem(questId, 2);
                             break;
                     }
-
-                    if (quest->IsAutoComplete())
-                        qm.AddMenuItem(questId, 4);
-                    else if (player->GetQuestStatus(questId) == QUEST_STATUS_NONE)
-                        qm.AddMenuItem(questId, 2);
                 }
             }
-
             player->SEND_GOSSIP_MENU(player->GetGossipTextId(creature), creature->GetGUID());
             return true;
         }
@@ -447,7 +463,7 @@ class spell_wintergrasp_force_building : public SpellScriptLoader
         {
             PrepareSpellScript(spell_wintergrasp_force_building_SpellScript);
 
-            bool Validate(SpellInfo const* /*spell*/) override
+            bool Validate(SpellInfo const* /*spell*/)
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_BUILD_CATAPULT_FORCE)
                     || !sSpellMgr->GetSpellInfo(SPELL_BUILD_DEMOLISHER_FORCE)
@@ -463,13 +479,13 @@ class spell_wintergrasp_force_building : public SpellScriptLoader
                 GetHitUnit()->CastSpell(GetHitUnit(), GetEffectValue(), false);
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectHitTarget += SpellEffectFn(spell_wintergrasp_force_building_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_wintergrasp_force_building_SpellScript();
         }
@@ -490,13 +506,13 @@ class spell_wintergrasp_grab_passenger : public SpellScriptLoader
                     target->CastSpell(GetCaster(), SPELL_RIDE_WG_VEHICLE, false);
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectHitTarget += SpellEffectFn(spell_wintergrasp_grab_passenger_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_wintergrasp_grab_passenger_SpellScript();
         }
@@ -507,7 +523,7 @@ class achievement_wg_didnt_stand_a_chance : public AchievementCriteriaScript
 public:
     achievement_wg_didnt_stand_a_chance() : AchievementCriteriaScript("achievement_wg_didnt_stand_a_chance") { }
 
-    bool OnCheck(Player* source, Unit* target) override
+    bool OnCheck(Player* source, Unit* target)
     {
         if (!target)
             return false;
@@ -550,13 +566,13 @@ public:
             return SPELL_CAST_OK;
         }
 
-        void Register() override
+        void Register()
         {
             OnCheckCast += SpellCheckCastFn(spell_wintergrasp_defender_teleport_SpellScript::CheckCast);
         }
     };
 
-    SpellScript* GetSpellScript() const override
+    SpellScript* GetSpellScript() const
     {
         return new spell_wintergrasp_defender_teleport_SpellScript();
     }
@@ -581,13 +597,13 @@ public:
             }
         }
 
-        void Register() override
+        void Register()
         {
             OnEffectHitTarget += SpellEffectFn(spell_wintergrasp_defender_teleport_trigger_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
         }
     };
 
-    SpellScript* GetSpellScript() const override
+    SpellScript* GetSpellScript() const
     {
         return new spell_wintergrasp_defender_teleport_trigger_SpellScript();
     }

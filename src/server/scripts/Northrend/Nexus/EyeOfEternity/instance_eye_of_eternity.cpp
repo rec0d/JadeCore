@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -29,7 +26,7 @@ class instance_eye_of_eternity : public InstanceMapScript
 public:
     instance_eye_of_eternity() : InstanceMapScript("instance_eye_of_eternity", 616) { }
 
-    InstanceScript* GetInstanceScript(InstanceMap* map) const override
+    InstanceScript* GetInstanceScript(InstanceMap* map) const
     {
         return new instance_eye_of_eternity_InstanceMapScript(map);
     }
@@ -51,7 +48,7 @@ public:
             alexstraszaBunnyGUID = 0;
         };
 
-        bool SetBossState(uint32 type, EncounterState state) override
+        bool SetBossState(uint32 type, EncounterState state)
         {
             if (!InstanceScript::SetBossState(type, state))
                 return false;
@@ -73,7 +70,7 @@ public:
                     SpawnGameObject(GO_EXIT_PORTAL, exitPortalPosition);
 
                     if (GameObject* platform = instance->GetGameObject(platformGUID))
-                        platform->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_DESTROYED);
+                        platform->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_DESTROYED);
                 }
                 else if (state == DONE)
                     SpawnGameObject(GO_EXIT_PORTAL, exitPortalPosition);
@@ -97,7 +94,7 @@ public:
             instance->AddToMap(go);
         }
 
-        void OnGameObjectCreate(GameObject* go) override
+        void OnGameObjectCreate(GameObject* go)
         {
             switch (go->GetEntry())
             {
@@ -133,7 +130,7 @@ public:
             }
         }
 
-        void OnCreatureCreate(Creature* creature) override
+        void OnCreatureCreate(Creature* creature)
         {
             switch (creature->GetEntry())
             {
@@ -155,7 +152,7 @@ public:
             }
         }
 
-        void OnUnitDeath(Unit* unit) override
+        void OnUnitDeath(Unit* unit)
         {
             if (unit->GetTypeId() != TYPEID_PLAYER)
                 return;
@@ -175,7 +172,7 @@ public:
                 if (Creature* alexstraszaBunny = instance->GetCreature(alexstraszaBunnyGUID))
                 {
                     alexstraszaBunny->CastSpell(alexstraszaBunny, SPELL_IRIS_OPENED);
-                    instance->GetGameObject(irisGUID)->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_IN_USE);
+                    instance->GetGameObject(irisGUID)->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE);
                 }
 
                 if (Creature* malygos = instance->GetCreature(malygosGUID))
@@ -209,7 +206,7 @@ public:
                             {
                                 Player* player = target->ToPlayer();
 
-                                if (!player || player->IsGameMaster() || player->HasAura(SPELL_VORTEX_4))
+                                if (!player || player->isGameMaster() || player->HasAura(SPELL_VORTEX_4))
                                     continue;
 
                                 player->CastSpell(trigger, SPELL_VORTEX_4, true);
@@ -242,7 +239,7 @@ public:
             }
         }
 
-        void SetData(uint32 data, uint32 /*value*/) override
+        void SetData(uint32 data, uint32 /*value*/)
         {
             switch (data)
             {
@@ -258,7 +255,7 @@ public:
             }
         }
 
-        uint64 GetData64(uint32 data) const override
+        uint64 GetData64(uint32 data) const
         {
             switch (data)
             {
@@ -281,7 +278,7 @@ public:
             return 0;
         }
 
-        std::string GetSaveData() override
+        std::string GetSaveData()
         {
             OUT_SAVE_INST_DATA;
 
@@ -292,7 +289,7 @@ public:
             return saveStream.str();
         }
 
-        void Load(const char* str) override
+        void Load(const char* str)
         {
             if (!str)
             {

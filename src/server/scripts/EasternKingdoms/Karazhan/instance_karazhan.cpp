@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,7 +19,7 @@
 /* ScriptData
 SDName: Instance_Karazhan
 SD%Complete: 70
-SDComment: Instance Script for Karazhan to help in various encounters. @todo GameObject visibility for Opera event.
+SDComment: Instance Script for Karazhan to help in various encounters. TODO: GameObject visibility for Opera event.
 SDCategory: Karazhan
 EndScriptData */
 
@@ -50,14 +49,14 @@ class instance_karazhan : public InstanceMapScript
 public:
     instance_karazhan() : InstanceMapScript("instance_karazhan", 532) { }
 
-    InstanceScript* GetInstanceScript(InstanceMap* map) const override
+    InstanceScript* GetInstanceScript(InstanceMap* map) const
     {
         return new instance_karazhan_InstanceMapScript(map);
     }
 
     struct instance_karazhan_InstanceMapScript : public InstanceScript
     {
-        instance_karazhan_InstanceMapScript(Map* map) : InstanceScript(map) { }
+        instance_karazhan_InstanceMapScript(Map* map) : InstanceScript(map) {}
 
         uint32 m_auiEncounter[MAX_ENCOUNTER];
         std::string strSaveData;
@@ -81,7 +80,7 @@ public:
         uint64 ImageGUID;
         uint64 DustCoveredChest;
 
-        void Initialize() override
+        void Initialize()
         {
             memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
 
@@ -109,7 +108,7 @@ public:
             DustCoveredChest    = 0;
         }
 
-        bool IsEncounterInProgress() const override
+        bool IsEncounterInProgress() const
         {
             for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
                 if (m_auiEncounter[i] == IN_PROGRESS)
@@ -118,7 +117,7 @@ public:
             return false;
         }
 
-        void OnCreatureCreate(Creature* creature) override
+        void OnCreatureCreate(Creature* creature)
         {
             switch (creature->GetEntry())
             {
@@ -128,7 +127,7 @@ public:
             }
         }
 
-        void SetData(uint32 type, uint32 uiData) override
+        void SetData(uint32 type, uint32 uiData)
         {
             switch (type)
             {
@@ -183,7 +182,7 @@ public:
             }
         }
 
-         void SetData64(uint32 identifier, uint64 data) override
+         void SetData64(uint32 identifier, uint64 data)
          {
              switch (identifier)
              {
@@ -191,7 +190,7 @@ public:
              }
          }
 
-        void OnGameObjectCreate(GameObject* go) override
+        void OnGameObjectCreate(GameObject* go)
         {
             switch (go->GetEntry())
             {
@@ -216,16 +215,16 @@ public:
                 case 184275:
                     m_uiSideEntranceDoor = go->GetGUID();
                     if (m_auiEncounter[4] == DONE)
-                        go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_LOCKED);
+                        go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_LOCKED);
                     else
-                        go->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_LOCKED);
+                        go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_LOCKED);
                     break;
                 case 185119: DustCoveredChest = go->GetGUID(); break;
             }
 
             switch (m_uiOperaEvent)
             {
-                /// @todo Set Object visibilities for Opera based on performance
+                //TODO: Set Object visibilities for Opera based on performance
                 case EVENT_OZ:
                     break;
 
@@ -237,12 +236,12 @@ public:
             }
         }
 
-        std::string GetSaveData() override
+        std::string GetSaveData()
         {
             return strSaveData;
         }
 
-        uint32 GetData(uint32 uiData) const override
+        uint32 GetData(uint32 uiData) const
         {
             switch (uiData)
             {
@@ -265,7 +264,7 @@ public:
             return 0;
         }
 
-        uint64 GetData64(uint32 uiData) const override
+        uint64 GetData64(uint32 uiData) const
         {
             switch (uiData)
             {

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,7 +25,7 @@ EndScriptData */
 
 /* ContentData
 boss_kelidan_the_breaker
-npc_shadowmoon_channeler
+mob_shadowmoon_channeler
 EndContentData */
 
 #include "ScriptMgr.h"
@@ -34,7 +33,7 @@ EndContentData */
 #include "SpellAuras.h"
 #include "blood_furnace.h"
 
-enum Kelidan
+enum eKelidan
 {
     SAY_WAKE                    = 0,
     SAY_ADD_AGGRO               = 1,
@@ -98,7 +97,7 @@ class boss_kelidan_the_breaker : public CreatureScript
             bool addYell;
             uint64 Channelers[5];
 
-            void Reset() override
+            void Reset()
             {
                 ShadowVolley_Timer = 1000;
                 BurningNova_Timer = 15000;
@@ -113,7 +112,7 @@ class boss_kelidan_the_breaker : public CreatureScript
                     instance->SetData(TYPE_KELIDAN_THE_BREAKER_EVENT, NOT_STARTED);
             }
 
-            void EnterCombat(Unit* who) override
+            void EnterCombat(Unit* who)
             {
                 Talk(SAY_WAKE);
                 if (me->IsNonMeleeSpellCasted(false))
@@ -123,7 +122,7 @@ class boss_kelidan_the_breaker : public CreatureScript
                     instance->SetData(TYPE_KELIDAN_THE_BREAKER_EVENT, IN_PROGRESS);
             }
 
-            void KilledUnit(Unit* /*victim*/) override
+            void KilledUnit(Unit* /*victim*/)
             {
                 if (rand()%2)
                     return;
@@ -141,7 +140,7 @@ class boss_kelidan_the_breaker : public CreatureScript
                 for (uint8 i=0; i<5; ++i)
                 {
                     Creature* channeler = Unit::GetCreature(*me, Channelers[i]);
-                    if (who && channeler && !channeler->IsInCombat())
+                    if (who && channeler && !channeler->isInCombat())
                         channeler->AI()->AttackStart(who);
                 }
             }
@@ -151,7 +150,7 @@ class boss_kelidan_the_breaker : public CreatureScript
                 for (uint8 i=0; i<5; ++i)
                 {
                     Creature* channeler = Unit::GetCreature(*me, Channelers[i]);
-                    if (channeler && channeler->IsAlive())
+                    if (channeler && channeler->isAlive())
                         return;
                 }
                 me->SetReactState(REACT_AGGRESSIVE);
@@ -190,7 +189,7 @@ class boss_kelidan_the_breaker : public CreatureScript
                 }
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 Talk(SAY_DIE);
 
@@ -202,7 +201,7 @@ class boss_kelidan_the_breaker : public CreatureScript
                 instance->HandleGameObject(instance->GetData64(DATA_DOOR6), true);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (!UpdateVictim())
                 {
@@ -274,17 +273,17 @@ class boss_kelidan_the_breaker : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_kelidan_the_breakerAI(creature);
         }
 };
 
 /*######
-## npc_shadowmoon_channeler
+## mob_shadowmoon_channeler
 ######*/
 
-enum Shadowmoon
+enum eShadowmoon
 {
     SPELL_SHADOW_BOLT       = 12739,
     H_SPELL_SHADOW_BOLT     = 15472,
@@ -293,21 +292,21 @@ enum Shadowmoon
     SPELL_CHANNELING        = 39123
 };
 
-class npc_shadowmoon_channeler : public CreatureScript
+class mob_shadowmoon_channeler : public CreatureScript
 {
     public:
 
-        npc_shadowmoon_channeler() : CreatureScript("npc_shadowmoon_channeler") { }
+        mob_shadowmoon_channeler() : CreatureScript("mob_shadowmoon_channeler") {}
 
-        struct npc_shadowmoon_channelerAI : public ScriptedAI
+        struct mob_shadowmoon_channelerAI : public ScriptedAI
         {
-            npc_shadowmoon_channelerAI(Creature* creature) : ScriptedAI(creature){ }
+            mob_shadowmoon_channelerAI(Creature* creature) : ScriptedAI(creature){}
 
             uint32 ShadowBolt_Timer;
             uint32 MarkOfShadow_Timer;
             uint32 check_Timer;
 
-            void Reset() override
+            void Reset()
             {
                 ShadowBolt_Timer = 1000+rand()%1000;
                 MarkOfShadow_Timer = 5000+rand()%2000;
@@ -316,7 +315,7 @@ class npc_shadowmoon_channeler : public CreatureScript
                     me->InterruptNonMeleeSpells(true);
             }
 
-            void EnterCombat(Unit* who) override
+            void EnterCombat(Unit* who)
             {
                 if (Creature* Kelidan = me->FindNearestCreature(ENTRY_KELIDAN, 100))
                     CAST_AI(boss_kelidan_the_breaker::boss_kelidan_the_breakerAI, Kelidan->AI())->ChannelerEngaged(who);
@@ -325,13 +324,13 @@ class npc_shadowmoon_channeler : public CreatureScript
                 DoStartMovement(who);
             }
 
-            void JustDied(Unit* killer) override
+            void JustDied(Unit* killer)
             {
                if (Creature* Kelidan = me->FindNearestCreature(ENTRY_KELIDAN, 100))
                    CAST_AI(boss_kelidan_the_breaker::boss_kelidan_the_breakerAI, Kelidan->AI())->ChannelerDied(killer);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (!UpdateVictim())
                 {
@@ -372,15 +371,15 @@ class npc_shadowmoon_channeler : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return new npc_shadowmoon_channelerAI(creature);
+            return new mob_shadowmoon_channelerAI(creature);
         }
 };
 
 void AddSC_boss_kelidan_the_breaker()
 {
     new boss_kelidan_the_breaker();
-    new npc_shadowmoon_channeler();
+    new mob_shadowmoon_channeler();
 }
 

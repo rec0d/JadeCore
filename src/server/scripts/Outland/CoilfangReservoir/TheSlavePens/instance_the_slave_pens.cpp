@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,13 +24,14 @@ gets instead the deserter debuff.
 
 #include "ScriptMgr.h"
 #include "InstanceScript.h"
+#include "the_slave_pens.h"
 
 class instance_the_slave_pens : public InstanceMapScript
 {
 public:
-    instance_the_slave_pens() : InstanceMapScript("instance_the_slave_pens", 547) { }
+    instance_the_slave_pens() : InstanceMapScript(SPScriptName, 547) { }
 
-    InstanceScript* GetInstanceScript(InstanceMap* map) const override
+    InstanceScript* GetInstanceScript(InstanceMap* map) const 
     {
         return new instance_the_slave_pens_InstanceMapScript(map);
     }

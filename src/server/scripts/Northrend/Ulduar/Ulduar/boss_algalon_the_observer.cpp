@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -185,7 +182,6 @@ enum EncounterPhases
 enum AchievmentInfo
 {
     EVENT_ID_SUPERMASSIVE_START = 21697,
-    DATA_HAS_FED_ON_TEARS       = 30043005,
 };
 
 
@@ -298,7 +294,7 @@ class SummonUnleashedDarkMatter : public BasicEvent
 class boss_algalon_the_observer : public CreatureScript
 {
     public:
-        boss_algalon_the_observer() : CreatureScript("boss_algalon_the_observer") { }
+        boss_algalon_the_observer() : CreatureScript("boss_algalon_the_observer") {}
 
         struct boss_algalon_the_observerAI : public BossAI
         {
@@ -308,7 +304,7 @@ class boss_algalon_the_observer : public CreatureScript
                 _fedOnTears = false;
             }
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 me->SetReactState(REACT_PASSIVE);
@@ -317,7 +313,7 @@ class boss_algalon_the_observer : public CreatureScript
                 _hasYelled = false;
             }
 
-            void KilledUnit(Unit* victim) override
+            void KilledUnit(Unit* victim)
             {
                 if (victim->GetTypeId() == TYPEID_UNIT)
                 {
@@ -331,13 +327,13 @@ class boss_algalon_the_observer : public CreatureScript
                 }
             }
 
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 switch (action)
                 {
                     case ACTION_START_INTRO:
                     {
-                        me->SetFlag(UNIT_FIELD_FLAGS2, 0x20);
+                        me->SetFlag(UNIT_FIELD_FLAGS_2, 0x20);
                         me->SetDisableGravity(true);
                         DoCast(me, SPELL_ARRIVAL, true);
                         DoCast(me, SPELL_RIDE_THE_LIGHTNING, true);
@@ -363,7 +359,7 @@ class boss_algalon_the_observer : public CreatureScript
                     case EVENT_DESPAWN_ALGALON:
                         events.Reset();
                         events.SetPhase(PHASE_ROLE_PLAY);
-                        if (me->IsInCombat())
+                        if (me->isInCombat())
                             events.ScheduleEvent(EVENT_ASCEND_TO_THE_HEAVENS, 1);
                         events.ScheduleEvent(EVENT_DESPAWN_ALGALON_1, 5000);
                         events.ScheduleEvent(EVENT_DESPAWN_ALGALON_2, 17000);
@@ -378,12 +374,7 @@ class boss_algalon_the_observer : public CreatureScript
                 }
             }
 
-            uint32 GetData(uint32 type) const override
-            {
-                return type == DATA_HAS_FED_ON_TEARS ? _fedOnTears : 1;
-            }
-
-            void EnterCombat(Unit* /*target*/) override
+            void EnterCombat(Unit* /*target*/)
             {
                 uint32 introDelay = 0;
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_IMMUNE_TO_NPC);
@@ -425,7 +416,7 @@ class boss_algalon_the_observer : public CreatureScript
                     (*itr)->m_Events.KillAllEvents(true);
             }
 
-            void MovementInform(uint32 movementType, uint32 pointId) override
+            void MovementInform(uint32 movementType, uint32 pointId)
             {
                 if (movementType != POINT_MOTION_TYPE)
                     return;
@@ -447,7 +438,7 @@ class boss_algalon_the_observer : public CreatureScript
                 }
             }
 
-            void JustSummoned(Creature* summon) override
+            void JustSummoned(Creature* summon)
             {
                 summons.Summon(summon);
                 switch (summon->GetEntry())
@@ -489,7 +480,7 @@ class boss_algalon_the_observer : public CreatureScript
                 }
             }
 
-            void EnterEvadeMode() override
+            void EnterEvadeMode()
             {
                 instance->SetBossState(BOSS_ALGALON, FAIL);
                 BossAI::EnterEvadeMode();
@@ -497,7 +488,7 @@ class boss_algalon_the_observer : public CreatureScript
                 me->SetSheath(SHEATH_STATE_UNARMED);
             }
 
-            void DamageTaken(Unit* /*attacker*/, uint32& damage) override
+            void DamageTaken(Unit* /*attacker*/, uint32& damage)
             {
                 if (_fightWon)
                 {
@@ -540,7 +531,7 @@ class boss_algalon_the_observer : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if ((!(events.IsInPhase(PHASE_ROLE_PLAY) || events.IsInPhase(PHASE_BIG_BANG)) && !UpdateVictim()) || !CheckInRoom())
                     return;
@@ -704,7 +695,7 @@ class boss_algalon_the_observer : public CreatureScript
             bool _hasYelled;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<boss_algalon_the_observerAI>(creature);
         }
@@ -721,19 +712,19 @@ class npc_living_constellation : public CreatureScript
             {
             }
 
-            void Reset() override
+            void Reset()
             {
                 _events.Reset();
                 _events.ScheduleEvent(EVENT_ARCANE_BARRAGE, 2500);
                 _isActive = false;
             }
 
-            uint32 GetData(uint32 /*type*/) const override
+            uint32 GetData(uint32 /*type*/) const
             {
                 return _isActive ? 1 : 0;
             }
 
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 switch (action)
                 {
@@ -758,7 +749,7 @@ class npc_living_constellation : public CreatureScript
                 }
             }
 
-            void SpellHit(Unit* caster, SpellInfo const* spell) override
+            void SpellHit(Unit* caster, SpellInfo const* spell)
             {
                 if (spell->Id != SPELL_CONSTELLATION_PHASE_EFFECT || caster->GetTypeId() != TYPEID_UNIT)
                     return;
@@ -770,7 +761,7 @@ class npc_living_constellation : public CreatureScript
                 caster->ToCreature()->DespawnOrUnsummon(1);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!(_events.IsInPhase(PHASE_ROLE_PLAY) || _events.IsInPhase(PHASE_BIG_BANG)) && !UpdateVictim())
                     return;
@@ -797,7 +788,7 @@ class npc_living_constellation : public CreatureScript
             bool _isActive;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<npc_living_constellationAI>(creature);
         }
@@ -815,7 +806,7 @@ class npc_collapsing_star : public CreatureScript
                 _dying = false;
             }
 
-            void JustSummoned(Creature* summon) override
+            void JustSummoned(Creature* summon)
             {
                 if (summon->GetEntry() != NPC_BLACK_HOLE)
                     return;
@@ -827,7 +818,7 @@ class npc_collapsing_star : public CreatureScript
                 me->DespawnOrUnsummon(1);
             }
 
-            void DamageTaken(Unit* /*attacker*/, uint32& damage) override
+            void DamageTaken(Unit* /*attacker*/, uint32& damage)
             {
                 if (_dying)
                 {
@@ -847,7 +838,7 @@ class npc_collapsing_star : public CreatureScript
             bool _dying;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<npc_collapsing_starAI>(creature);
         }
@@ -864,7 +855,7 @@ class npc_brann_bronzebeard_algalon : public CreatureScript
             {
             }
 
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 switch (action)
                 {
@@ -886,7 +877,7 @@ class npc_brann_bronzebeard_algalon : public CreatureScript
                 }
             }
 
-            void MovementInform(uint32 movementType, uint32 pointId) override
+            void MovementInform(uint32 movementType, uint32 pointId)
             {
                 if (movementType != POINT_MOTION_TYPE)
                     return;
@@ -915,7 +906,7 @@ class npc_brann_bronzebeard_algalon : public CreatureScript
                 _events.ScheduleEvent(EVENT_BRANN_MOVE_INTRO, delay);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 UpdateVictim();
 
@@ -951,7 +942,7 @@ class npc_brann_bronzebeard_algalon : public CreatureScript
             uint32 _currentPoint;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<npc_brann_bronzebeard_algalonAI>(creature);
         }
@@ -960,7 +951,7 @@ class npc_brann_bronzebeard_algalon : public CreatureScript
 class go_celestial_planetarium_access : public GameObjectScript
 {
     public:
-        go_celestial_planetarium_access() : GameObjectScript("go_celestial_planetarium_access") { }
+        go_celestial_planetarium_access() : GameObjectScript("go_celestial_planetarium_access") {}
 
         struct go_celestial_planetarium_accessAI : public GameObjectAI
         {
@@ -968,7 +959,7 @@ class go_celestial_planetarium_access : public GameObjectScript
             {
             }
 
-            bool GossipHello(Player* player) override
+            bool GossipHello(Player* player)
             {
                 bool hasKey = true;
                 if (LockEntry const* lock = sLockStore.LookupEntry(go->GetGOInfo()->goober.lockId))
@@ -991,7 +982,7 @@ class go_celestial_planetarium_access : public GameObjectScript
                     return false;
 
                 // Start Algalon event
-                go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_IN_USE);
+                go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE);
                 _events.ScheduleEvent(EVENT_DESPAWN_CONSOLE, 5000);
                 if (Creature* brann = go->SummonCreature(NPC_BRANN_BRONZBEARD_ALG, BrannIntroSpawnPos))
                     brann->AI()->DoAction(ACTION_START_INTRO);
@@ -1009,7 +1000,7 @@ class go_celestial_planetarium_access : public GameObjectScript
                 return false;
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 diff)
             {
                 if (_events.Empty())
                     return;
@@ -1030,7 +1021,7 @@ class go_celestial_planetarium_access : public GameObjectScript
             EventMap _events;
         };
 
-        GameObjectAI* GetAI(GameObject* go) const override
+        GameObjectAI* GetAI(GameObject* go) const
         {
             return GetUlduarAI<go_celestial_planetarium_accessAI>(go);
         }
@@ -1061,14 +1052,14 @@ class spell_algalon_phase_punch : public SpellScriptLoader
                     GetTarget()->RemoveAurasDueToSpell(PhasePunchAlphaId[GetStackAmount() - 1]);
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectPeriodic += AuraEffectPeriodicFn(spell_algalon_phase_punch_AuraScript::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
                 OnEffectRemove += AuraEffectRemoveFn(spell_algalon_phase_punch_AuraScript::OnRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
             }
         };
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const
         {
             return new spell_algalon_phase_punch_AuraScript();
         }
@@ -1104,13 +1095,13 @@ class spell_algalon_arcane_barrage : public SpellScriptLoader
                 targets.remove_if(NotVictimFilter(GetCaster()));
             }
 
-            void Register() override
+            void Register()
             {
                 OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_algalon_arcane_barrage_SpellScript::SelectTarget, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_algalon_arcane_barrage_SpellScript();
         }
@@ -1149,13 +1140,13 @@ class spell_algalon_trigger_3_adds : public SpellScriptLoader
                 target->AI()->DoAction(ACTION_ACTIVATE_STAR);
             }
 
-            void Register() override
+            void Register()
             {
                 OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_algalon_trigger_3_adds_SpellScript::SelectTarget, EFFECT_0, TARGET_UNIT_SRC_AREA_ENTRY);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_algalon_trigger_3_adds_SpellScript();
         }
@@ -1176,13 +1167,13 @@ class spell_algalon_collapse : public SpellScriptLoader
                 GetTarget()->DealDamage(GetTarget(), GetTarget()->CountPctFromMaxHealth(1), NULL, NODAMAGE);
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectPeriodic += AuraEffectPeriodicFn(spell_algalon_collapse_AuraScript::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
             }
         };
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const
         {
             return new spell_algalon_collapse_AuraScript();
         }
@@ -1197,7 +1188,7 @@ class spell_algalon_big_bang : public SpellScriptLoader
         {
             PrepareSpellScript(spell_algalon_big_bang_SpellScript);
 
-            bool Load() override
+            bool Load()
             {
                 _targetCount = 0;
                 return true;
@@ -1214,7 +1205,7 @@ class spell_algalon_big_bang : public SpellScriptLoader
                     GetCaster()->GetAI()->DoAction(ACTION_ASCEND);
             }
 
-            void Register() override
+            void Register()
             {
                 OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_algalon_big_bang_SpellScript::CountTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
                 AfterCast += SpellCastFn(spell_algalon_big_bang_SpellScript::CheckTargets);
@@ -1223,7 +1214,7 @@ class spell_algalon_big_bang : public SpellScriptLoader
             uint32 _targetCount;
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_algalon_big_bang_SpellScript();
         }
@@ -1244,13 +1235,13 @@ class spell_algalon_remove_phase : public SpellScriptLoader
                 GetTarget()->RemoveAurasByType(SPELL_AURA_PHASE);
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectPeriodic += AuraEffectPeriodicFn(spell_algalon_remove_phase_AuraScript::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
             }
         };
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const
         {
             return new spell_algalon_remove_phase_AuraScript();
         }
@@ -1272,13 +1263,13 @@ class spell_algalon_cosmic_smash : public SpellScriptLoader
                 GetHitDest()->RelocateOffset(offset);
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectLaunch += SpellEffectFn(spell_algalon_cosmic_smash_SpellScript::ModDestHeight, EFFECT_0, SPELL_EFFECT_SUMMON);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_algalon_cosmic_smash_SpellScript();
         }
@@ -1303,13 +1294,13 @@ class spell_algalon_cosmic_smash_damage : public SpellScriptLoader
                     SetHitDamage(int32(float(GetHitDamage()) / distance) * 2);
             }
 
-            void Register() override
+            void Register()
             {
                 OnHit += SpellHitFn(spell_algalon_cosmic_smash_damage_SpellScript::RecalculateDamage);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_algalon_cosmic_smash_damage_SpellScript();
         }
@@ -1332,26 +1323,15 @@ class spell_algalon_supermassive_fail : public SpellScriptLoader
                 GetHitPlayer()->ResetAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BE_SPELL_TARGET, ACHIEVEMENT_CRITERIA_CONDITION_NO_SPELL_HIT, GetSpellInfo()->Id, true);
             }
 
-            void Register() override
+            void Register()
             {
                 OnHit += SpellHitFn(spell_algalon_supermassive_fail_SpellScript::RecalculateDamage);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_algalon_supermassive_fail_SpellScript();
-        }
-};
-
-class achievement_he_feeds_on_your_tears : public AchievementCriteriaScript
-{
-    public:
-        achievement_he_feeds_on_your_tears() : AchievementCriteriaScript("achievement_he_feeds_on_your_tears") { }
-
-        bool OnCheck(Player* /*source*/, Unit* target) override
-        {
-            return !target->GetAI()->GetData(DATA_HAS_FED_ON_TEARS);
         }
 };
 
@@ -1371,5 +1351,4 @@ void AddSC_boss_algalon_the_observer()
     new spell_algalon_cosmic_smash();
     new spell_algalon_cosmic_smash_damage();
     new spell_algalon_supermassive_fail();
-    new achievement_he_feeds_on_your_tears();
 }

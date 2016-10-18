@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -97,7 +95,7 @@ class OPvPCapturePointHP : public OPvPCapturePoint
 
         void SendChangePhase();
 
-        void FillInitialWorldStates(WorldStateBuilder& builder);
+        void FillInitialWorldStates(WorldPacket & data);
 
         // used when player is activated/inactivated in the area
         bool HandlePlayerEnter(Player* player);
@@ -121,7 +119,7 @@ class OutdoorPvPHP : public OutdoorPvP
 
         bool Update(uint32 diff);
 
-        void FillInitialWorldStates(WorldStateBuilder& builder);
+        void FillInitialWorldStates(WorldPacket &data);
 
         void SendRemoveWorldStates(Player* player);
 

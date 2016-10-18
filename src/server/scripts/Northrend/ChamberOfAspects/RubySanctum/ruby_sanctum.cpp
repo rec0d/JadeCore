@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -63,13 +60,13 @@ class npc_xerestrasza : public CreatureScript
                 _introDone = false;
             }
 
-            void Reset() override
+            void Reset()
             {
                 _events.Reset();
-                me->RemoveFlag(UNIT_FIELD_NPC_FLAGS, GOSSIP_OPTION_QUESTGIVER);
+                me->RemoveFlag(UNIT_NPC_FLAGS, GOSSIP_OPTION_QUESTGIVER);
             }
 
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 if (action == ACTION_BALTHARUS_DEATH)
                 {
@@ -95,7 +92,7 @@ class npc_xerestrasza : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (_isIntro)
                     return;
@@ -125,7 +122,7 @@ class npc_xerestrasza : public CreatureScript
                             Talk(SAY_XERESTRASZA_EVENT_6);
                             break;
                         case EVENT_XERESTRASZA_EVENT_7:
-                            me->SetFlag(UNIT_FIELD_NPC_FLAGS, GOSSIP_OPTION_QUESTGIVER);
+                            me->SetFlag(UNIT_NPC_FLAGS, GOSSIP_OPTION_QUESTGIVER);
                             Talk(SAY_XERESTRASZA_EVENT_7);
                             me->setActive(false);
                             break;
@@ -141,7 +138,7 @@ class npc_xerestrasza : public CreatureScript
             bool _introDone;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetRubySanctumAI<npc_xerestraszaAI>(creature);
         }
@@ -152,7 +149,7 @@ class at_baltharus_plateau : public AreaTriggerScript
     public:
         at_baltharus_plateau() : AreaTriggerScript("at_baltharus_plateau") { }
 
-        bool OnTrigger(Player* player, AreaTriggerEntry const* /*areaTrigger*/) override
+        bool OnTrigger(Player* player, AreaTriggerEntry const* /*areaTrigger*/)
         {
             // Only trigger once
             if (InstanceScript* instance = player->GetInstanceScript())

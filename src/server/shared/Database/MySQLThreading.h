@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -35,7 +33,7 @@ class MySQL
         static void Thread_Init()
         {
             mysql_thread_init();
-            TC_LOG_WARN("sql.sql", "Core thread with ID [" UI64FMTD "] initializing MySQL thread.",
+            sLog->outWarn(LOG_FILTER_SQL, "Core thread with ID ["UI64FMTD"] initializing MySQL thread.",
                     (uint64)ACE_Based::Thread::currentId());
         }
 
@@ -46,7 +44,7 @@ class MySQL
         static void Thread_End()
         {
             mysql_thread_end();
-            TC_LOG_WARN("sql.sql", "Core thread with ID [" UI64FMTD "] shutting down MySQL thread.",
+            sLog->outWarn(LOG_FILTER_SQL, "Core thread with ID ["UI64FMTD"] shutting down MySQL thread.",
                 (uint64)ACE_Based::Thread::currentId());
         }
 

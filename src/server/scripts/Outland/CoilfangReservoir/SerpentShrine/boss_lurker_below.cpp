@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,36 +29,30 @@ EndScriptData */
 #include "Spell.h"
 #include "Player.h"
 
-enum Spells
-{
-    SPELL_SPOUT             = 37433,
-    SPELL_SPOUT_ANIM        = 42835,
-    SPELL_SPOUT_BREATH      = 37431,
-    SPELL_KNOCKBACK         = 19813,
-    SPELL_GEYSER            = 37478,
-    SPELL_WHIRL             = 37660,
-    SPELL_WATERBOLT         = 37138,
-    SPELL_SUBMERGE          = 37550,
-    SPELL_EMERGE            = 20568,
-
-
-    // Ambusher spells
-    SPELL_SPREAD_SHOT       = 37790,
-    SPELL_SHOOT             = 37770,
-    // Guardian spells
-    SPELL_ARCINGSMASH       = 38761, // Wrong SpellId. Can't find the right one.
-    SPELL_HAMSTRING         = 26211
-};
-
-enum Creatures
-{
-    NPC_COILFANG_GUARDIAN   = 21873,
-    NPC_COILFANG_AMBUSHER   = 21865
-};
+#define SPELL_SPOUT         37433
+#define SPELL_SPOUT_ANIM    42835
+#define SPELL_SPOUT_BREATH  37431
+#define SPELL_KNOCKBACK     19813
+#define SPELL_GEYSER        37478
+#define SPELL_WHIRL         37660
+#define SPELL_WATERBOLT     37138
+#define SPELL_SUBMERGE      37550
+#define SPELL_EMERGE        20568
 
 #define EMOTE_SPOUT "The Lurker Below takes a deep breath."
 
 #define SPOUT_DIST  100
+
+#define MOB_COILFANG_GUARDIAN 21873
+#define MOB_COILFANG_AMBUSHER 21865
+
+//Ambusher spells
+#define SPELL_SPREAD_SHOT   37790
+#define SPELL_SHOOT         37770
+
+//Guardian spells
+#define SPELL_ARCINGSMASH   38761 // Wrong SpellId. Can't find the right one.
+#define SPELL_HAMSTRING     26211
 
 float AddPos[9][3] =
 {
@@ -80,16 +73,15 @@ class boss_the_lurker_below : public CreatureScript
 public:
     boss_the_lurker_below() : CreatureScript("boss_the_lurker_below") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_the_lurker_belowAI(creature);
+        return new boss_the_lurker_belowAI (creature);
     }
 
-    struct boss_the_lurker_belowAI : public ScriptedAI
+    struct boss_the_lurker_belowAI : public Scripted_NoMovementAI
     {
-        boss_the_lurker_belowAI(Creature* creature) : ScriptedAI(creature), Summons(me)
+        boss_the_lurker_belowAI(Creature* creature) : Scripted_NoMovementAI(creature), Summons(me)
         {
-            SetCombatMovement(false);
             instance = creature->GetInstanceScript();
         }
 
@@ -117,10 +109,9 @@ public:
                 return false;
             return true;
         }
-        void Reset() override
+        void Reset()
         {
-            me->SetSwim(true);
-            me->SetDisableGravity(true);
+            me->AddUnitMovementFlag(MOVEMENTFLAG_SWIMMING | MOVEMENTFLAG_DISABLE_GRAVITY);
             SpoutAnimTimer = 1000;
             RotTimer = 0;
             WaterboltTimer = 15000; // give time to get in range when fight starts
@@ -150,7 +141,7 @@ public:
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             if (instance)
             {
@@ -161,14 +152,14 @@ public:
             Summons.DespawnAll();
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* who)
         {
             if (instance)
                 instance->SetData(DATA_THELURKERBELOWEVENT, IN_PROGRESS);
+            Scripted_NoMovementAI::EnterCombat(who);
         }
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
             if (!CanStartEvent) // boss is invisible, don't attack
                 return;
@@ -180,13 +171,13 @@ public:
             }
         }
 
-        void MovementInform(uint32 type, uint32 /*id*/) override
+        void MovementInform(uint32 type, uint32 /*id*/)
         {
             if (type == ROTATE_MOTION_TYPE)
                 me->SetReactState(REACT_AGGRESSIVE);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!CanStartEvent) // boss is invisible, don't attack
             {
@@ -202,7 +193,7 @@ public:
                     if (!Submerged && WaitTimer2 <= diff) // wait 500ms before emerge anim
                     {
                         me->RemoveAllAuras();
-                        me->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, 0);
+                        me->SetUInt32Value(UNIT_NPC_EMOTESTATE, 0);
                         DoCast(me, SPELL_EMERGE, false);
                         WaitTimer2 = 60000; // never reached
                         WaitTimer = 3000;
@@ -225,7 +216,7 @@ public:
 
             if (me->getThreatManager().getThreatList().empty()) // check if should evade
             {
-                if (me->IsInCombat())
+                if (me->isInCombat())
                     EnterEvadeMode();
                 return;
             }
@@ -266,7 +257,7 @@ public:
                     {
                         for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
                         {
-                            if (me->IsWithinMeleeRange(i->GetSource()))
+                            if (me->IsWithinMeleeRange(i->getSource()))
                                 InRange = true;
                         }
                     }
@@ -281,8 +272,8 @@ public:
                         Map::PlayerList const &PlayerList = map->GetPlayers();
                         for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
                         {
-                            if (i->GetSource() && i->GetSource()->IsAlive() && me->HasInArc(float(diff/20000*M_PI*2), i->GetSource()) && me->IsWithinDist(i->GetSource(), SPOUT_DIST) && !i->GetSource()->IsInWater())
-                                DoCast(i->GetSource(), SPELL_SPOUT, true); // only knock back players in arc, in 100yards, not in water
+                            if (i->getSource() && i->getSource()->isAlive() && me->HasInArc(float(diff/20000*M_PI*2), i->getSource()) && me->IsWithinDist(i->getSource(), SPOUT_DIST) && !i->getSource()->IsInWater())
+                                DoCast(i->getSource(), SPELL_SPOUT, true); // only knock back players in arc, in 100yards, not in water
                         }
                     }
 
@@ -336,7 +327,7 @@ public:
                     me->InterruptNonMeleeSpells(false); // shouldn't be any
                     me->RemoveAllAuras();
                     me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
-                    me->RemoveFlag(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_STATE_SUBMERGED);
+                    me->RemoveFlag(UNIT_NPC_EMOTESTATE, EMOTE_STATE_SUBMERGED);
                     DoCast(me, SPELL_EMERGE, true);
                     Spawned = false;
                     SpoutTimer = 3000; // directly cast Spout after emerging!
@@ -350,7 +341,7 @@ public:
                     return;
                 }
 
-                if (!me->IsInCombat())
+                if (!me->isInCombat())
                     DoZoneInCombat();
 
                 if (!Spawned)
@@ -358,7 +349,7 @@ public:
                     me->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
                     // spawn adds
                     for (uint8 i = 0; i < 9; ++i)
-                        if (Creature* summoned = me->SummonCreature(i < 6 ? NPC_COILFANG_AMBUSHER : NPC_COILFANG_GUARDIAN, AddPos[i][0], AddPos[i][1], AddPos[i][2], 0, TEMPSUMMON_CORPSE_DESPAWN, 0))
+                        if (Creature* summoned = me->SummonCreature(i < 6 ? MOB_COILFANG_AMBUSHER : MOB_COILFANG_GUARDIAN, AddPos[i][0], AddPos[i][1], AddPos[i][2], 0, TEMPSUMMON_CORPSE_DESPAWN, 0))
                             Summons.Summon(summoned);
                     Spawned = true;
                 }
@@ -367,34 +358,32 @@ public:
      };
 };
 
-class npc_coilfang_ambusher : public CreatureScript
+class mob_coilfang_ambusher : public CreatureScript
 {
 public:
-    npc_coilfang_ambusher() : CreatureScript("npc_coilfang_ambusher") { }
+    mob_coilfang_ambusher() : CreatureScript("mob_coilfang_ambusher") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_coilfang_ambusherAI(creature);
+        return new mob_coilfang_ambusherAI (creature);
     }
 
-    struct npc_coilfang_ambusherAI : public ScriptedAI
+    struct mob_coilfang_ambusherAI : public Scripted_NoMovementAI
     {
-        npc_coilfang_ambusherAI(Creature* creature) : ScriptedAI(creature)
+        mob_coilfang_ambusherAI(Creature* creature) : Scripted_NoMovementAI(creature)
         {
-            SetCombatMovement(false);
         }
 
         uint32 MultiShotTimer;
         uint32 ShootBowTimer;
 
-        void Reset() override
+        void Reset()
         {
             MultiShotTimer = 10000;
             ShootBowTimer = 4000;
         }
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
             if (!who || me->GetVictim())
                 return;
@@ -403,7 +392,7 @@ public:
                 AttackStart(who);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (MultiShotTimer <= diff)
             {
@@ -430,9 +419,9 @@ public:
 class go_strange_pool : public GameObjectScript
 {
     public:
-        go_strange_pool() : GameObjectScript("go_strange_pool") { }
+        go_strange_pool() : GameObjectScript("go_strange_pool") {}
 
-        bool OnGossipHello(Player* player, GameObject* go) override
+        bool OnGossipHello(Player* player, GameObject* go)
         {
             // 25%
             if (InstanceScript* instanceScript = go->GetInstanceScript())
@@ -453,6 +442,6 @@ class go_strange_pool : public GameObjectScript
 void AddSC_boss_the_lurker_below()
 {
     new boss_the_lurker_below();
-    new npc_coilfang_ambusher();
+    new mob_coilfang_ambusher();
     new go_strange_pool();
 }

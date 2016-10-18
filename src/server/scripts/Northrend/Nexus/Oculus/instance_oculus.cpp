@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -37,16 +34,16 @@ class instance_oculus : public InstanceMapScript
 public:
     instance_oculus() : InstanceMapScript("instance_oculus", 578) { }
 
-    InstanceScript* GetInstanceScript(InstanceMap* map) const override
+    InstanceScript* GetInstanceScript(InstanceMap* map) const
     {
         return new instance_oculus_InstanceMapScript(map);
     }
 
     struct instance_oculus_InstanceMapScript : public InstanceScript
     {
-        instance_oculus_InstanceMapScript(Map* map) : InstanceScript(map) { }
+        instance_oculus_InstanceMapScript(Map* map) : InstanceScript(map) {}
 
-        void Initialize() override
+        void Initialize()
         {
             SetBossNumber(MAX_ENCOUNTER);
 
@@ -68,7 +65,7 @@ public:
             verdisaGUID = 0;
 }
 
-        void OnUnitDeath(Unit* unit) override
+        void OnUnitDeath(Unit* unit)
         {
             Creature* creature = unit->ToCreature();
             if (!creature)
@@ -84,7 +81,7 @@ public:
                     varos->RemoveAllAuras();
         }
 
-        void OnPlayerEnter(Player* player) override
+        void OnPlayerEnter(Player* player)
         {
             if (GetBossState(DATA_DRAKOS_EVENT) == DONE && GetBossState(DATA_VAROS_EVENT) != DONE)
             {
@@ -111,7 +108,7 @@ public:
                 drake->AI()->DoAction(ACTION_CALL_DRAGON_EVENT);
         }
 
-        void OnCreatureCreate(Creature* creature) override
+        void OnCreatureCreate(Creature* creature)
         {
             switch (creature->GetEntry())
             {
@@ -134,47 +131,39 @@ public:
                         creature->SetPhaseMask(1, true);
                     break;
                 case NPC_CENTRIFUGE_CONSTRUCT:
-                    if (creature->IsAlive())
+                    if (creature->isAlive())
                         DoUpdateWorldState(WORLD_STATE_CENTRIFUGE_CONSTRUCT_AMOUNT, ++centrifugueConstructCounter);
                     break;
                 case NPC_BELGARISTRASZ:
                     belgaristraszGUID = creature->GetGUID();
                     if (GetBossState(DATA_DRAKOS_EVENT) == DONE)
-                    {
                         creature->SetWalk(true),
                         creature->GetMotionMaster()->MovePoint(0, 941.453f, 1044.1f, 359.967f),
-                        creature->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-                    }
+                        creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                     break;
                 case NPC_ETERNOS:
                     eternosGUID = creature->GetGUID();
                     if (GetBossState(DATA_DRAKOS_EVENT) == DONE)
-                    {
                         creature->SetWalk(true),
                         creature->GetMotionMaster()->MovePoint(0, 943.202f, 1059.35f, 359.967f),
-                        creature->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-                    }
+                        creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                     break;
                 case NPC_VERDISA:
                     verdisaGUID = creature->GetGUID();
                     if (GetBossState(DATA_DRAKOS_EVENT) == DONE)
-                    {
                         creature->SetWalk(true),
                         creature->GetMotionMaster()->MovePoint(0, 949.188f, 1032.91f, 359.967f),
-                        creature->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
-                    }
+                        creature->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                     break;
                 case NPC_GREATER_WHELP:
                     if (GetBossState(DATA_UROM_EVENT) == DONE)
-                    {
                         creature->SetPhaseMask(1, true);
                         gwhelpList.push_back(creature->GetGUID());
-                    }
                     break;
             }
         }
 
-        void OnGameObjectCreate(GameObject* go) override
+        void OnGameObjectCreate(GameObject* go)
         {
             switch (go->GetEntry())
             {
@@ -194,7 +183,7 @@ public:
             }
         }
 
-        bool SetBossState(uint32 type, EncounterState state) override
+        bool SetBossState(uint32 type, EncounterState state)
         {
             if (!InstanceScript::SetBossState(type, state))
                 return false;
@@ -220,13 +209,9 @@ public:
                     break;
                 case DATA_UROM_EVENT:
                     if (state == DONE)
-                    {
                         if (Creature* eregos = instance->GetCreature(eregosGUID))
-                        {
                             eregos->SetPhaseMask(1, true);
                             GreaterWhelps();
-                        }
-                    }
                     break;
                 case DATA_EREGOS_EVENT:
                     if (state == DONE)
@@ -237,7 +222,7 @@ public:
             return true;
         }
 
-        void SetData(uint32 type, uint32 data) override
+        void SetData(uint32 type, uint32 data)
         {
             switch (type)
             {
@@ -247,7 +232,7 @@ public:
             }
         }
 
-        uint32 GetData(uint32 type) const override
+        uint32 GetData(uint32 type) const
         {
             switch (type)
             {
@@ -259,7 +244,7 @@ public:
             return 0;
         }
 
-        uint64 GetData64(uint32 identifier) const override
+        uint64 GetData64(uint32 identifier) const
         {
             switch (identifier)
             {
@@ -303,11 +288,13 @@ public:
                 return;
 
             for (std::list<uint64>::const_iterator itr = gwhelpList.begin(); itr != gwhelpList.end(); ++itr)
+            {
                 if (Creature* gwhelp = instance->GetCreature(*itr))
                     gwhelp->SetPhaseMask(1, true);
+            }
         }
 
-        std::string GetSaveData() override
+        std::string GetSaveData()
         {
             OUT_SAVE_INST_DATA;
 
@@ -320,7 +307,7 @@ public:
             return str_data;
         }
 
-        void Load(const char* in) override
+        void Load(const char* in)
         {
             if (!in)
             {

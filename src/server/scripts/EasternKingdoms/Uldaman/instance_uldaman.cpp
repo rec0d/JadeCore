@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2007 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 /* ScriptData
 SDName: instance_uldaman
 SD%Complete: 99
@@ -28,7 +27,7 @@ EndScriptData */
 #include "InstanceScript.h"
 #include "uldaman.h"
 
-enum Spells
+enum eSpells
 {
     SPELL_ARCHAEDAS_AWAKEN      = 10347,
     SPELL_AWAKEN_VAULT_WALKER   = 10258,
@@ -42,13 +41,13 @@ enum Events
 class instance_uldaman : public InstanceMapScript
 {
     public:
-        instance_uldaman() : InstanceMapScript("instance_uldaman", 70) { }
+        instance_uldaman() : InstanceMapScript("instance_uldaman", 70) {}
 
         struct instance_uldaman_InstanceMapScript : public InstanceScript
         {
-            instance_uldaman_InstanceMapScript(Map* map) : InstanceScript(map) { }
+            instance_uldaman_InstanceMapScript(Map* map) : InstanceScript(map) {}
 
-            void Initialize() override
+            void Initialize()
             {
                 memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
 
@@ -68,7 +67,7 @@ class instance_uldaman : public InstanceMapScript
                 keystoneCheck = false;
             }
 
-            bool IsEncounterInProgress() const override
+            bool IsEncounterInProgress() const
             {
                 for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
                     if (m_auiEncounter[i] == IN_PROGRESS)
@@ -100,7 +99,7 @@ class instance_uldaman : public InstanceMapScript
             uint32 m_auiEncounter[MAX_ENCOUNTER];
             std::string str_data;
 
-            void OnGameObjectCreate(GameObject* go) override
+            void OnGameObjectCreate(GameObject* go)
             {
                 switch (go->GetEntry())
                 {
@@ -120,7 +119,7 @@ class instance_uldaman : public InstanceMapScript
 
                     case GO_ANCIENT_VAULT_DOOR:
                         go->SetGoState(GO_STATE_READY);
-                        go->SetUInt32Value(GAMEOBJECT_FIELD_FLAGS, 33);
+                        go->SetUInt32Value(GAMEOBJECT_FLAGS, 33);
                         ancientVaultDoor = go->GetGUID();
 
                         if (m_auiEncounter[1] == DONE)
@@ -140,7 +139,7 @@ class instance_uldaman : public InstanceMapScript
                         if (m_auiEncounter[2] == DONE)
                         {
                             HandleGameObject(0, true, go);
-                            go->SetUInt32Value(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_INTERACT_COND);
+                            go->SetUInt32Value(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
                         }
                         break;
                 }
@@ -170,7 +169,7 @@ class instance_uldaman : public InstanceMapScript
                 if (!go)
                     return;
 
-                go->SetUInt32Value(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_INTERACT_COND);
+                go->SetUInt32Value(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
             }
 
             void ActivateStoneKeepers()
@@ -180,7 +179,7 @@ class instance_uldaman : public InstanceMapScript
                     for (std::vector<uint64>::const_iterator i = stoneKeepers.begin(); i != stoneKeepers.end(); ++i)
                     {
                         Creature* target = instance->GetCreature(*i);
-                        if (!target || !target->IsAlive())
+                        if (!target || !target->isAlive())
                             continue;
                         target->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE);
                         target->setFaction(14);
@@ -202,7 +201,7 @@ class instance_uldaman : public InstanceMapScript
                 for (std::vector<uint64>::const_iterator i = archaedasWallMinions.begin(); i != archaedasWallMinions.end(); ++i)
                 {
                     Creature* target = instance->GetCreature(*i);
-                    if (!target || !target->IsAlive() || target->getFaction() == 14)
+                    if (!target || !target->isAlive() || target->getFaction() == 14)
                         continue;
                     archaedas->CastSpell(target, SPELL_AWAKEN_VAULT_WALKER, true);
                     target->CastSpell(target, SPELL_ARCHAEDAS_AWAKEN, true);
@@ -309,7 +308,7 @@ class instance_uldaman : public InstanceMapScript
                     }
                 }
             }
-            void Update(uint32 diff) override
+            void Update(uint32 diff)
             {
                 if (!keystoneCheck)
                     return;
@@ -328,7 +327,7 @@ class instance_uldaman : public InstanceMapScript
                     ironayaSealDoorTimer -= diff;
             }
 
-            void SetData(uint32 type, uint32 data) override
+            void SetData(uint32 type, uint32 data)
             {
                 switch (type)
                 {
@@ -394,7 +393,7 @@ class instance_uldaman : public InstanceMapScript
                 }
             }
 
-            void SetData64(uint32 type, uint64 data) override
+            void SetData64(uint32 type, uint64 data)
             {
                 // Archaedas
                 if (type == 0)
@@ -404,12 +403,12 @@ class instance_uldaman : public InstanceMapScript
                 }
             }
 
-            std::string GetSaveData() override
+            std::string GetSaveData()
             {
                 return str_data;
             }
 
-            void Load(const char* in) override
+            void Load(const char* in)
             {
                 if (!in)
                 {
@@ -431,7 +430,7 @@ class instance_uldaman : public InstanceMapScript
                 OUT_LOAD_INST_DATA_COMPLETE;
             }
 
-            void OnCreatureCreate(Creature* creature) override
+            void OnCreatureCreate(Creature* creature)
             {
                 switch (creature->GetEntry())
                 {
@@ -470,7 +469,7 @@ class instance_uldaman : public InstanceMapScript
                 }
             }
 
-            uint64 GetData64(uint32 identifier) const override
+            uint64 GetData64(uint32 identifier) const
             {
                 switch (identifier)
                 {
@@ -495,7 +494,7 @@ class instance_uldaman : public InstanceMapScript
                 return 0;
             } // end GetData64
 
-            void ProcessEvent(WorldObject* /*gameObject*/, uint32 eventId) override
+            void ProcessEvent(WorldObject* /*gameObject*/, uint32 eventId)
             {
                 switch (eventId)
                 {
@@ -508,7 +507,7 @@ class instance_uldaman : public InstanceMapScript
             }
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const
         {
             return new instance_uldaman_InstanceMapScript(map);
         }

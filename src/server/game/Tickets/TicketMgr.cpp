@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -143,7 +143,7 @@ void GmTicket::WritePacket(WorldPacket& data) const
 
 void GmTicket::SendResponse(WorldSession* session) const
 {
-    WorldPacket data(SMSG_GM_RESPONSE_RECEIVED);
+    WorldPacket data(SMSG_GMRESPONSE_RECEIVED);
     data << uint32(1);          // responseID
     data << uint32(_id);        // ticketID
     data << _message.c_str();
@@ -233,7 +233,7 @@ void GmTicket::SetChatLog(std::list<uint32> time, std::string const& log)
     std::stringstream ss(log);
     std::stringstream newss;
     std::string line;
-    while (std::getline(ss, line))
+    while (!time.empty() && std::getline(ss, line))
     {
         newss << secsToTimeString(time.front()) << ": " << line << "\n";
         time.pop_front();
@@ -244,8 +244,7 @@ void GmTicket::SetChatLog(std::list<uint32> time, std::string const& log)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Ticket manager
-TicketMgr::TicketMgr() : _status(true), _lastTicketId(0), _lastSurveyId(0), _openTicketCount(0),
-    _lastChange(time(NULL)) { }
+TicketMgr::TicketMgr() : _status(true), _lastTicketId(0), _lastSurveyId(0), _openTicketCount(0), _lastChange(time(NULL)) { }
 
 TicketMgr::~TicketMgr()
 {
@@ -253,24 +252,13 @@ TicketMgr::~TicketMgr()
         delete itr->second;
 }
 
-void TicketMgr::Initialize()
-{
-    SetStatus(sWorld->getBoolConfig(CONFIG_ALLOW_TICKETS));
-}
+void TicketMgr::Initialize() { SetStatus(sWorld->getBoolConfig(CONFIG_ALLOW_TICKETS)); }
 
 void TicketMgr::ResetTickets()
 {
-    for (GmTicketList::const_iterator itr = _ticketList.begin(); itr != _ticketList.end();)
-    {
+    for (GmTicketList::const_iterator itr = _ticketList.begin(); itr != _ticketList.end(); ++itr)
         if (itr->second->IsClosed())
-        {
-            uint32 ticketId = itr->second->GetId();
-            ++itr;
-            sTicketMgr->RemoveTicket(ticketId);
-        }
-        else
-            ++itr;
-    }
+            sTicketMgr->RemoveTicket(itr->second->GetId());
 
     _lastTicketId = 0;
 
@@ -294,7 +282,7 @@ void TicketMgr::LoadTickets()
     PreparedQueryResult result = CharacterDatabase.Query(stmt);
     if (!result)
     {
-        TC_LOG_INFO("server.loading", ">> Loaded 0 GM tickets. DB table `gm_tickets` is empty!");
+        sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded 0 GM tickets. DB table `gm_tickets` is empty!");
 
         return;
     }
@@ -321,7 +309,7 @@ void TicketMgr::LoadTickets()
         ++count;
     } while (result->NextRow());
 
-    TC_LOG_INFO("server.loading", ">> Loaded %u GM tickets in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+    sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded %u GM tickets in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 
 }
 
@@ -334,7 +322,7 @@ void TicketMgr::LoadSurveys()
     if (QueryResult result = CharacterDatabase.Query("SELECT MAX(surveyId) FROM gm_surveys"))
         _lastSurveyId = (*result)[0].GetUInt32();
 
-    TC_LOG_INFO("server.loading", ">> Loaded GM Survey count from database in %u ms", GetMSTimeDiffToNow(oldMSTime));
+    sLog->outInfo(LOG_FILTER_SERVER_LOADING, ">> Loaded GM Survey count from database in %u ms", GetMSTimeDiffToNow(oldMSTime));
 
 }
 
@@ -396,7 +384,7 @@ void TicketMgr::ShowEscalatedList(ChatHandler& handler) const
 
 void TicketMgr::SendTicket(WorldSession* session, GmTicket* ticket) const
 {
-    WorldPacket data(SMSG_GM_TICKET_GETTICKET, (ticket ? (4 + 4 + 1 + 4 + 4 + 4 + 1 + 1) : 4));
+    WorldPacket data(SMSG_GMTICKET_GETTICKET, (ticket ? (4 + 4 + 1 + 4 + 4 + 4 + 1 + 1) : 4));
 
     if (ticket)
         ticket->WritePacket(data);

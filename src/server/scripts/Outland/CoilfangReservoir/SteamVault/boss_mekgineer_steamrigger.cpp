@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -24,32 +23,27 @@ SDComment: Mechanics' interrrupt heal doesn't work very well, also a proper move
 SDCategory: Coilfang Resevoir, The Steamvault
 EndScriptData */
 
+/* ContentData
+boss_mekgineer_steamrigger
+mob_steamrigger_mechanic
+EndContentData */
+
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "steam_vault.h"
 
-enum Yells
+enum MekgineerSteamrigger
 {
     SAY_MECHANICS               = 0,
     SAY_AGGRO                   = 1,
     SAY_SLAY                    = 2,
-    SAY_DEATH                   = 3
-};
+    SAY_DEATH                   = 3,
 
-enum Spells
-{
     SPELL_SUPER_SHRINK_RAY      = 31485,
     SPELL_SAW_BLADE             = 31486,
     SPELL_ELECTRIFIED_NET       = 35107,
 
-    SPELL_DISPEL_MAGIC          = 17201,
-    SPELL_REPAIR                = 31532,
-    H_SPELL_REPAIR              = 37936
-};
-
-enum Creatures
-{
-    NPC_STREAMRIGGER_MECHANIC   = 17951
+    ENTRY_STREAMRIGGER_MECHANIC = 17951
 };
 
 class boss_mekgineer_steamrigger : public CreatureScript
@@ -57,9 +51,9 @@ class boss_mekgineer_steamrigger : public CreatureScript
 public:
     boss_mekgineer_steamrigger() : CreatureScript("boss_mekgineer_steamrigger") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_mekgineer_steamriggerAI(creature);
+        return new boss_mekgineer_steamriggerAI (creature);
     }
 
     struct boss_mekgineer_steamriggerAI : public ScriptedAI
@@ -78,7 +72,7 @@ public:
         bool Summon50;
         bool Summon25;
 
-        void Reset() override
+        void Reset()
         {
             Shrink_Timer = 20000;
             Saw_Blade_Timer = 15000;
@@ -89,28 +83,28 @@ public:
             Summon25 = false;
 
             if (instance)
-                instance->SetBossState(DATA_MEKGINEER_STEAMRIGGER, NOT_STARTED);
+                instance->SetData(TYPE_MEKGINEER_STEAMRIGGER, NOT_STARTED);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Talk(SAY_DEATH);
 
             if (instance)
-                instance->SetBossState(DATA_MEKGINEER_STEAMRIGGER, DONE);
+                instance->SetData(TYPE_MEKGINEER_STEAMRIGGER, DONE);
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_SLAY);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(SAY_AGGRO);
 
             if (instance)
-                instance->SetBossState(DATA_MEKGINEER_STEAMRIGGER, IN_PROGRESS);
+                instance->SetData(TYPE_MEKGINEER_STEAMRIGGER, IN_PROGRESS);
         }
 
         //no known summon spells exist
@@ -118,17 +112,17 @@ public:
         {
             Talk(SAY_MECHANICS);
 
-            DoSpawnCreature(NPC_STREAMRIGGER_MECHANIC, 5, 5, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
-            DoSpawnCreature(NPC_STREAMRIGGER_MECHANIC, -5, 5, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
-            DoSpawnCreature(NPC_STREAMRIGGER_MECHANIC, -5, -5, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
+            DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC, 5, 5, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
+            DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC, -5, 5, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
+            DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC, -5, -5, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
 
             if (rand()%2)
-                DoSpawnCreature(NPC_STREAMRIGGER_MECHANIC, 5, -7, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
+                DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC, 5, -7, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
             if (rand()%2)
-                DoSpawnCreature(NPC_STREAMRIGGER_MECHANIC, 7, -5, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
+                DoSpawnCreature(ENTRY_STREAMRIGGER_MECHANIC, 7, -5, 0, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 240000);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -189,22 +183,26 @@ public:
 
 };
 
+#define SPELL_DISPEL_MAGIC          17201
+#define SPELL_REPAIR                31532
+#define H_SPELL_REPAIR              37936
+
 #define MAX_REPAIR_RANGE            (13.0f)                 //we should be at least at this range for repair
 #define MIN_REPAIR_RANGE            (7.0f)                  //we can stop movement at this range to repair but not required
 
-class npc_steamrigger_mechanic : public CreatureScript
+class mob_steamrigger_mechanic : public CreatureScript
 {
 public:
-    npc_steamrigger_mechanic() : CreatureScript("npc_steamrigger_mechanic") { }
+    mob_steamrigger_mechanic() : CreatureScript("mob_steamrigger_mechanic") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_steamrigger_mechanicAI(creature);
+        return new mob_steamrigger_mechanicAI (creature);
     }
 
-    struct npc_steamrigger_mechanicAI : public ScriptedAI
+    struct mob_steamrigger_mechanicAI : public ScriptedAI
     {
-        npc_steamrigger_mechanicAI(Creature* creature) : ScriptedAI(creature)
+        mob_steamrigger_mechanicAI(Creature* creature) : ScriptedAI(creature)
         {
             instance = creature->GetInstanceScript();
         }
@@ -213,30 +211,30 @@ public:
 
         uint32 Repair_Timer;
 
-        void Reset() override
+        void Reset()
         {
             Repair_Timer = 2000;
         }
 
-        void MoveInLineOfSight(Unit* /*who*/) override
+        void MoveInLineOfSight(Unit* /*who*/)
         {
             //react only if attacked
         }
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/) { }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (Repair_Timer <= diff)
             {
-                if (instance && instance->GetBossState(DATA_MEKGINEER_STEAMRIGGER) == IN_PROGRESS)
+                if (instance && instance->GetData64(DATA_MEKGINEERSTEAMRIGGER) && instance->GetData(TYPE_MEKGINEER_STEAMRIGGER) == IN_PROGRESS)
                 {
-                    if (Unit* pMekgineer = Unit::GetUnit(*me, instance->GetData64(DATA_MEKGINEER_STEAMRIGGER)))
+                    if (Unit* pMekgineer = Unit::GetUnit(*me, instance->GetData64(DATA_MEKGINEERSTEAMRIGGER)))
                     {
                         if (me->IsWithinDistInMap(pMekgineer, MAX_REPAIR_RANGE))
                         {
                             //are we already channeling? Doesn't work very well, find better check?
-                            if (!me->GetUInt32Value(UNIT_FIELD_CHANNEL_SPELL))
+                            if (!me->GetUInt32Value(UNIT_CHANNEL_SPELL))
                             {
                                 //me->GetMotionMaster()->MovementExpired();
                                 //me->GetMotionMaster()->MoveIdle();
@@ -266,5 +264,5 @@ public:
 void AddSC_boss_mekgineer_steamrigger()
 {
     new boss_mekgineer_steamrigger();
-    new npc_steamrigger_mechanic();
+    new mob_steamrigger_mechanic();
 }

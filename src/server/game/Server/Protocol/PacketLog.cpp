@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,13 +35,13 @@ PacketLog::~PacketLog()
 
 void PacketLog::Initialize()
 {
-    std::string logsDir = sConfigMgr->GetStringDefault("LogsDir", "");
+    std::string logsDir = ConfigMgr::GetStringDefault("LogsDir", "");
 
     if (!logsDir.empty())
         if ((logsDir.at(logsDir.length()-1) != '/') && (logsDir.at(logsDir.length()-1) != '\\'))
             logsDir.push_back('/');
 
-    std::string logname = sConfigMgr->GetStringDefault("PacketLogFile", "");
+    std::string logname = ConfigMgr::GetStringDefault("PacketLogFile", "");
     if (!logname.empty())
         _file = fopen((logsDir + logname).c_str(), "wb");
 }
@@ -51,9 +49,7 @@ void PacketLog::Initialize()
 void PacketLog::LogPacket(WorldPacket const& packet, Direction direction)
 {
     ByteBuffer data(4+4+4+1+packet.size());
-    uint32 opcode = direction == CLIENT_TO_SERVER ? const_cast<WorldPacket&>(packet).GetReceivedOpcode() : serverOpcodeTable[packet.GetOpcode()]->OpcodeNumber;
-
-    data << int32(opcode);
+    data << int32(packet.GetOpcode());
     data << int32(packet.size());
     data << uint32(time(NULL));
     data << uint8(direction);

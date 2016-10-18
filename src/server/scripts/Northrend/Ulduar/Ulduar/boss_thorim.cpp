@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -52,40 +49,40 @@ class boss_thorim : public CreatureScript
             {
             }
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
             }
 
-            void EnterEvadeMode() override
+            void EnterEvadeMode()
             {
                 Talk(SAY_WIPE);
                 _EnterEvadeMode();
             }
 
-            void KilledUnit(Unit* who) override
+            void KilledUnit(Unit* who)
             {
                 if (who->GetTypeId() == TYPEID_PLAYER)
                     Talk(SAY_SLAY);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 Talk(SAY_DEATH);
                 _JustDied();
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 Talk(SAY_AGGRO);
                 _EnterCombat();
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
-                //SPELLS @todo
+                //SPELLS TODO:
 
                 //
                 DoMeleeAttackIfReady();
@@ -94,7 +91,7 @@ class boss_thorim : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<boss_thorimAI>(creature);
         }

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,10 +18,10 @@
 
 #include "BoundingIntervalHierarchy.h"
 
-#ifdef _MSC_VER
-  #define isnan _isnan
-#else
+#if defined __APPLE__
   #define isnan std::isnan
+#elif defined _MSC_VER
+  #define isnan _isnan
 #endif
 
 void BIH::buildHierarchy(std::vector<uint32> &tempTree, buildData &dat, BuildStats &stats)
@@ -273,7 +272,7 @@ bool BIH::readFromFile(FILE* rf)
     check += fread(&count, sizeof(uint32), 1, rf);
     objects.resize(count); // = new uint32[nObjects];
     check += fread(&objects[0], sizeof(uint32), count, rf);
-    return uint64(check) == uint64(3 + 3 + 1 + 1 + uint64(treeSize) + uint64(count));
+    return check == (3 + 3 + 2 + treeSize + count);
 }
 
 void BIH::BuildStats::updateLeaf(int depth, int n)

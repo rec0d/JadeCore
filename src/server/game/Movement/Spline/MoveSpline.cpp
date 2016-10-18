@@ -1,19 +1,19 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
- * option) any later version.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "MoveSpline.h"
@@ -22,6 +22,10 @@
 #include "Creature.h"
 
 namespace Movement{
+
+extern float computeFallTime(float path_length, bool isSafeFall);
+extern float computeFallElevation(float time_passed, bool isSafeFall, float start_velocy);
+extern float computeFallElevation(float time_passed);
 
 Location MoveSpline::ComputePosition() const
 {
@@ -80,9 +84,12 @@ void MoveSpline::computeParabolicElevation(float& el) const
 
 void MoveSpline::computeFallElevation(float& el) const
 {
-    float z_now = spline.getPoint(spline.first()).z - Movement::computeFallElevation(MSToSec(time_passed), false);
+    float z_now = spline.getPoint(spline.first()).z - Movement::computeFallElevation(MSToSec(time_passed));
     float final_z = FinalDestination().z;
-    el = std::max(z_now, final_z);
+    if (z_now < final_z)
+        el = final_z;
+    else
+        el = z_now;
 }
 
 inline uint32 computeDuration(float length, float velocity)
@@ -92,7 +99,7 @@ inline uint32 computeDuration(float length, float velocity)
 
 struct FallInitializer
 {
-    FallInitializer(float _start_elevation) : start_elevation(_start_elevation) { }
+    FallInitializer(float _start_elevation) : start_elevation(_start_elevation) {}
     float start_elevation;
     inline int32 operator()(Spline<int32>& s, int32 i)
     {
@@ -106,7 +113,7 @@ enum{
 
 struct CommonInitializer
 {
-    CommonInitializer(float _velocity) : velocityInv(1000.f/_velocity), time(minimal_duration) { }
+    CommonInitializer(float _velocity) : velocityInv(1000.f/_velocity), time(minimal_duration) {}
     float velocityInv;
     int32 time;
     inline int32 operator()(Spline<int32>& s, int32 i)
@@ -144,16 +151,16 @@ void MoveSpline::init_spline(const MoveSplineInitArgs& args)
         spline.initLengths(init);
     }
 
-    /// @todo what to do in such cases? problem is in input data (all points are at same coords)
+    // TODO: what to do in such cases? problem is in input data (all points are at same coords)
     if (spline.length() < minimal_duration)
     {
-        TC_LOG_ERROR("misc", "MoveSpline::init_spline: zero length spline, wrong input data?");
+        sLog->outError(LOG_FILTER_GENERAL, "MoveSpline::init_spline: zero length spline, wrong input data?");
         spline.set_length(spline.last(), spline.isCyclic() ? 1000 : 1);
     }
     point_Idx = spline.first();
 }
 
-void MoveSpline::Initialize(MoveSplineInitArgs const& args)
+void MoveSpline::Initialize(const MoveSplineInitArgs& args)
 {
     splineflags = args.flags;
     facing = args.facing;
@@ -161,6 +168,7 @@ void MoveSpline::Initialize(MoveSplineInitArgs const& args)
     point_Idx_offset = args.path_Idx_offset;
     initialOrientation = args.initialOrientation;
 
+    onTransport = false;
     time_passed = 0;
     vertical_acceleration = 0.f;
     effect_start_time = 0;
@@ -188,8 +196,7 @@ void MoveSpline::Initialize(MoveSplineInitArgs const& args)
 }
 
 MoveSpline::MoveSpline() : m_Id(0), time_passed(0),
-    vertical_acceleration(0.f), initialOrientation(0.f), effect_start_time(0), point_Idx(0), point_Idx_offset(0),
-    onTransport(false)
+    vertical_acceleration(0.f), initialOrientation(0.f), effect_start_time(0), point_Idx(0), point_Idx_offset(0)
 {
     splineflags.done = true;
 }
@@ -201,7 +208,7 @@ bool MoveSplineInitArgs::Validate(Unit* unit) const
 #define CHECK(exp) \
     if (!(exp))\
     {\
-        TC_LOG_ERROR("misc", "MoveSplineInitArgs::Validate: expression '%s' failed for GUID: %u Entry: %u", #exp, unit->GetTypeId() == TYPEID_PLAYER ? unit->GetGUIDLow() : unit->ToCreature()->GetDBTableGUIDLow(), unit->GetEntry());\
+        sLog->outError(LOG_FILTER_GENERAL, "MoveSplineInitArgs::Validate: expression '%s' failed for GUID: %u Entry: %u", #exp, unit->GetTypeId() == TYPEID_PLAYER ? unit->GetGUIDLow() : unit->ToCreature()->GetDBTableGUIDLow(), unit->GetEntry());\
         return false;\
     }
     CHECK(path.size() > 1);
@@ -228,7 +235,7 @@ bool MoveSplineInitArgs::_checkPathBounds() const
             offset = path[i] - middle;
             if (fabs(offset.x) >= MAX_OFFSET || fabs(offset.y) >= MAX_OFFSET || fabs(offset.z) >= MAX_OFFSET)
             {
-                TC_LOG_ERROR("misc", "MoveSplineInitArgs::_checkPathBounds check failed");
+                sLog->outError(LOG_FILTER_GENERAL, "MoveSplineInitArgs::_checkPathBounds check failed");
                 return false;
             }
         }
@@ -249,7 +256,7 @@ MoveSpline::UpdateResult MoveSpline::_updateState(int32& ms_time_diff)
     UpdateResult result = Result_None;
 
     int32 minimal_diff = std::min(ms_time_diff, segment_time_elapsed());
-    ASSERT(minimal_diff >= 0);
+    //ASSERT(minimal_diff >= 0);
     time_passed += minimal_diff;
     ms_time_diff -= minimal_diff;
 

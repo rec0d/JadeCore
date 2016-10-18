@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -52,7 +51,7 @@ struct PhaseDefinition
     uint32 phasemask;
     uint32 phaseId;
     uint32 terrainswapmap;
-    uint32 worldMapArea;
+    uint32 originmap;
     uint8 flags;
 
     bool IsOverwritingExistingPhases() const { return flags & PHASE_FLAG_OVERWRITE_EXISTING; }
@@ -68,7 +67,6 @@ struct SpellPhaseInfo
     uint32 spellId;
     uint32 phasemask;
     uint32 terrainswapmap;
-    uint32 worldMapArea;
 };
 
 typedef UNORDERED_MAP<uint32 /*spellId*/, SpellPhaseInfo> SpellPhaseStore;
@@ -80,10 +78,9 @@ struct PhaseInfo
     uint32 phasemask;
     uint32 terrainswapmap;
     uint32 phaseId;
-    uint32 worldMapArea;
 
     bool NeedsServerSideUpdate() const { return phasemask; }
-    bool NeedsClientSideUpdate() const { return terrainswapmap || phaseId || worldMapArea; }
+    bool NeedsClientSideUpdate() const { return terrainswapmap || phaseId; }
 };
 
 typedef UNORDERED_MAP<uint32 /*spellId*/, PhaseInfo> PhaseInfoContainer;
@@ -103,13 +100,11 @@ struct PhaseData
     void AddPhaseDefinition(PhaseDefinition const* phaseDefinition);
     bool HasActiveDefinitions() const { return !activePhaseDefinitions.empty(); }
 
-    void AddAuraInfo(uint32 spellId, PhaseInfo const& phaseInfo);
-    uint32 RemoveAuraInfo(uint32 spellId);
+    void AddAuraInfo(uint32 const spellId, PhaseInfo phaseInfo);
+    uint32 RemoveAuraInfo(uint32 const spellId);
 
     void SendPhaseMaskToPlayer();
     void SendPhaseshiftToPlayer();
-
-    void GetActivePhases(std::set<uint32>& phases) const;
 
 private:
     Player* player;
@@ -119,7 +114,6 @@ private:
 
 struct PhaseUpdateData
 {
-    PhaseUpdateData(): _conditionTypeFlags(0), _questId(0) { }
     void AddConditionType(ConditionTypes const conditionType) { _conditionTypeFlags |= (1 << conditionType); }
     void AddQuestUpdate(uint32 const questId);
 
@@ -150,25 +144,23 @@ public:
     void UnRegisterPhasingAuraEffect(AuraEffect const* auraEffect);
 
     // Update flags (delayed phasing)
-    void AddUpdateFlag(PhaseUpdateFlag updateFlag) { _UpdateFlags |= updateFlag; }
-    void RemoveUpdateFlag(PhaseUpdateFlag updateFlag);
+    void AddUpdateFlag(PhaseUpdateFlag const updateFlag) { _UpdateFlags |= updateFlag; }
+    void RemoveUpdateFlag(PhaseUpdateFlag const updateFlag);
 
     // Needed for modify phase command
-    void SetCustomPhase(uint32 phaseMask);
+    void SetCustomPhase(uint32 const phaseMask);
 
     // Debug
     void SendDebugReportToPlayer(Player* const debugger);
 
-    static bool IsConditionTypeSupported(ConditionTypes conditionType);
-
-    void GetActivePhases(std::set<uint32>& phases) const;
+    static bool IsConditionTypeSupported(ConditionTypes const conditionType);
 
 private:
     void Recalculate();
 
     inline bool CheckDefinition(PhaseDefinition const* phaseDefinition);
 
-    bool NeedsPhaseUpdateWithData(PhaseUpdateData const& updateData) const;
+    bool NeedsPhaseUpdateWithData(PhaseUpdateData const updateData) const;
 
     inline bool IsUpdateInProgress() const { return (_UpdateFlags & PHASE_UPDATE_FLAG_ZONE_UPDATE) || (_UpdateFlags & PHASE_UPDATE_FLAG_AREA_UPDATE); }
 

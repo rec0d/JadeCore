@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,7 +19,7 @@
 #include "ScriptedCreature.h"
 #include "gundrak.h"
 
-enum Spells
+enum eSpells
 {
     SPELL_DETERMINED_STAB                         = 55104,
     SPELL_GROUND_TREMOR                           = 55142,
@@ -34,7 +32,7 @@ enum Spells
     SPELL_TRANSFORMATION                          = 55098, //Periodic, The caster transforms into a powerful mammoth, increasing Physical damage done by 25% and granting immunity to Stun effects.
 };
 
-enum Says
+enum eSays
 {
     SAY_AGGRO                                     = 0,
     SAY_SLAY                                      = 1,
@@ -44,17 +42,14 @@ enum Says
     EMOTE_TRANSFORM                               = 5
 };
 
-enum Misc
-{
-    DATA_LESS_RABI                                = 1
-};
+#define DATA_LESS_RABI                            1
 
 class boss_moorabi : public CreatureScript
 {
 public:
     boss_moorabi() : CreatureScript("boss_moorabi") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_moorabiAI(creature);
     }
@@ -75,7 +70,7 @@ public:
         uint32 uiDeterminedStabTimer;
         uint32 uiTransformationTImer;
 
-        void Reset() override
+        void Reset()
         {
             uiGroundTremorTimer = 18*IN_MILLISECONDS;
             uiNumblingShoutTimer =  10*IN_MILLISECONDS;
@@ -87,7 +82,7 @@ public:
                 instance->SetData(DATA_MOORABI_EVENT, NOT_STARTED);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(SAY_AGGRO);
             DoCast(me, SPELL_MOJO_FRENZY, true);
@@ -96,7 +91,7 @@ public:
                 instance->SetData(DATA_MOORABI_EVENT, IN_PROGRESS);
         }
 
-        void UpdateAI(uint32 uiDiff) override
+        void UpdateAI(const uint32 uiDiff)
         {
             //Return since we have no target
              if (!UpdateVictim())
@@ -147,7 +142,7 @@ public:
             DoMeleeAttackIfReady();
          }
 
-        uint32 GetData(uint32 type) const override
+        uint32 GetData(uint32 type) const
         {
             if (type == DATA_LESS_RABI)
                 return bPhase ? 0 : 1;
@@ -155,7 +150,7 @@ public:
             return 0;
         }
 
-         void JustDied(Unit* /*killer*/) override
+         void JustDied(Unit* /*killer*/)
          {
             Talk(SAY_DEATH);
 
@@ -163,9 +158,9 @@ public:
                 instance->SetData(DATA_MOORABI_EVENT, DONE);
         }
 
-        void KilledUnit(Unit* victim) override
+        void KilledUnit(Unit* victim)
         {
-            if (victim->GetTypeId() != TYPEID_PLAYER)
+            if (victim == me)
                 return;
 
             Talk(SAY_SLAY);
@@ -181,7 +176,7 @@ class achievement_less_rabi : public AchievementCriteriaScript
         {
         }
 
-        bool OnCheck(Player* /*player*/, Unit* target) override
+        bool OnCheck(Player* /*player*/, Unit* target)
         {
             if (!target)
                 return false;

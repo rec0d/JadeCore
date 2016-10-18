@@ -1,7 +1,6 @@
-/*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ /*
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,28 +35,6 @@ EndContentData */
 #include "karazhan.h"
 #include "ScriptedEscortAI.h"
 #include "Player.h"
-
-enum Spells
-{
-    // Barnes
-    SPELL_SPOTLIGHT             = 25824,
-    SPELL_TUXEDO                = 32616,
-
-    // Berthold
-    SPELL_TELEPORT              = 39567,
-
-    // Image of Medivh
-    SPELL_FIRE_BALL             = 30967,
-    SPELL_UBER_FIREBALL         = 30971,
-    SPELL_CONFLAGRATION_BLAST   = 30977,
-    SPELL_MANA_SHIELD           = 31635
-};
-
-enum Creatures
-{
-    NPC_ARCANAGOS               = 17652,
-    NPC_SPOTLIGHT               = 19525
-};
 
 /*######
 # npc_barnesAI
@@ -119,6 +96,11 @@ float Spawns[6][2]=
     {17534, -10900},                                        // Julianne
 };
 
+#define CREATURE_SPOTLIGHT  19525
+
+#define SPELL_SPOTLIGHT     25824
+#define SPELL_TUXEDO        32616
+
 #define SPAWN_Z             90.5f
 #define SPAWN_Y             -1758
 #define SPAWN_O             4.738f
@@ -149,7 +131,7 @@ public:
         bool PerformanceReady;
         bool RaidWiped;
 
-        void Reset() override
+        void Reset()
         {
             m_uiSpotlightGUID = 0;
 
@@ -177,9 +159,9 @@ public:
             Start(false, false);
         }
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/) {}
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId)
         {
             if (!instance)
                 return;
@@ -194,13 +176,13 @@ public:
                     TalkCount = 0;
                     SetEscortPaused(true);
 
-                    if (Creature* spotlight = me->SummonCreature(NPC_SPOTLIGHT,
+                    if (Creature* pSpotlight = me->SummonCreature(CREATURE_SPOTLIGHT,
                         me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), 0.0f,
                         TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 60000))
                     {
-                        spotlight->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
-                        spotlight->CastSpell(spotlight, SPELL_SPOTLIGHT, false);
-                        m_uiSpotlightGUID = spotlight->GetGUID();
+                        pSpotlight->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+                        pSpotlight->CastSpell(pSpotlight, SPELL_SPOTLIGHT, false);
+                        m_uiSpotlightGUID = pSpotlight->GetGUID();
                     }
                     break;
                 case 8:
@@ -248,7 +230,7 @@ public:
 
         void PrepareEncounter()
         {
-            TC_LOG_DEBUG("scripts", "Barnes Opera Event - Introduction complete - preparing encounter %d", m_uiEventId);
+            sLog->outDebug(LOG_FILTER_TSCR, "Barnes Opera Event - Introduction complete - preparing encounter %d", m_uiEventId);
             uint8 index = 0;
             uint8 count = 0;
 
@@ -284,7 +266,7 @@ public:
             RaidWiped = false;
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             npc_escortAI::UpdateAI(diff);
 
@@ -323,7 +305,7 @@ public:
                         RaidWiped = true;
                         for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
                         {
-                            if (i->GetSource()->IsAlive() && !i->GetSource()->IsGameMaster())
+                            if (i->getSource()->isAlive() && !i->getSource()->isGameMaster())
                             {
                                 RaidWiped = false;
                                 break;
@@ -344,7 +326,7 @@ public:
         }
     };
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         npc_barnesAI* pBarnesAI = CAST_AI(npc_barnes::npc_barnesAI, creature->AI());
@@ -362,24 +344,24 @@ public:
             case GOSSIP_ACTION_INFO_DEF+3:
                 player->CLOSE_GOSSIP_MENU();
                 pBarnesAI->m_uiEventId = EVENT_OZ;
-                TC_LOG_INFO("scripts", "player (GUID " UI64FMTD ") manually set Opera event to EVENT_OZ", player->GetGUID());
+                sLog->outInfo(LOG_FILTER_TSCR, "player (GUID " UI64FMTD ") manually set Opera event to EVENT_OZ", player->GetGUID());
                 break;
             case GOSSIP_ACTION_INFO_DEF+4:
                 player->CLOSE_GOSSIP_MENU();
                 pBarnesAI->m_uiEventId = EVENT_HOOD;
-                TC_LOG_INFO("scripts", "player (GUID " UI64FMTD ") manually set Opera event to EVENT_HOOD", player->GetGUID());
+                sLog->outInfo(LOG_FILTER_TSCR, "player (GUID " UI64FMTD ") manually set Opera event to EVENT_HOOD", player->GetGUID());
                 break;
             case GOSSIP_ACTION_INFO_DEF+5:
                 player->CLOSE_GOSSIP_MENU();
                 pBarnesAI->m_uiEventId = EVENT_RAJ;
-                TC_LOG_INFO("scripts", "player (GUID " UI64FMTD ") manually set Opera event to EVENT_RAJ", player->GetGUID());
+                sLog->outInfo(LOG_FILTER_TSCR, "player (GUID " UI64FMTD ") manually set Opera event to EVENT_RAJ", player->GetGUID());
                 break;
         }
 
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (InstanceScript* instance = creature->GetInstanceScript())
         {
@@ -388,7 +370,7 @@ public:
             {
                 player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, OZ_GOSSIP1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
 
-                if (player->IsGameMaster())
+                if (player->isGameMaster())
                 {
                     player->ADD_GOSSIP_ITEM(GOSSIP_ICON_DOT, OZ_GM_GOSSIP1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 3);
                     player->ADD_GOSSIP_ITEM(GOSSIP_ICON_DOT, OZ_GM_GOSSIP2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 4);
@@ -411,7 +393,7 @@ public:
         return true;
     }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_barnesAI(creature);
     }
@@ -421,6 +403,11 @@ public:
 # npc_berthold
 ####*/
 
+enum eBerthold
+{
+    SPELL_TELEPORT           = 39567
+};
+
 #define GOSSIP_ITEM_TELEPORT    "Teleport me to the Guardian's Library"
 
 class npc_berthold : public CreatureScript
@@ -428,7 +415,7 @@ class npc_berthold : public CreatureScript
 public:
     npc_berthold() : CreatureScript("npc_berthold") { }
 
-    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         if (action == GOSSIP_ACTION_INFO_DEF + 1)
@@ -438,7 +425,7 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (InstanceScript* instance = creature->GetInstanceScript())
         {
@@ -466,6 +453,11 @@ public:
 #define SAY_DIALOG_ARCANAGOS_8      "What have you done, wizard? This cannot be! I'm burning from... within!"
 #define SAY_DIALOG_MEDIVH_9         "He should not have angered me. I must go... recover my strength now..."
 
+#define MOB_ARCANAGOS               17652
+#define SPELL_FIRE_BALL             30967
+#define SPELL_UBER_FIREBALL         30971
+#define SPELL_CONFLAGRATION_BLAST   30977
+#define SPELL_MANA_SHIELD           31635
 
 static float MedivPos[4] = {-11161.49f, -1902.24f, 91.48f, 1.94f};
 static float ArcanagosPos[4] = {-11169.75f, -1881.48f, 95.39f, 4.83f};
@@ -475,7 +467,7 @@ class npc_image_of_medivh : public CreatureScript
 public:
     npc_image_of_medivh() : CreatureScript("npc_image_of_medivh") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_image_of_medivhAI(creature);
     }
@@ -498,7 +490,7 @@ public:
 
         bool EventStarted;
 
-        void Reset() override
+        void Reset()
         {
             ArcanagosGUID = 0;
 
@@ -513,9 +505,9 @@ public:
                 me->RemoveCorpse();
             }
         }
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/) {}
 
-        void MovementInform(uint32 type, uint32 id) override
+        void MovementInform(uint32 type, uint32 id)
         {
             if (type != POINT_MOTION_TYPE)
                 return;
@@ -531,7 +523,7 @@ public:
         {
             Step = 1;
             EventStarted = true;
-            Creature* Arcanagos = me->SummonCreature(NPC_ARCANAGOS, ArcanagosPos[0], ArcanagosPos[1], ArcanagosPos[2], 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 20000);
+            Creature* Arcanagos = me->SummonCreature(MOB_ARCANAGOS, ArcanagosPos[0], ArcanagosPos[1], ArcanagosPos[2], 0, TEMPSUMMON_CORPSE_TIMED_DESPAWN, 20000);
             if (!Arcanagos)
                 return;
             ArcanagosGUID = Arcanagos->GetGUID();
@@ -606,10 +598,10 @@ public:
                     InstanceMap::PlayerList const &PlayerList = map->GetPlayers();
                     for (InstanceMap::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
                     {
-                        if (i->GetSource()->IsAlive())
+                        if (i->getSource()->isAlive())
                         {
-                            if (i->GetSource()->GetQuestStatus(9645) == QUEST_STATUS_INCOMPLETE)
-                                i->GetSource()->CompleteQuest(9645);
+                            if (i->getSource()->GetQuestStatus(9645) == QUEST_STATUS_INCOMPLETE)
+                                i->getSource()->CompleteQuest(9645);
                         }
                     }
                 }
@@ -621,7 +613,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (YellTimer <= diff)
             {

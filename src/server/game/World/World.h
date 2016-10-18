@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -78,7 +77,6 @@ enum ShutdownExitCode
 enum WorldTimers
 {
     WUPDATE_AUCTIONS,
-    WUPDATE_BLACKMARKET,
     WUPDATE_WEATHERS,
     WUPDATE_UPTIME,
     WUPDATE_CORPSES,
@@ -89,7 +87,19 @@ enum WorldTimers
     WUPDATE_DELETECHARS,
     WUPDATE_PINGDB,
     WUPDATE_GUILDSAVE,
+    WUPDATE_HPGOLD,
+    WUPDATE_CRONJOBS,
     WUPDATE_COUNT
+};
+
+enum CronjobType
+{
+    CRONJOB_TELEPORT      = 1,
+    CRONJOB_REVIVE        = 2,
+    CRONJOB_LEVEL         = 3,
+    CRONJOB_FACTIONCHANGE = 4,
+    CRONJOB_RACECHANGE    = 5,
+    CRONJOB_CUSTOMIZE     = 6
 };
 
 /// Configuration elements
@@ -101,18 +111,28 @@ enum WorldBoolConfigs
     CONFIG_CLEAN_CHARACTER_DB,
     CONFIG_GRID_UNLOAD,
     CONFIG_STATS_SAVE_ONLY_ON_LOGOUT,
+    CONFIG_ALLOW_TWO_SIDE_ACCOUNTS,
     CONFIG_ALLOW_TWO_SIDE_INTERACTION_CALENDAR,
+    CONFIG_ALLOW_TWO_SIDE_INTERACTION_CHAT,
     CONFIG_ALLOW_TWO_SIDE_INTERACTION_CHANNEL,
     CONFIG_ALLOW_TWO_SIDE_INTERACTION_GROUP,
     CONFIG_ALLOW_TWO_SIDE_INTERACTION_GUILD,
     CONFIG_ALLOW_TWO_SIDE_INTERACTION_AUCTION,
+    CONFIG_ALLOW_TWO_SIDE_INTERACTION_MAIL,
+    CONFIG_ALLOW_TWO_SIDE_WHO_LIST,
+    CONFIG_ALLOW_TWO_SIDE_ADD_FRIEND,
     CONFIG_ALLOW_TWO_SIDE_TRADE,
+	CONFIG_FAKE_WHO_LIST,
+	CONFIG_FAKE_RANDOM_ONLINE_OFFLINE,
+	CONFIG_FAKE_LEVEL_UP,
     CONFIG_ALL_TAXI_PATHS,
     CONFIG_INSTANT_TAXI,
     CONFIG_INSTANCE_IGNORE_LEVEL,
     CONFIG_INSTANCE_IGNORE_RAID,
     CONFIG_CAST_UNSTUCK,
+    CONFIG_GM_LOG_TRADE,
     CONFIG_ALLOW_GM_GROUP,
+    CONFIG_ALLOW_GM_FRIEND,
     CONFIG_GM_LOWER_SECURITY,
     CONFIG_SKILL_PROSPECTING,
     CONFIG_SKILL_MILLING,
@@ -121,6 +141,7 @@ enum WorldBoolConfigs
     CONFIG_QUEST_IGNORE_RAID,
     CONFIG_DETECT_POS_COLLISION,
     CONFIG_RESTRICTED_LFG_CHANNEL,
+    CONFIG_SILENTLY_GM_JOIN_TO_CHANNEL,
     CONFIG_TALENTS_INSPECTING,
     CONFIG_CHAT_FAKE_MESSAGE_PREVENTING,
     CONFIG_DEATH_CORPSE_RECLAIM_DELAY_PVP,
@@ -146,6 +167,8 @@ enum WorldBoolConfigs
     CONFIG_PVP_TOKEN_ENABLE,
     CONFIG_NO_RESET_TALENT_COST,
     CONFIG_SHOW_KICK_IN_WORLD,
+	CONFIG_SHOW_MUTE_IN_WORLD,
+	CONFIG_SHOW_BAN_IN_WORLD,
     CONFIG_CHATLOG_CHANNEL,
     CONFIG_CHATLOG_WHISPER,
     CONFIG_CHATLOG_SYSCHAN,
@@ -157,21 +180,25 @@ enum WorldBoolConfigs
     CONFIG_CHATLOG_BGROUND,
     CONFIG_AUTOBROADCAST,
     CONFIG_ALLOW_TICKETS,
-	CONFIG_LFG_LOCATION_ALL,
     CONFIG_DBC_ENFORCE_ITEM_ATTRIBUTES,
     CONFIG_PRESERVE_CUSTOM_CHANNELS,
+    CONFIG_ANTICHEAT_ENABLE,
     CONFIG_PDUMP_NO_PATHS,
     CONFIG_PDUMP_NO_OVERWRITE,
     CONFIG_QUEST_IGNORE_AUTO_ACCEPT,
     CONFIG_QUEST_IGNORE_AUTO_COMPLETE,
+	CONFIG_QUEST_ENABLE_QUEST_TRACKER,
     CONFIG_WARDEN_ENABLED,
     CONFIG_ENABLE_MMAPS,
     CONFIG_WINTERGRASP_ENABLE,
+    CONFIG_TOL_BARAD_ENABLE,
     CONFIG_GUILD_LEVELING_ENABLED,
     CONFIG_UI_QUESTLEVELS_IN_DIALOGS,     // Should we add quest levels to the title in the NPC dialogs?
-    CONFIG_EVENT_ANNOUNCE,
-    CONFIG_STATS_LIMITS_ENABLE,
-    CONFIG_INSTANCES_RESET_ANNOUNCE,
+    CONFIG_RATED_BATTLEGROUND_ENABLED,
+    CONFIG_ALLOW_ZONE_AND_AREA_VALUES_CORRECTION_AT_STARTUP,
+    CONFIG_ARENA_READYMARK_ENABLED,
+    CONFIG_HPGOLD_REFRESH_ENABLED,
+    CONFIG_CRONJOBS_ENABLED,
     BOOL_CONFIG_VALUE_COUNT
 };
 
@@ -188,10 +215,6 @@ enum WorldFloatConfigs
     CONFIG_CREATURE_FAMILY_ASSISTANCE_RADIUS,
     CONFIG_THREAT_RADIUS,
     CONFIG_CHANCE_OF_GM_SURVEY,
-    CONFIG_STATS_LIMITS_DODGE,
-    CONFIG_STATS_LIMITS_PARRY,
-    CONFIG_STATS_LIMITS_BLOCK,
-    CONFIG_STATS_LIMITS_CRIT,
     FLOAT_CONFIG_VALUE_COUNT
 };
 
@@ -229,6 +252,7 @@ enum WorldIntConfigs
     CONFIG_START_PLAYER_MONEY,
     CONFIG_CURRENCY_START_JUSTICE_POINTS,
     CONFIG_CURRENCY_MAX_JUSTICE_POINTS,
+    CONFIG_CURRENCY_START_VALOR_POINTS,
     CONFIG_CURRENCY_START_HONOR_POINTS,
     CONFIG_CURRENCY_MAX_HONOR_POINTS,
     CONFIG_CURRENCY_START_CONQUEST_POINTS,
@@ -259,6 +283,7 @@ enum WorldIntConfigs
     CONFIG_SKILL_CHANCE_GREEN,
     CONFIG_SKILL_CHANCE_GREY,
     CONFIG_SKILL_CHANCE_MINING_STEPS,
+    CONFIG_SKILL_CHANCE_ARCHAEOLOGY_STEPS,
     CONFIG_SKILL_CHANCE_SKINNING_STEPS,
     CONFIG_SKILL_GAIN_CRAFTING,
     CONFIG_SKILL_GAIN_GATHERING,
@@ -267,6 +292,7 @@ enum WorldIntConfigs
     CONFIG_CHATFLOOD_MESSAGE_COUNT,
     CONFIG_CHATFLOOD_MESSAGE_DELAY,
     CONFIG_CHATFLOOD_MUTE_TIME,
+    CONFIG_EVENT_ANNOUNCE,
     CONFIG_CREATURE_FAMILY_ASSISTANCE_DELAY,
     CONFIG_CREATURE_FAMILY_FLEE_DELAY,
     CONFIG_WORLD_BOSS_LEVEL_DIFF,
@@ -321,7 +347,6 @@ enum WorldIntConfigs
     CONFIG_CHARDELETE_KEEP_DAYS,
     CONFIG_CHARDELETE_METHOD,
     CONFIG_CHARDELETE_MIN_LEVEL,
-    CONFIG_CHARDELETE_HEROIC_MIN_LEVEL,
     CONFIG_AUTOBROADCAST_CENTER,
     CONFIG_AUTOBROADCAST_INTERVAL,
     CONFIG_MAX_RESULTS_LOOKUP_COMMANDS,
@@ -329,7 +354,11 @@ enum WorldIntConfigs
     CONFIG_PRESERVE_CUSTOM_CHANNEL_DURATION,
     CONFIG_PERSISTENT_CHARACTER_CLEAN_FLAGS,
     CONFIG_LFG_OPTIONSMASK,
+	CONFIG_ANTICHEAT_REPORTS_INGAME_NOTIFICATION,
+    CONFIG_ANTICHEAT_MAX_REPORTS_FOR_DAILY_REPORT,
     CONFIG_MAX_INSTANCES_PER_HOUR,
+	CONFIG_ANTICHEAT_DETECTIONS_ENABLED,
+    CONFIG_DOUBLE_MOVING,
     CONFIG_WARDEN_CLIENT_RESPONSE_DELAY,
     CONFIG_WARDEN_CLIENT_CHECK_HOLDOFF,
     CONFIG_WARDEN_CLIENT_FAIL_ACTION,
@@ -342,26 +371,31 @@ enum WorldIntConfigs
     CONFIG_WINTERGRASP_BATTLETIME,
     CONFIG_WINTERGRASP_NOBATTLETIME,
     CONFIG_WINTERGRASP_RESTART_AFTER_CRASH,
+    CONFIG_TOL_BARAD_PLR_MAX,
+    CONFIG_TOL_BARAD_PLR_MIN,
+    CONFIG_TOL_BARAD_PLR_MIN_LVL,
+    CONFIG_TOL_BARAD_BATTLETIME,
+    CONFIG_TOL_BARAD_NOBATTLETIME,
     CONFIG_GUILD_SAVE_INTERVAL,
     CONFIG_GUILD_MAX_LEVEL,
     CONFIG_GUILD_UNDELETABLE_LEVEL,
     CONFIG_GUILD_DAILY_XP_CAP,
     CONFIG_GUILD_WEEKLY_REP_CAP,
-    CONFIG_PACKET_SPOOF_POLICY,
-    CONFIG_PACKET_SPOOF_BANMODE,
-    CONFIG_PACKET_SPOOF_BANDURATION,
-    CONFIG_ACC_PASSCHANGESEC,
-    CONFIG_RBAC_FREE_PERMISSION_MODE,
-    CONFIG_BG_REWARD_WINNER_HONOR_FIRST,
-    CONFIG_BG_REWARD_WINNER_HONOR_LAST,
-    CONFIG_BG_REWARD_LOSER_HONOR_FIRST,
-    CONFIG_BG_REWARD_LOSER_HONOR_LAST,
-    CONFIG_BG_REWARD_WINNER_CONQUEST_FIRST,
-    CONFIG_BG_REWARD_WINNER_CONQUEST_LAST,
-    CONFIG_BATTLE_PET_LOADOUT_UNLOCK_COUNT,
-    CONFIG_BATTLE_PET_INITIAL_LEVEL,
-    CONFIG_BLACKMARKET_MAX_AUCTIONS,
-	CONFIG_RATE_XP_WEEKEND_EVID,
+    CONFIG_GUILD_XP_REWARD_ARENA,
+    CONFIG_GUILD_REPUTATION_QUEST_DIVIDER,
+    CONFIG_GUILD_CHALLENGE_DUNGEON_XP,
+    CONFIG_GUILD_CHALLENGE_DUNGEON_GOLD,
+    CONFIG_GUILD_CHALLENGE_DUNGEON_NEEDED,
+    CONFIG_GUILD_CHALLENGE_RAID_XP,
+    CONFIG_GUILD_CHALLENGE_RAID_GOLD,
+    CONFIG_GUILD_CHALLENGE_RAID_NEEDED,
+    CONFIG_GUILD_CHALLENGE_RATEDBG_XP,
+    CONFIG_GUILD_CHALLENGE_RATEDBG_GOLD,
+    CONFIG_GUILD_CHALLENGE_RATEDBG_NEEDED,
+    CONFIG_DYN_ITEM_GUID_SIZE,
+    CONFIG_DYN_ITEM_SQL_REQUEST_SIZE,
+    CONFIG_HPGOLD_REFRESH_INTERVAL,
+    CONFIG_CRONJOBS_INTERVAL,
     INT_CONFIG_VALUE_COUNT
 };
 
@@ -376,7 +410,6 @@ enum Rates
     RATE_POWER_RUNICPOWER_LOSS,
     RATE_POWER_FOCUS,
     RATE_POWER_ENERGY,
-    RATE_POWER_CHI,
     RATE_SKILL_DISCOVERY,
     RATE_DROP_ITEM_POOR,
     RATE_DROP_ITEM_NORMAL,
@@ -390,7 +423,11 @@ enum Rates
     RATE_DROP_MONEY,
     RATE_XP_KILL,
     RATE_XP_QUEST,
-    RATE_XP_GUILD_MODIFIER,
+    RATE_XP_QUEST_GUILD_MODIFIER,
+    RATE_XP_BASEKILL_GUILD_MODIFIER,
+    RATE_XP_HEROIC_DUNGEON_GUILD_MODIFIER,
+    RATE_XP_HEROIC_RAID_GUILD_MODIFIER,
+    RATE_XP_HONOR_EARNED_GUILD_MODIFIER,
     RATE_XP_EXPLORE,
     RATE_REPAIRCOST,
     RATE_REPUTATION_GAIN,
@@ -421,6 +458,11 @@ enum Rates
     RATE_AUCTION_DEPOSIT,
     RATE_AUCTION_CUT,
     RATE_HONOR,
+    RATE_MINING_AMOUNT,
+    RATE_MINING_NEXT,
+    RATE_ARCHAEOLOGY_AMOUNT,
+    RATE_ARCHAEOLOGY_NEXT,
+    RATE_TALENT,
     RATE_CORPSE_DECAY_LOOTED,
     RATE_INSTANCE_RESET_TIME,
     RATE_TARGET_POS_RECALCULATION_RANGE,
@@ -430,7 +472,6 @@ enum Rates
     RATE_DURABILITY_LOSS_ABSORB,
     RATE_DURABILITY_LOSS_BLOCK,
     RATE_MOVESPEED,
-	RATE_XP_WEEKEND,
     MAX_RATES
 };
 
@@ -551,7 +592,7 @@ struct CharacterNameData
 class World
 {
     public:
-        static ACE_Atomic_Op<ACE_Thread_Mutex, uint32> m_worldLoopCounter;
+        static volatile uint32 m_worldLoopCounter;
 
         World();
         ~World();
@@ -604,7 +645,7 @@ class World
         int32 GetQueuePos(WorldSession*);
         bool HasRecentlyDisconnected(WorldSession*);
 
-        /// @todo Actions on m_allowMovement still to be implemented
+        /// \todo Actions on m_allowMovement still to be implemented
         /// Is movement allowed?
         bool getAllowMovement() const { return m_allowMovement; }
         /// Allow/Disallow object movements
@@ -655,7 +696,7 @@ class World
         void SendGMText(int32 string_id, ...);
         void SendGlobalMessage(WorldPacket* packet, WorldSession* self = 0, uint32 team = 0);
         void SendGlobalGMMessage(WorldPacket* packet, WorldSession* self = 0, uint32 team = 0);
-        bool SendZoneMessage(uint32 zone, WorldPacket* packet, WorldSession* self = 0, uint32 team = 0);
+        void SendZoneMessage(uint32 zone, WorldPacket* packet, WorldSession* self = 0, uint32 team = 0);
         void SendZoneText(uint32 zone, const char *text, WorldSession* self = 0, uint32 team = 0);
         void SendServerMessage(ServerMessageType type, const char *text = "", Player* player = NULL);
 
@@ -668,6 +709,9 @@ class World
         static uint8 GetExitCode() { return m_ExitCode; }
         static void StopNow(uint8 exitcode) { m_stopEvent = true; m_ExitCode = exitcode; }
         static bool IsStopped() { return m_stopEvent.value(); }
+
+        std::string ShutdownReason; 
+        void SetShutdownMessage(std::string reason) { ShutdownReason = reason; }
 
         void Update(uint32 diff);
 
@@ -727,7 +771,6 @@ class World
         void KickAll();
         void KickAllLess(AccountTypes sec);
         BanReturn BanAccount(BanMode mode, std::string const& nameOrIP, std::string const& duration, std::string const& reason, std::string const& author);
-        BanReturn BanAccount(BanMode mode, std::string const& nameOrIP, uint32 duration_secs, std::string const& reason, std::string const& author);
         bool RemoveBanAccount(BanMode mode, std::string const& nameOrIP);
         BanReturn BanCharacter(std::string const& name, std::string const& duration, std::string const& reason, std::string const& author);
         bool RemoveBanCharacter(std::string const& name);
@@ -760,31 +803,30 @@ class World
 
         void UpdateAreaDependentAuras();
 
+        CharacterNameData const* GetCharacterNameData(uint32 guid) const;
+        void AddCharacterNameData(uint32 guid, std::string const& name, uint8 gender, uint8 race, uint8 playerClass, uint8 level);
+        void UpdateCharacterNameData(uint32 guid, std::string const& name, uint8 gender = GENDER_NONE, uint8 race = RACE_NONE);
+        void UpdateCharacterNameDataLevel(uint32 guid, uint8 level);
+
         void ProcessStartEvent();
         void ProcessStopEvent();
         bool GetEventKill() const { return isEventKillStart; }
 
         bool isEventKillStart;
 
-        CharacterNameData const* GetCharacterNameData(uint32 guid) const;
-        void AddCharacterNameData(uint32 guid, std::string const& name, uint8 gender, uint8 race, uint8 playerClass, uint8 level);
-        void UpdateCharacterNameData(uint32 guid, std::string const& name, uint8 gender = GENDER_NONE, uint8 race = RACE_NONE);
-        void UpdateCharacterNameDataLevel(uint32 guid, uint8 level);
-        void DeleteCharacterNameData(uint32 guid) { _characterNameDataMap.erase(guid); }
-        bool HasCharacterNameData(uint32 guid) { return _characterNameDataMap.find(guid) != _characterNameDataMap.end(); }
-
         uint32 GetCleaningFlags() const { return m_CleaningFlags; }
         void   SetCleaningFlags(uint32 flags) { m_CleaningFlags = flags; }
         void   ResetEventSeasonalQuests(uint16 event_id);
 
         void UpdatePhaseDefinitions();
-        void ReloadRBAC();
+        void ExecuteCronjobs();
 
     protected:
         void _UpdateGameTime();
         // callback for UpdateRealmCharacters
         void _UpdateRealmCharCount(PreparedQueryResult resultCharCount);
 
+        void InitPacketThrottling();
         void InitDailyQuestResetTime();
         void InitWeeklyQuestResetTime();
         void InitMonthlyQuestResetTime();
@@ -796,6 +838,7 @@ class World
         void ResetMonthlyQuests();
         void ResetRandomBG();
         void ResetGuildCap();
+		void ResetDailyGuildCap();
         void ResetCurrencyWeekCap();
     private:
         static ACE_Atomic_Op<ACE_Thread_Mutex, bool> m_stopEvent;
@@ -836,6 +879,7 @@ class World
         AccountTypes m_allowedSecurityLevel;
         LocaleConstant m_defaultDbcLocale;                     // from config for one from loaded DBC locales
         uint32 m_availableDbcLocaleMask;                       // by loaded DBC
+        void DetectDBCLang();
         bool m_allowMovement;
         std::string m_motd;
         std::string m_dataPath;
@@ -858,6 +902,7 @@ class World
         time_t m_NextMonthlyQuestReset;
         time_t m_NextRandomBGReset;
         time_t m_NextGuildReset;
+		time_t m_NextDailyGuildReset;
         time_t m_NextCurrencyReset;
 
         //Player Queue
@@ -870,12 +915,8 @@ class World
         // used versions
         std::string m_DBVersion;
 
-        typedef std::map<uint8, std::string> AutobroadcastsMap;
-        AutobroadcastsMap m_Autobroadcasts;
-
-        typedef std::map<uint8, uint8> AutobroadcastsWeightMap;
-        AutobroadcastsWeightMap m_AutobroadcastsWeights;
-
+        std::list<std::string> m_Autobroadcasts;
+		
         std::map<uint32, CharacterNameData> _characterNameDataMap;
         void LoadCharacterNameData();
 
@@ -883,9 +924,6 @@ class World
         ACE_Future_Set<PreparedQueryResult> m_realmCharCallbacks;
 };
 
-typedef std::map<uint32, std::string> RealmNameMap;
-
-extern RealmNameMap realmNameStore;
 extern uint32 realmID;
 
 #define sWorld ACE_Singleton<World, ACE_Null_Mutex>::instance()

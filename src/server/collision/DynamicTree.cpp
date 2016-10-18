@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -108,7 +107,9 @@ struct DynTreeImpl : public ParentTree/*, public Intersectable*/
     int unbalanced_times;
 };
 
-DynamicMapTree::DynamicMapTree() : impl(new DynTreeImpl()) { }
+DynamicMapTree::DynamicMapTree() : impl(new DynTreeImpl())
+{
+}
 
 DynamicMapTree::~DynamicMapTree()
 {
@@ -149,7 +150,7 @@ struct DynamicTreeIntersectionCallback
 {
     bool did_hit;
     uint32 phase_mask;
-    DynamicTreeIntersectionCallback(uint32 phasemask) : did_hit(false), phase_mask(phasemask) { }
+    DynamicTreeIntersectionCallback(uint32 phasemask) : did_hit(false), phase_mask(phasemask) {}
     bool operator()(const G3D::Ray& r, const GameObjectModel& obj, float& distance)
     {
         did_hit = obj.intersectRay(r, distance, true, phase_mask);
@@ -164,16 +165,16 @@ struct DynamicTreeIntersectionCallback_WithLogger
     uint32 phase_mask;
     DynamicTreeIntersectionCallback_WithLogger(uint32 phasemask) : did_hit(false), phase_mask(phasemask)
     {
-        TC_LOG_DEBUG("maps", "Dynamic Intersection log");
+        sLog->outDebug(LOG_FILTER_MAPS, "Dynamic Intersection log");
     }
     bool operator()(const G3D::Ray& r, const GameObjectModel& obj, float& distance)
     {
-        TC_LOG_DEBUG("maps", "testing intersection with %s", obj.name.c_str());
+        sLog->outDebug(LOG_FILTER_MAPS, "testing intersection with %s", obj.name.c_str());
         bool hit = obj.intersectRay(r, distance, true, phase_mask);
         if (hit)
         {
             did_hit = true;
-            TC_LOG_DEBUG("maps", "result: intersects");
+            sLog->outDebug(LOG_FILTER_MAPS, "result: intersects");
         }
         return hit;
     }

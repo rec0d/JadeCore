@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -19,99 +18,29 @@
 #include "Opcodes.h"
 #include "WorldSession.h"
 #include "WorldPacket.h"
-#include "Config.h"
 
 void WorldSession::SendAuthResponse(uint8 code, bool queued, uint32 queuePos)
 {
-    std::map<uint32, std::string> realmNamesToSend;
-
-    QueryResult classResult = LoginDatabase.PQuery("SELECT class, expansion FROM realm_classes WHERE realmId = %u", realmID);
-    QueryResult raceResult = LoginDatabase.PQuery("SELECT race, expansion FROM realm_races WHERE realmId = %u", realmID);
-
-    if (!classResult || !raceResult)
-    {
-        TC_LOG_ERROR("network", "Unable to retrieve class or race data.");
-        return;
-    }
-
-    RealmNameMap::const_iterator iter = realmNameStore.find(realmID);
-    if (iter != realmNameStore.end()) // Add local realm
-        realmNamesToSend[realmID] = iter->second;
-
-    TC_LOG_ERROR("network", "SMSG_AUTH_RESPONSE");
-    WorldPacket packet(SMSG_AUTH_RESPONSE, 80);
-
-    packet.WriteBit(code == AUTH_OK);
-
-    if (code == AUTH_OK)
-    {
-        packet.WriteBits(realmNamesToSend.size(), 21); // Send current realmId
-
-        for (std::map<uint32, std::string>::const_iterator itr = realmNamesToSend.begin(); itr != realmNamesToSend.end(); itr++)
-        {
-            packet.WriteBits(itr->second.size(), 8);
-            packet.WriteBits(itr->second.size(), 8);
-            packet.WriteBit(itr->first == realmID); // Home realm
-        }
-
-        packet.WriteBits(classResult->GetRowCount(), 23);
-        packet.WriteBits(0, 21);
-        packet.WriteBit(0);
-        packet.WriteBit(0);
-        packet.WriteBit(0);
-        packet.WriteBit(0);
-        packet.WriteBits(raceResult->GetRowCount(), 23);
-        packet.WriteBit(0);
-    }
-
+    WorldPacket packet(SMSG_AUTH_RESPONSE, 1 /*bits*/ + 4 + 1 + 4 + 1 + 4 + 1 + 1 + (queued ? 4 : 0));
     packet.WriteBit(queued);
-
     if (queued)
-        packet.WriteBit(1);                             // Unknown
+        packet.WriteBit(0);
+
+    packet.WriteBit(1);                                    // has account info
 
     packet.FlushBits();
 
+    // account info
+    packet << uint32(0);                                   // BillingTimeRemaining
+    packet << uint8(Expansion());                          // 0 - normal, 1 - TBC, 2 - WOTLK, 3 - CATA; must be set in database manually for each account
+    packet << uint32(0);
+    packet << uint8(Expansion());                          // Unknown, these two show the same
+    packet << uint32(0);                                   // BillingTimeRested
+    packet << uint8(0);                                    // BillingPlanFlags
+
+    packet << uint8(code);
     if (queued)
-        packet << uint32(0);                            // Unknown
-
-    if (code == AUTH_OK)
-    {
-        for (std::map<uint32, std::string>::const_iterator itr = realmNamesToSend.begin(); itr != realmNamesToSend.end(); itr++)
-        {
-            packet << uint32(itr->first);
-            packet.WriteString(itr->second);
-            packet.WriteString(itr->second);
-        }
-
-        do
-        {
-            Field* fields = raceResult->Fetch();
-
-            packet << fields[1].GetUInt8();
-            packet << fields[0].GetUInt8();
-        }
-        while (raceResult->NextRow());
-
-        do
-        {
-            Field* fields = classResult->Fetch();
-
-            packet << fields[1].GetUInt8();
-            packet << fields[0].GetUInt8();
-        }
-        while (classResult->NextRow());
-
-        packet << uint32(0);
-        packet << uint8(Expansion());
-        packet << uint32(Expansion());
-        packet << uint32(0);
-        packet << uint8(Expansion());
-        packet << uint32(0);
-        packet << uint32(0);
-        packet << uint32(0);
-    }
-
-    packet << uint8(code);                             // Auth response ?
+        packet << uint32(queuePos);                             // Queue position
 
     SendPacket(&packet);
 }

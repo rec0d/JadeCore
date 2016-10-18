@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,6 +24,34 @@
 
 #define HYJAL_AI_MAX_SPELLS 3
 
+enum CreaturesIds
+{
+    // Trash Mobs summoned in waves
+    NECROMANCER         = 17899,
+    ABOMINATION         = 17898,
+    GHOUL               = 17895,
+    BANSHEE             = 17905,
+    CRYPT_FIEND         = 17897,
+    GARGOYLE            = 17906,
+    FROST_WYRM          = 17907,
+    GIANT_INFERNAL      = 17908,
+    FEL_STALKER         = 17916,
+
+    JAINA               = 17772,
+    THRALL              = 17852,
+    TYRANDE             = 17948,
+
+    ANCIENT_VEIN        = 185557,
+    FLAMEOBJECT         = 182592,
+
+    // Bosses summoned after every 8 waves
+    RAGE_WINTERCHILL    = 17767,
+    ANETHERON           = 17808,
+    KAZROGAL            = 17888,
+    AZGALOR             = 17842,
+    ARCHIMONDE          = 17968,
+};
+
 enum SpellIds
 {
     SPELL_TELEPORT_VISUAL     = 41232,
@@ -38,7 +65,7 @@ enum SpellIds
 
     //Thrall spells
     SPELL_CHAIN_LIGHTNING     = 31330,
-    SPELL_SUMMON_DIRE_WOLF    = 31331
+    SPELL_SUMMON_DIRE_WOLF    = 31331,
 };
 
 struct Wave
@@ -126,7 +153,7 @@ struct hyjalAI : public npc_escortAI
 
     void EnterCombat(Unit* /*who*/);                                  // Used to reset cooldowns for our spells and to inform the raid that we're under attack
 
-    void UpdateAI(uint32 diff);                       // Called to summon waves, check for boss deaths and to cast our spells.
+    void UpdateAI(const uint32 diff);                       // Called to summon waves, check for boss deaths and to cast our spells.
 
     void JustDied(Unit* /*killer*/);                             // Called on death, informs the raid that they have failed.
 

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,9 +19,16 @@
 #ifndef DEF_ULDAMAN_H
 #define DEF_ULDAMAN_H
 
-#define MAX_ENCOUNTER                   3
+enum eObjects
+{
+    GO_ARCHAEDAS_TEMPLE_DOOR            = 141869,
+    GO_ALTAR_OF_THE_KEEPER_TEMPLE_DOOR  = 124367,
+    GO_ANCIENT_VAULT_DOOR               = 124369,
+    GO_IRONAYA_SEAL_DOOR                = 124372,
+    GO_KEYSTONE                         = 124371,
+};
 
-enum DataTypes
+enum eData
 {
     DATA_ALTAR_DOORS                    = 1,
     DATA_ANCIENT_DOOR                   = 2,
@@ -32,13 +38,6 @@ enum DataTypes
     DATA_IRONAYA_SEAL                   = 6,
 };
 
-enum GameObjectIds
-{
-    GO_ARCHAEDAS_TEMPLE_DOOR            = 141869,
-    GO_ALTAR_OF_THE_KEEPER_TEMPLE_DOOR  = 124367,
-    GO_ANCIENT_VAULT_DOOR               = 124369,
-    GO_IRONAYA_SEAL_DOOR                = 124372,
-    GO_KEYSTONE                         = 124371,
-};
+#define MAX_ENCOUNTER                   3
 
 #endif

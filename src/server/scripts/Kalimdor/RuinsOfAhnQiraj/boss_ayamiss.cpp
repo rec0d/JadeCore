@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -36,13 +34,13 @@ enum Spells
 
 enum Events
 {
-    EVENT_STINGER_SPRAY         = 1,
-    EVENT_POISON_STINGER        = 2,
-    EVENT_SUMMON_SWARMER        = 3,
-    EVENT_SWARMER_ATTACK        = 4,
-    EVENT_PARALYZE              = 5,
-    EVENT_LASH                  = 6,
-    EVENT_TRASH                 = 7
+    EVENT_STINGER_SPRAY         = 0,
+    EVENT_POISON_STINGER        = 1,
+    EVENT_SUMMON_SWARMER        = 2,
+    EVENT_SWARMER_ATTACK        = 3,
+    EVENT_PARALYZE              = 4,
+    EVENT_LASH                  = 5,
+    EVENT_TRASH                 = 6
 };
 
 enum Emotes
@@ -65,7 +63,7 @@ enum Points
 
 const Position AyamissAirPos =  { -9689.292f, 1547.912f, 48.02729f, 0.0f };
 const Position AltarPos =       { -9717.18f, 1517.72f, 27.4677f, 0.0f };
-/// @todo These below are probably incorrect, taken from SD2
+// TODO: These below are probably incorrect, taken from SD2
 const Position SwarmerPos =     { -9647.352f, 1578.062f, 55.32f, 0.0f };
 const Position LarvaPos[2] =
 {
@@ -84,7 +82,7 @@ class boss_ayamiss : public CreatureScript
             {
             }
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 _phase = PHASE_AIR;
@@ -92,7 +90,7 @@ class boss_ayamiss : public CreatureScript
                 SetCombatMovement(false);
             }
 
-            void JustSummoned(Creature* who) override
+            void JustSummoned(Creature* who)
             {
                 switch (who->GetEntry())
                 {
@@ -109,7 +107,7 @@ class boss_ayamiss : public CreatureScript
                 }
             }
 
-            void MovementInform(uint32 type, uint32 id) override
+            void MovementInform(uint32 type, uint32 id)
             {
                 if (type == POINT_MOTION_TYPE)
                 {
@@ -125,13 +123,13 @@ class boss_ayamiss : public CreatureScript
                 }
             }
 
-            void EnterEvadeMode() override
+            void EnterEvadeMode()
             {
                 me->ClearUnitState(UNIT_STATE_ROOT);
                 BossAI::EnterEvadeMode();
             }
 
-            void EnterCombat(Unit* attacker) override
+            void EnterCombat(Unit* attacker)
             {
                 BossAI::EnterCombat(attacker);
 
@@ -146,7 +144,7 @@ class boss_ayamiss : public CreatureScript
                 me->GetMotionMaster()->MovePoint(POINT_AIR, AyamissAirPos);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -232,7 +230,7 @@ class boss_ayamiss : public CreatureScript
             bool _enraged;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_ayamissAI(creature);
         }
@@ -250,7 +248,7 @@ class npc_hive_zara_larva : public CreatureScript
                 _instance = me->GetInstanceScript();
             }
 
-            void MovementInform(uint32 type, uint32 id) override
+            void MovementInform(uint32 type, uint32 id)
             {
                 if (type == POINT_MOTION_TYPE)
                     if (id == POINT_PARALYZE)
@@ -258,8 +256,7 @@ class npc_hive_zara_larva : public CreatureScript
                             DoCast(target, SPELL_FEED); // Omnomnom
             }
 
-            void MoveInLineOfSight(Unit* who) override
-
+            void MoveInLineOfSight(Unit* who)
             {
                 if (_instance->GetBossState(DATA_AYAMISS) == IN_PROGRESS)
                     return;
@@ -267,7 +264,7 @@ class npc_hive_zara_larva : public CreatureScript
                 ScriptedAI::MoveInLineOfSight(who);
             }
 
-            void AttackStart(Unit* victim) override
+            void AttackStart(Unit* victim)
             {
                 if (_instance->GetBossState(DATA_AYAMISS) == IN_PROGRESS)
                     return;
@@ -275,7 +272,7 @@ class npc_hive_zara_larva : public CreatureScript
                 ScriptedAI::AttackStart(victim);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (_instance->GetBossState(DATA_AYAMISS) == IN_PROGRESS)
                     return;
@@ -286,7 +283,7 @@ class npc_hive_zara_larva : public CreatureScript
             InstanceScript* _instance;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_hive_zara_larvaAI(creature);
         }

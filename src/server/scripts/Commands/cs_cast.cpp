@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -39,18 +37,18 @@ public:
     {
         static ChatCommand castCommandTable[] =
         {
-            { "back",   rbac::RBAC_PERM_COMMAND_CAST_BACK,   false, &HandleCastBackCommand,  "", NULL },
-            { "dist",   rbac::RBAC_PERM_COMMAND_CAST_DIST,   false, &HandleCastDistCommand,  "", NULL },
-            { "self",   rbac::RBAC_PERM_COMMAND_CAST_SELF,   false, &HandleCastSelfCommand,  "", NULL },
-            { "target", rbac::RBAC_PERM_COMMAND_CAST_TARGET, false, &HandleCastTargetCommad, "", NULL },
-            { "dest",   rbac::RBAC_PERM_COMMAND_CAST_DEST,   false, &HandleCastDestCommand,  "", NULL },
-            { "",       rbac::RBAC_PERM_COMMAND_CAST,        false, &HandleCastCommand,      "", NULL },
-            { NULL,     0,                             false, NULL,                    "", NULL }
+            { "back",           SEC_ADMINISTRATOR,  false, &HandleCastBackCommand,              "", NULL },
+            { "dist",           SEC_ADMINISTRATOR,  false, &HandleCastDistCommand,              "", NULL },
+            { "self",           SEC_ADMINISTRATOR,  false, &HandleCastSelfCommand,              "", NULL },
+            { "target",         SEC_ADMINISTRATOR,  false, &HandleCastTargetCommad,             "", NULL },
+            { "dest",           SEC_ADMINISTRATOR,  false, &HandleCastDestCommand,              "", NULL },
+            { "",               SEC_ADMINISTRATOR,  false, &HandleCastCommand,                  "", NULL },
+            { NULL,             0,                  false, NULL,                                "", NULL }
         };
         static ChatCommand commandTable[] =
         {
-            { "cast",   rbac::RBAC_PERM_COMMAND_CAST,        false, NULL,                    "", castCommandTable },
-            { NULL,     0,                             false, NULL,                    "", NULL }
+            { "cast",           SEC_ADMINISTRATOR,  false, NULL,                                "", castCommandTable },
+            { NULL,             0,                  false, NULL,                                "", NULL }
         };
         return commandTable;
     }

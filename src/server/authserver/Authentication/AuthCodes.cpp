@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -24,21 +22,6 @@ namespace AuthHelper
 {
     static RealmBuildInfo const PostBcAcceptedClientBuilds[] =
     {
-        {18414, 5, 4, 8, ' '},        // Last version MoP
-        {18291, 5, 4, 8, ' '},
-        {18019, 5, 4, 7, ' '},
-        {17956, 5, 4, 7, ' '},
-        {17930, 5, 4, 7, ' '},
-        {17898, 5, 4, 7, ' '},
-        {17688, 5, 4, 2, 'a'},
-        {17658, 5, 4, 2, ' '},
-        {17538, 5, 4, 1, ' '},
-        {17399, 5, 4, 0, ' '},
-        {17128, 5, 3, 0, ' '},
-        {16769, 5, 2, 0, ' '},
-        {16357, 5, 1, 0, 'a'},
-        {16309, 5, 1, 0, ' '},
-        {16135, 5, 0, 5, 'b'}, 
         {15595, 4, 3, 4, ' '},
         {14545, 4, 2, 2, ' '},
         {13623, 4, 0, 6, 'a'},
@@ -54,7 +37,6 @@ namespace AuthHelper
 
     static RealmBuildInfo const PreBcAcceptedClientBuilds[] =
     {
-        {6141,  1, 12, 3, ' '},
         {6005,  1, 12, 2, ' '},
         {5875,  1, 12, 1, ' '},
         {0,     0, 0, 0, ' '}                                   // terminator

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -42,25 +41,25 @@ class boss_timmy_the_cruel : public CreatureScript
 public:
     boss_timmy_the_cruel() : CreatureScript("boss_timmy_the_cruel") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_timmy_the_cruelAI(creature);
+        return new boss_timmy_the_cruelAI (creature);
     }
 
     struct boss_timmy_the_cruelAI : public ScriptedAI
     {
-        boss_timmy_the_cruelAI(Creature* creature) : ScriptedAI(creature) { }
+        boss_timmy_the_cruelAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 RavenousClaw_Timer;
         bool HasYelled;
 
-        void Reset() override
+        void Reset()
         {
             RavenousClaw_Timer = 10000;
             HasYelled = false;
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             if (!HasYelled)
             {
@@ -69,7 +68,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             //Return since we have no target
             if (!UpdateVictim())

@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -87,13 +84,13 @@ class boss_tharon_ja : public CreatureScript
         {
             boss_tharon_jaAI(Creature* creature) : BossAI(creature, DATA_THARON_JA) { }
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 me->RestoreDisplayId();
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 Talk(SAY_AGGRO);
                 _EnterCombat();
@@ -104,13 +101,13 @@ class boss_tharon_ja : public CreatureScript
                 events.ScheduleEvent(EVENT_SHADOW_VOLLEY, urand(8000, 10000));
             }
 
-            void KilledUnit(Unit* who) override
+            void KilledUnit(Unit* who)
             {
                 if (who->GetTypeId() == TYPEID_PLAYER)
                     Talk(SAY_KILL);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 _JustDied();
 
@@ -119,7 +116,7 @@ class boss_tharon_ja : public CreatureScript
                 DoCastAOE(SPELL_ACHIEVEMENT_CHECK, true);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -202,7 +199,7 @@ class boss_tharon_ja : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetDrakTharonKeepAI<boss_tharon_jaAI>(creature);
         }
@@ -217,7 +214,7 @@ class spell_tharon_ja_clear_gift_of_tharon_ja : public SpellScriptLoader
         {
             PrepareSpellScript(spell_tharon_ja_clear_gift_of_tharon_ja_SpellScript);
 
-            bool Validate(SpellInfo const* /*spellInfo*/) override
+            bool Validate(SpellInfo const* /*spellInfo*/)
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_GIFT_OF_THARON_JA))
                     return false;
@@ -230,13 +227,13 @@ class spell_tharon_ja_clear_gift_of_tharon_ja : public SpellScriptLoader
                     target->RemoveAura(SPELL_GIFT_OF_THARON_JA);
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectHitTarget += SpellEffectFn(spell_tharon_ja_clear_gift_of_tharon_ja_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_tharon_ja_clear_gift_of_tharon_ja_SpellScript();
         }

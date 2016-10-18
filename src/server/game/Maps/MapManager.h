@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -19,14 +19,13 @@
 #ifndef TRINITY_MAPMANAGER_H
 #define TRINITY_MAPMANAGER_H
 
-#include "Object.h"
+#include "Define.h"
+#include <ace/Singleton.h>
+#include <ace/Thread_Mutex.h>
+#include "Common.h"
 #include "Map.h"
 #include "GridStates.h"
 #include "MapUpdater.h"
-
-#include <ace/Singleton.h>
-#include <ace/Thread_Mutex.h>
-
 
 class Transport;
 struct TransportCreatureProto;
@@ -107,6 +106,15 @@ class MapManager
 
         void DoDelayedMovesAndRemoves();
 
+        void LoadTransports();
+        void LoadTransportNPCs();
+
+        typedef std::set<Transport*> TransportSet;
+        TransportSet m_Transports;
+
+        typedef std::map<uint32, TransportSet> TransportMap;
+        TransportMap m_TransportsByMap;
+
         bool CanPlayerEnter(uint32 mapid, Player* player, bool loginCheck = false);
         void InitializeVisibilityDistanceInfo();
 
@@ -125,6 +133,11 @@ class MapManager
 
         MapUpdater * GetMapUpdater() { return &m_updater; }
 
+        Map* FindBaseMap(uint32 mapId) const
+        {
+            MapMapType::const_iterator iter = i_maps.find(mapId);
+            return (iter == i_maps.end() ? NULL : iter->second);
+        }
     private:
         typedef UNORDERED_MAP<uint32, Map*> MapMapType;
         typedef std::vector<bool> InstanceIds;
@@ -136,12 +149,6 @@ class MapManager
 
         MapManager();
         ~MapManager();
-
-        Map* FindBaseMap(uint32 mapId) const
-        {
-            MapMapType::const_iterator iter = i_maps.find(mapId);
-            return (iter == i_maps.end() ? NULL : iter->second);
-        }
 
         MapManager(const MapManager &);
         MapManager& operator=(const MapManager &);

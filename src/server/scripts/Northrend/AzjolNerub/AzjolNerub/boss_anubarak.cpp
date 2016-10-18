@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -55,7 +52,7 @@ enum Yells
     SAY_INTRO                                     = 5
 };
 
-enum Misc
+enum
 {
     ACHIEV_TIMED_START_EVENT                      = 20381,
 };
@@ -116,7 +113,7 @@ public:
 
         SummonList Summons;
 
-        void Reset() override
+        void Reset()
         {
             CarrionBeetlesTimer = 8*IN_MILLISECONDS;
             LeechingSwarmTimer = 20*IN_MILLISECONDS;
@@ -135,7 +132,7 @@ public:
 
             if (instance)
             {
-                instance->SetBossState(DATA_ANUBARAK, NOT_STARTED);
+                instance->SetData(DATA_ANUBARAK_EVENT, NOT_STARTED);
                 instance->DoStopTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMED_START_EVENT);
             }
         }
@@ -157,7 +154,7 @@ public:
             return NULL;
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(SAY_AGGRO);
             DelayTimer = 0;
@@ -168,10 +165,10 @@ public:
         void DelayEventStart()
         {
             if (instance)
-                instance->SetBossState(DATA_ANUBARAK, IN_PROGRESS);
+                instance->SetData(DATA_ANUBARAK_EVENT, IN_PROGRESS);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -334,29 +331,28 @@ public:
             }
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Talk(SAY_DEATH);
             Summons.DespawnAll();
             if (instance)
-                instance->SetBossState(DATA_ANUBARAK, DONE);
+                instance->SetData(DATA_ANUBARAK_EVENT, DONE);
         }
 
-        void KilledUnit(Unit* victim) override
+        void KilledUnit(Unit* victim)
         {
-            if (victim->GetTypeId() != TYPEID_PLAYER)
+            if (victim == me)
                 return;
-
             Talk(SAY_SLAY);
         }
 
-        void JustSummoned(Creature* summon) override
+        void JustSummoned(Creature* summon)
         {
             Summons.Summon(summon);
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_anub_arakAI(creature);
     }
@@ -364,5 +360,5 @@ public:
 
 void AddSC_boss_anub_arak()
 {
-    new boss_anub_arak();
+    new boss_anub_arak;
 }

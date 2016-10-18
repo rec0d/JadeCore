@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -392,7 +391,7 @@ void hyjalAI::Reset()
     Debug = false;
 
     //Flags
-    me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+    me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
 
     //Initialize spells
     memset(Spells, 0, sizeof(Spell) * HYJAL_AI_MAX_SPELLS);
@@ -408,7 +407,7 @@ void hyjalAI::Reset()
             instance->DoUpdateWorldState(WORLD_STATE_ENEMYCOUNT, 0);
             instance->SetData(DATA_RESET_TRASH_COUNT, 0);
         }
-    } else TC_LOG_ERROR("scripts", ERROR_INST_DATA);
+    } else sLog->outError(LOG_FILTER_TSCR, ERROR_INST_DATA);
 
     //Visibility
     DoHide = true;
@@ -422,7 +421,7 @@ void hyjalAI::EnterEvadeMode()
     me->CombatStop(true);
     me->LoadCreaturesAddon();
 
-    if (me->IsAlive())
+    if (me->isAlive())
         me->GetMotionMaster()->MoveTargetedHome();
 
     me->SetLootRecipient(NULL);
@@ -541,7 +540,7 @@ void hyjalAI::SummonNextWave(const Wave wave[18], uint32 Count, float Base[4][3]
 
     if (!instance)
     {
-        TC_LOG_ERROR("scripts", ERROR_INST_DATA);
+        sLog->outError(LOG_FILTER_TSCR, ERROR_INST_DATA);
         return;
     }
     InfernalCount = 0;//reset infernal count every new wave
@@ -571,7 +570,7 @@ void hyjalAI::SummonNextWave(const Wave wave[18], uint32 Count, float Base[4][3]
         else
         {
             NextWaveTimer = 15000;
-            TC_LOG_DEBUG("scripts", "HyjalAI: debug mode is enabled. Next Wave in 15 seconds");
+            sLog->outDebug(LOG_FILTER_TSCR, "HyjalAI: debug mode is enabled. Next Wave in 15 seconds");
         }
     }
     else
@@ -602,7 +601,7 @@ void hyjalAI::StartEvent(Player* player)
     CheckTimer = 5000;
     PlayerGUID = player->GetGUID();
 
-    me->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+    me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
 
     instance->DoUpdateWorldState(WORLD_STATE_WAVES, 0);
     instance->DoUpdateWorldState(WORLD_STATE_ENEMY, 0);
@@ -615,7 +614,7 @@ uint32 hyjalAI::GetInstanceData(uint32 Event)
 {
     if (instance)
         return instance->GetData(Event);
-    else TC_LOG_ERROR("scripts", ERROR_INST_DATA);
+    else sLog->outError(LOG_FILTER_TSCR, ERROR_INST_DATA);
 
     return 0;
 }
@@ -640,7 +639,7 @@ void hyjalAI::Retreat()
             Creature* JainaDummy = me->SummonCreature(JAINA, JainaDummySpawn[0][0], JainaDummySpawn[0][1], JainaDummySpawn[0][2], JainaDummySpawn[0][3], TEMPSUMMON_TIMED_DESPAWN, 60000);
             if (JainaDummy)
             {
-                JainaDummy->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                JainaDummy->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                 CAST_AI(hyjalAI, JainaDummy->AI())->IsDummy = true;
                 DummyGuid = JainaDummy->GetGUID();
             }
@@ -651,7 +650,7 @@ void hyjalAI::Retreat()
     }
     SpawnVeins();
     Overrun = true;
-    me->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);//cant talk after overrun event started
+    me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);//cant talk after overrun event started
 }
 
 void hyjalAI::SpawnVeins()
@@ -662,7 +661,7 @@ void hyjalAI::SpawnVeins()
             return;
         for (uint8 i = 0; i<7; ++i)
         {
-            GameObject* gem = me->SummonGameObject(GO_ANCIENT_VEIN, VeinPos[i][0], VeinPos[i][1], VeinPos[i][2], VeinPos[i][3], VeinPos[i][4], VeinPos[i][5], VeinPos[i][6], VeinPos[i][7], 0);
+            GameObject* gem = me->SummonGameObject(ANCIENT_VEIN, VeinPos[i][0], VeinPos[i][1], VeinPos[i][2], VeinPos[i][3], VeinPos[i][4], VeinPos[i][5], VeinPos[i][6], VeinPos[i][7], 0);
             if (gem)
                 VeinGUID[i]=gem->GetGUID();
         }
@@ -672,7 +671,7 @@ void hyjalAI::SpawnVeins()
             return;
         for (uint8 i = 7; i<14; ++i)
         {
-            GameObject* gem = me->SummonGameObject(GO_ANCIENT_VEIN, VeinPos[i][0], VeinPos[i][1], VeinPos[i][2], VeinPos[i][3], VeinPos[i][4], VeinPos[i][5], VeinPos[i][6], VeinPos[i][7], 0);
+            GameObject* gem = me->SummonGameObject(ANCIENT_VEIN, VeinPos[i][0], VeinPos[i][1], VeinPos[i][2], VeinPos[i][3], VeinPos[i][4], VeinPos[i][5], VeinPos[i][6], VeinPos[i][7], 0);
             if (gem)
                 VeinGUID[i]=gem->GetGUID();
         }
@@ -709,7 +708,7 @@ void hyjalAI::DeSpawnVeins()
     }
 }
 
-void hyjalAI::UpdateAI(uint32 diff)
+void hyjalAI::UpdateAI(const uint32 diff)
 {
     if (IsDummy)
     {
@@ -732,7 +731,7 @@ void hyjalAI::UpdateAI(uint32 diff)
                     HideNearPos(me->GetPositionX(), me->GetPositionY());
                     HideNearPos(5037.76f, -1889.71f);
                     for (uint8 i = 0; i < 92; ++i)//summon fires
-                        me->SummonGameObject(GO_ROARING_FLAME, AllianceFirePos[i][0], AllianceFirePos[i][1], AllianceFirePos[i][2], AllianceFirePos[i][3], AllianceFirePos[i][4], AllianceFirePos[i][5], AllianceFirePos[i][6], AllianceFirePos[i][7], 0);
+                        me->SummonGameObject(FLAMEOBJECT, AllianceFirePos[i][0], AllianceFirePos[i][1], AllianceFirePos[i][2], AllianceFirePos[i][3], AllianceFirePos[i][4], AllianceFirePos[i][5], AllianceFirePos[i][6], AllianceFirePos[i][7], 0);
 
                 }
                 else me->SetVisible(true);
@@ -745,7 +744,7 @@ void hyjalAI::UpdateAI(uint32 diff)
                     HideNearPos(5563, -2763.19f);
                     HideNearPos(5542.2f, -2629.36f);
                     for (uint8 i = 0; i < 65; ++i)//summon fires
-                        me->SummonGameObject(GO_ROARING_FLAME, HordeFirePos[i][0], HordeFirePos[i][1], HordeFirePos[i][2], HordeFirePos[i][3], HordeFirePos[i][4], HordeFirePos[i][5], HordeFirePos[i][6], HordeFirePos[i][7], 0);
+                        me->SummonGameObject(FLAMEOBJECT, HordeFirePos[i][0], HordeFirePos[i][1], HordeFirePos[i][2], HordeFirePos[i][3], HordeFirePos[i][4], HordeFirePos[i][5], HordeFirePos[i][6], HordeFirePos[i][7], 0);
 
                 }
                 else me->SetVisible(true);
@@ -826,7 +825,7 @@ void hyjalAI::UpdateAI(uint32 diff)
             if (BossGUID[i])
             {
                 Unit* unit = Unit::GetUnit(*me, BossGUID[i]);
-                if (unit && (!unit->IsAlive()))
+                if (unit && (!unit->isAlive()))
                 {
                     if (BossGUID[i] == BossGUID[0])
                     {
@@ -840,7 +839,7 @@ void hyjalAI::UpdateAI(uint32 diff)
                     }
                     EventBegun = false;
                     CheckTimer = 0;
-                    me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                    me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                     BossGUID[i] = 0;
                     if (instance)
                         instance->DoUpdateWorldState(WORLD_STATE_ENEMY, 0); // Reset world state for enemies to disable it
@@ -879,7 +878,7 @@ void hyjalAI::UpdateAI(uint32 diff)
                         break;
                 }
 
-                if (target && target->IsAlive())
+                if (target && target->isAlive())
                 {
                     DoCast(target, Spells[i].SpellId);
                     SpellTimer[i] = Spells[i].Cooldown;
@@ -961,12 +960,12 @@ void hyjalAI::WaypointReached(uint32 waypointId)
             DoCast(me, SPELL_MASS_TELEPORT, false);
         if (me->GetEntry() == THRALL && DummyGuid)
         {
-            if (Creature* creature = Unit::GetCreature(*me, DummyGuid))
+            Unit* Dummy = Unit::GetUnit(*me, DummyGuid);
+            if (Dummy)
             {
-                hyjalAI* ai = CAST_AI(hyjalAI, creature->AI());
-                ai->DoMassTeleport = true;
-                ai->MassTeleportTimer = 20000;
-                creature->CastSpell(me, SPELL_MASS_TELEPORT, false);
+                CAST_AI(hyjalAI, CAST_CRE(Dummy)->AI())->DoMassTeleport = true;
+                CAST_AI(hyjalAI, CAST_CRE(Dummy)->AI())->MassTeleportTimer = 20000;
+                Dummy->CastSpell(me, SPELL_MASS_TELEPORT, false);
             }
         }
         //do some talking
@@ -989,7 +988,7 @@ void hyjalAI::WaypointReached(uint32 waypointId)
         {
             for (std::list<Creature*>::const_iterator itr = creatures.begin(); itr != creatures.end(); ++itr)
             {
-                if ((*itr) && (*itr)->IsAlive() && (*itr) != me && (*itr)->GetEntry() != JAINA)
+                if ((*itr) && (*itr)->isAlive() && (*itr) != me && (*itr)->GetEntry() != JAINA)
                 {
                     if (!(*itr)->IsWithinDist(me, 60))
                         (*itr)->SetWalk(false);
@@ -1029,7 +1028,7 @@ void hyjalAI::DoOverrun(uint32 faction, const uint32 diff)
             {
                 for (std::list<Creature*>::const_iterator itr = creatures.begin(); itr != creatures.end(); ++itr)
                 {
-                    if ((*itr) && (*itr)->IsAlive())
+                    if ((*itr) && (*itr)->isAlive())
                     {
                         (*itr)->CastSpell(*itr, SPELL_TELEPORT_VISUAL, true);
                         (*itr)->setFaction(35);//make them friendly so mobs won't attack them
@@ -1052,7 +1051,7 @@ void hyjalAI::DoOverrun(uint32 faction, const uint32 diff)
     {
         case 0://alliance
             for (uint8 i = 0; i < 92; ++i)//summon fires
-                me->SummonGameObject(GO_ROARING_FLAME, AllianceFirePos[i][0], AllianceFirePos[i][1], AllianceFirePos[i][2], AllianceFirePos[i][3], AllianceFirePos[i][4], AllianceFirePos[i][5], AllianceFirePos[i][6], AllianceFirePos[i][7], 0);
+                me->SummonGameObject(FLAMEOBJECT, AllianceFirePos[i][0], AllianceFirePos[i][1], AllianceFirePos[i][2], AllianceFirePos[i][3], AllianceFirePos[i][4], AllianceFirePos[i][5], AllianceFirePos[i][6], AllianceFirePos[i][7], 0);
 
             for (uint8 i = 0; i < 25; ++i)//summon 25 ghouls
             {
@@ -1093,7 +1092,7 @@ void hyjalAI::DoOverrun(uint32 faction, const uint32 diff)
             break;
         case 1://horde
             for (uint8 i = 0; i < 65; ++i)//summon fires
-                me->SummonGameObject(GO_ROARING_FLAME, HordeFirePos[i][0], HordeFirePos[i][1], HordeFirePos[i][2], HordeFirePos[i][3], HordeFirePos[i][4], HordeFirePos[i][5], HordeFirePos[i][6], HordeFirePos[i][7], 0);
+                me->SummonGameObject(FLAMEOBJECT, HordeFirePos[i][0], HordeFirePos[i][1], HordeFirePos[i][2], HordeFirePos[i][3], HordeFirePos[i][4], HordeFirePos[i][5], HordeFirePos[i][6], HordeFirePos[i][7], 0);
 
             for (uint8 i = 0; i < 26; ++i)//summon infernals
             {

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -95,7 +94,7 @@ struct emerald_dragonAI : public WorldBossAI
     {
     }
 
-    void Reset() override
+    void Reset()
     {
         WorldBossAI::Reset();
         me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
@@ -107,14 +106,14 @@ struct emerald_dragonAI : public WorldBossAI
     }
 
     // Target killed during encounter, mark them as suspectible for Aura Of Nature
-    void KilledUnit(Unit* who) override
+    void KilledUnit(Unit* who)
     {
         if (who->GetTypeId() == TYPEID_PLAYER)
             who->CastSpell(who, SPELL_MARK_OF_NATURE, true);
     }
 
     // Execute and reschedule base events shared between all Emerald Dragons
-    void ExecuteEvent(uint32 eventId) override
+    void ExecuteEvent(uint32 const eventId)
     {
         switch (eventId)
         {
@@ -138,7 +137,7 @@ struct emerald_dragonAI : public WorldBossAI
         }
     }
 
-    void UpdateAI(uint32 diff) override
+    void UpdateAI(uint32 const diff)
     {
         if (!UpdateVictim())
             return;
@@ -173,12 +172,12 @@ class npc_dream_fog : public CreatureScript
             {
             }
 
-            void Reset() override
+            void Reset()
             {
                 _roamTimer = 0;
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -210,7 +209,7 @@ class npc_dream_fog : public CreatureScript
             uint32 _roamTimer;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_dream_fogAI(creature);
         }
@@ -250,21 +249,21 @@ class boss_ysondre : public CreatureScript
             {
             }
 
-            void Reset() override
+            void Reset()
             {
                 _stage = 1;
                 emerald_dragonAI::Reset();
                 events.ScheduleEvent(EVENT_LIGHTNING_WAVE, 12000);
             }
 
-            void EnterCombat(Unit* who) override
+            void EnterCombat(Unit* who)
             {
                 Talk(SAY_YSONDRE_AGGRO);
                 WorldBossAI::EnterCombat(who);
             }
 
             // Summon druid spirits on 75%, 50% and 25% health
-            void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/) override
+            void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/)
             {
                 if (!HealthAbovePct(100 - 25 * _stage))
                 {
@@ -276,7 +275,7 @@ class boss_ysondre : public CreatureScript
                 }
             }
 
-            void ExecuteEvent(uint32 eventId) override
+            void ExecuteEvent(uint32 const eventId)
             {
                 switch (eventId)
                 {
@@ -294,7 +293,7 @@ class boss_ysondre : public CreatureScript
             uint8 _stage;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_ysondreAI(creature);
         }
@@ -305,7 +304,7 @@ class boss_ysondre : public CreatureScript
  * --- Dragonspecific scripts and handling: LETHON
  * ---
  *
- * @todo
+ * TODO:
  * - Spell: Shadow bolt whirl casts needs custom handling (spellscript)
  */
 
@@ -338,20 +337,20 @@ class boss_lethon : public CreatureScript
             {
             }
 
-            void Reset() override
+            void Reset()
             {
                 _stage = 1;
                 emerald_dragonAI::Reset();
                 events.ScheduleEvent(EVENT_SHADOW_BOLT_WHIRL, 10000);
             }
 
-            void EnterCombat(Unit* who) override
+            void EnterCombat(Unit* who)
             {
                 Talk(SAY_LETHON_AGGRO);
                 WorldBossAI::EnterCombat(who);
             }
 
-            void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/) override
+            void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/)
             {
                 if (!HealthAbovePct(100 - 25 * _stage))
                 {
@@ -361,7 +360,7 @@ class boss_lethon : public CreatureScript
                 }
             }
 
-            void SpellHitTarget(Unit* target, SpellInfo const* spell) override
+            void SpellHitTarget(Unit* target, SpellInfo const* spell)
             {
                 if (spell->Id == SPELL_DRAW_SPIRIT && target->GetTypeId() == TYPEID_PLAYER)
                 {
@@ -371,7 +370,7 @@ class boss_lethon : public CreatureScript
                 }
             }
 
-            void ExecuteEvent(uint32 eventId) override
+            void ExecuteEvent(uint32 const eventId)
             {
                 switch (eventId)
                 {
@@ -389,7 +388,7 @@ class boss_lethon : public CreatureScript
             uint8 _stage;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_lethonAI(creature);
         }
@@ -406,13 +405,13 @@ class npc_spirit_shade : public CreatureScript
             {
             }
 
-            void IsSummonedBy(Unit* summoner) override
+            void IsSummonedBy(Unit* summoner)
             {
                 _summonerGuid = summoner->GetGUID();
                 me->GetMotionMaster()->MoveFollow(summoner, 0.0f, 0.0f);
             }
 
-            void MovementInform(uint32 moveType, uint32 data) override
+            void MovementInform(uint32 moveType, uint32 data)
             {
                 if (moveType == FOLLOW_MOTION_TYPE && data == _summonerGuid)
                 {
@@ -425,7 +424,7 @@ class npc_spirit_shade : public CreatureScript
             uint64 _summonerGuid;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_spirit_shadeAI(creature);
         }
@@ -461,27 +460,27 @@ class boss_emeriss : public CreatureScript
             {
             }
 
-            void Reset() override
+            void Reset()
             {
                 _stage = 1;
                 emerald_dragonAI::Reset();
                 events.ScheduleEvent(EVENT_VOLATILE_INFECTION, 12000);
             }
 
-            void KilledUnit(Unit* who) override
+            void KilledUnit(Unit* who)
             {
                 if (who->GetTypeId() == TYPEID_PLAYER)
                     DoCast(who, SPELL_PUTRID_MUSHROOM, true);
                 emerald_dragonAI::KilledUnit(who);
             }
 
-            void EnterCombat(Unit* who) override
+            void EnterCombat(Unit* who)
             {
                 Talk(SAY_EMERISS_AGGRO);
                 WorldBossAI::EnterCombat(who);
             }
 
-            void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/) override
+            void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/)
             {
                 if (!HealthAbovePct(100 - 25 * _stage))
                 {
@@ -491,7 +490,7 @@ class boss_emeriss : public CreatureScript
                 }
             }
 
-            void ExecuteEvent(uint32 eventId) override
+            void ExecuteEvent(uint32 const eventId)
             {
                 switch (eventId)
                 {
@@ -509,7 +508,7 @@ class boss_emeriss : public CreatureScript
             uint8 _stage;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_emerissAI(creature);
         }
@@ -553,7 +552,7 @@ class boss_taerar : public CreatureScript
             {
             }
 
-            void Reset() override
+            void Reset()
             {
                 me->RemoveAurasDueToSpell(SPELL_SHADE);
                 _stage = 1;
@@ -567,18 +566,18 @@ class boss_taerar : public CreatureScript
                 events.ScheduleEvent(EVENT_BELLOWING_ROAR, 30000);
             }
 
-            void EnterCombat(Unit* who) override
+            void EnterCombat(Unit* who)
             {
                 Talk(SAY_TAERAR_AGGRO);
                 emerald_dragonAI::EnterCombat(who);
             }
 
-            void SummonedCreatureDies(Creature* /*summon*/, Unit* /*killer*/) override
+            void SummonedCreatureDies(Creature* /*summon*/, Unit* /*killer*/)
             {
                 --_shades;
             }
 
-            void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/) override
+            void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/)
             {
                 // At 75, 50 or 25 percent health, we need to activate the shades and go "banished"
                 // Note: _stage holds the amount of times they have been summoned
@@ -605,7 +604,7 @@ class boss_taerar : public CreatureScript
                 }
             }
 
-            void ExecuteEvent(uint32 eventId) override
+            void ExecuteEvent(uint32 const eventId)
             {
                 switch (eventId)
                 {
@@ -623,9 +622,9 @@ class boss_taerar : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
-                if (!me->IsInCombat())
+                if (!me->isInCombat())
                     return;
 
                 if (_banished)
@@ -659,7 +658,7 @@ class boss_taerar : public CreatureScript
             uint8  _stage;                                 // check which "shade phase" we're at (75-50-25 percentage counters)
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_taerarAI(creature);
         }
@@ -696,13 +695,13 @@ class spell_dream_fog_sleep : public SpellScriptLoader
                 targets.remove_if(DreamFogTargetSelector());
             }
 
-            void Register() override
+            void Register()
             {
                 OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_dream_fog_sleep_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_DEST_AREA_ENEMY);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_dream_fog_sleep_SpellScript();
         }
@@ -735,7 +734,7 @@ class spell_mark_of_nature : public SpellScriptLoader
         {
             PrepareSpellScript(spell_mark_of_nature_SpellScript);
 
-            bool Validate(SpellInfo const* /*spellInfo*/) override
+            bool Validate(SpellInfo const* /*spellInfo*/)
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_MARK_OF_NATURE))
                     return false;
@@ -755,14 +754,14 @@ class spell_mark_of_nature : public SpellScriptLoader
                 GetHitUnit()->CastSpell(GetHitUnit(), SPELL_AURA_OF_NATURE, true);
             }
 
-            void Register() override
+            void Register()
             {
                 OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_mark_of_nature_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
                 OnEffectHitTarget += SpellEffectFn(spell_mark_of_nature_SpellScript::HandleEffect, EFFECT_0, SPELL_EFFECT_APPLY_AURA);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_mark_of_nature_SpellScript();
         }

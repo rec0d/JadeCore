@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -29,7 +29,7 @@
 
 int TotemAI::Permissible(Creature const* creature)
 {
-    if (creature->IsTotem())
+    if (creature->isTotem())
         return PERMIT_BASE_PROACTIVE;
 
     return PERMIT_BASE_NO;
@@ -37,22 +37,24 @@ int TotemAI::Permissible(Creature const* creature)
 
 TotemAI::TotemAI(Creature* c) : CreatureAI(c), i_victimGuid(0)
 {
-    ASSERT(c->IsTotem());
+    ASSERT(c->isTotem());
 }
 
-void TotemAI::MoveInLineOfSight(Unit* /*who*/) { }
+void TotemAI::MoveInLineOfSight(Unit* /*who*/)
+{
+}
 
 void TotemAI::EnterEvadeMode()
 {
     me->CombatStop(true);
 }
 
-void TotemAI::UpdateAI(uint32 /*diff*/)
+void TotemAI::UpdateAI(uint32 const /*diff*/)
 {
     if (me->ToTotem()->GetTotemType() != TOTEM_ACTIVE)
         return;
 
-    if (!me->IsAlive() || me->IsNonMeleeSpellCasted(false))
+    if (!me->isAlive() || me->IsNonMeleeSpellCasted(false))
         return;
 
     // Search spell
@@ -71,7 +73,7 @@ void TotemAI::UpdateAI(uint32 /*diff*/)
     // Search victim if no, not attackable, or out of range, or friendly (possible in case duel end)
     if (!victim ||
         !victim->isTargetableForAttack() || !me->IsWithinDistInMap(victim, max_range) ||
-        me->IsFriendlyTo(victim) || !me->CanSeeOrDetect(victim))
+        me->IsFriendlyTo(victim) || !me->canSeeOrDetect(victim))
     {
         victim = NULL;
         Trinity::NearestAttackableUnitInObjectRangeCheck u_check(me, me, max_range);
@@ -95,4 +97,13 @@ void TotemAI::UpdateAI(uint32 /*diff*/)
 
 void TotemAI::AttackStart(Unit* /*victim*/)
 {
+    // Sentry totem sends ping on attack
+    if (me->GetEntry() == SENTRY_TOTEM_ENTRY && me->GetOwner()->GetTypeId() == TYPEID_PLAYER)
+    {
+        WorldPacket data(MSG_MINIMAP_PING, (8+4+4));
+        data << me->GetGUID();
+        data << me->GetPositionX();
+        data << me->GetPositionY();
+        ((Player*)me->GetOwner())->GetSession()->SendPacket(&data);
+    }
 }

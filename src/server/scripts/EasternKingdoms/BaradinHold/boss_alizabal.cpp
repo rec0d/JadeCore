@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+* Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,22 +15,23 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "baradin_hold.h"
+#include "InstanceScript.h"
 #include "ScriptMgr.h"
-#include "ScriptedCreature.h"
 #include "Player.h"
 #include "ObjectAccessor.h"
-#include "baradin_hold.h"
+#include "ScriptedCreature.h"
 
 enum Texts
 {
-    SAY_INTRO               = 1,
-    SAY_AGGRO               = 2,
-    SAY_HATE                = 3,
-    SAY_SKEWER              = 4,
-    SAY_SKEWER_ANNOUNCE     = 5,
-    SAY_BLADE_STORM         = 6,
-    SAY_SLAY                = 10,
-    SAY_DEATH               = 12
+    SAY_INTRO           = 1,
+    SAY_AGGRO           = 2,
+    SAY_HATE            = 3,
+    SAY_SKEWER          = 4,
+    SAY_SKEWER_ANNOUNCE = 5,
+    SAY_BLADE_STORM     = 6,
+    SAY_SLAY            = 10,
+    SAY_DEATH           = 12,
 };
 
 enum Spells
@@ -41,25 +40,25 @@ enum Spells
     SPELL_BLADE_DANCE_DUMMY = 105828,
     SPELL_SEETHING_HATE     = 105067,
     SPELL_SKEWER            = 104936,
-    SPELL_BERSERK           = 47008
+    SPELL_BERSERK           = 47008,
 };
 
 enum Actions
 {
-    ACTION_INTRO            = 1
+    ACTION_INTRO    = 1,
 };
 
-    enum Points
+enum Points
 {
-    POINT_STORM             = 1
+    POINT_STORM     = 1,
 };
 
 enum Events
 {
-    EVENT_RANDOM_CAST       = 1,
-    EVENT_STOP_STORM        = 2,
-    EVENT_MOVE_STORM        = 3,
-    EVENT_CAST_STORM        = 4
+    EVENT_RANDOM_CAST   = 1,
+    EVENT_STOP_STORM    = 2,
+    EVENT_MOVE_STORM    = 3,
+    EVENT_CAST_STORM    = 4,
 };
 
 class at_alizabal_intro : public AreaTriggerScript
@@ -85,59 +84,75 @@ class boss_alizabal : public CreatureScript
         {
             boss_alizabalAI(Creature* creature) : BossAI(creature, DATA_ALIZABAL)
             {
-                _intro = false;
+                Intro = false;
+                Hate = false;
+                Skewer = false;
             }
 
-            void Reset() override
+            bool Intro;
+            bool Hate;
+            bool Skewer;
+
+            void Reset()
             {
                 _Reset();
-                _hate = false;
-                _skewer = false;
+                Hate = false;
+                Skewer = false;
+                Intro = false;
+                me->SetFullHealth();
+                instance->SendEncounterUnit(ENCOUNTER_FRAME_ENGAGE, me);
+                instance->HandleGameObject(instance->GetData64(GO_ALIZABAL_DOOR), false);
+                events.ScheduleEvent(EVENT_RANDOM_CAST, urand (80000, 10000));
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 _EnterCombat();
                 Talk(SAY_AGGRO);
                 instance->SendEncounterUnit(ENCOUNTER_FRAME_ENGAGE, me);
+                instance->HandleGameObject(instance->GetData64(GO_ALIZABAL_DOOR), false);
                 events.ScheduleEvent(EVENT_RANDOM_CAST, 10000);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 _JustDied();
                 Talk(SAY_DEATH);
                 instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
+                instance->HandleGameObject(instance->GetData64(GO_ALIZABAL_DOOR), true);
             }
 
-            void KilledUnit(Unit* who) override
+            void KilledUnit(Unit* who)
             {
                 if (who->GetTypeId() == TYPEID_PLAYER)
                     Talk(SAY_SLAY);
             }
 
-            void EnterEvadeMode() override
+            void EnterEvadeMode()
             {
+                events.Reset();
                 instance->SendEncounterUnit(ENCOUNTER_FRAME_DISENGAGE, me);
                 me->GetMotionMaster()->MoveTargetedHome();
-                _DespawnAtEvade();
+                //_DespawnAtEvade();
+                _Reset();
+                _EnterEvadeMode();
             }
 
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 switch (action)
                 {
                     case ACTION_INTRO:
-                        if (!_intro)
+                        if (!Intro)
                         {
                             Talk(SAY_INTRO);
-                            _intro = true;
+                            Intro = true;
                         }
                         break;
                 }
             }
 
-            void MovementInform(uint32 /*type*/, uint32 pointId) override
+            void MovementInform(uint32 /*type*/, uint32 pointId)
             {
                 switch (pointId)
                 {
@@ -147,7 +162,7 @@ class boss_alizabal : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -162,28 +177,28 @@ class boss_alizabal : public CreatureScript
                             switch (urand(0, 1))
                             {
                                 case 0:
-                                    if (!_skewer)
+                                    if (!Skewer)
                                     {
                                         if (Unit* target = SelectTarget(SELECT_TARGET_TOPAGGRO, 0))
                                         {
                                             DoCast(target, SPELL_SKEWER, true);
                                             Talk(SAY_SKEWER);
-                                            Talk(SAY_SKEWER_ANNOUNCE, target);
+                                            Talk(SAY_SKEWER_ANNOUNCE, target->GetGUID());
                                         }
-                                        _skewer = true;
+                                        Skewer = true;
                                         events.ScheduleEvent(EVENT_RANDOM_CAST, urand(7000, 10000));
                                     }
-                                    else if (!_hate)
+                                    else if (!Hate)
                                     {
                                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, NonTankTargetSelector(me)))
                                         {
                                             DoCast(target, SPELL_SEETHING_HATE, true);
                                             Talk(SAY_HATE);
                                         }
-                                        _hate = true;
+                                        Hate = true;
                                         events.ScheduleEvent(EVENT_RANDOM_CAST, urand(7000, 10000));
                                     }
-                                    else if (_hate && _skewer)
+                                    else if (Hate && Skewer)
                                     {
                                         Talk(SAY_BLADE_STORM);
                                         DoCastAOE(SPELL_BLADE_DANCE_DUMMY);
@@ -194,28 +209,28 @@ class boss_alizabal : public CreatureScript
                                     }
                                     break;
                                 case 1:
-                                    if (!_hate)
+                                    if (!Hate)
                                     {
                                         if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0, NonTankTargetSelector(me)))
                                         {
                                             DoCast(target, SPELL_SEETHING_HATE, true);
                                             Talk(SAY_HATE);
                                         }
-                                        _hate = true;
+                                        Hate = true;
                                         events.ScheduleEvent(EVENT_RANDOM_CAST, urand(7000, 10000));
                                     }
-                                    else if (!_skewer)
+                                    else if (!Skewer)
                                     {
                                         if (Unit* target = SelectTarget(SELECT_TARGET_TOPAGGRO, 0))
                                         {
                                             DoCast(target, SPELL_SKEWER, true);
                                             Talk(SAY_SKEWER);
-                                            Talk(SAY_SKEWER_ANNOUNCE, target);
+                                            Talk(SAY_SKEWER_ANNOUNCE, target->GetGUID());
                                         }
-                                        _skewer = true;
+                                        Skewer = true;
                                         events.ScheduleEvent(EVENT_RANDOM_CAST, urand(7000, 10000));
                                     }
-                                    else if (_hate && _skewer)
+                                    else if (Hate && Skewer)
                                     {
                                         Talk(SAY_BLADE_STORM);
                                         DoCastAOE(SPELL_BLADE_DANCE_DUMMY);
@@ -240,8 +255,8 @@ class boss_alizabal : public CreatureScript
                             me->SetSpeed(MOVE_WALK, 1.0f);
                             me->SetSpeed(MOVE_RUN, 1.14f);
                             me->GetMotionMaster()->MoveChase(me->GetVictim());
-                            _hate = false;
-                            _skewer = false;
+                            Hate = false;
+                            Skewer = false;
                             break;
                         case EVENT_CAST_STORM:
                             DoCastAOE(SPELL_BLADE_DANCE);
@@ -251,17 +266,11 @@ class boss_alizabal : public CreatureScript
 
                 DoMeleeAttackIfReady();
             }
-
-        private:
-            bool _intro;
-            bool _hate;
-            bool _skewer;
-
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return GetBaradinHoldAI<boss_alizabalAI>(creature);
+            return new boss_alizabalAI(creature);
         }
 };
 

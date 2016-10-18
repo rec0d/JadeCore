@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -24,7 +24,7 @@ enum LevelLimit
     // Client expected level limitation, like as used in DBC item max levels for "until max player level"
     // use as default max player level, must be fit max level for used client
     // also see MAX_LEVEL and STRONG_MAX_LEVEL define
-    DEFAULT_MAX_LEVEL = 90,
+    DEFAULT_MAX_LEVEL = 85,
 
     // client supported max level for player/pets/etc. Avoid overflow or client stability affected.
     // also see GT_MAX_LEVEL define
@@ -38,11 +38,11 @@ enum LevelLimit
 enum BattlegroundBracketId                                  // bracketId for level ranges
 {
     BG_BRACKET_ID_FIRST          = 0,
-    BG_BRACKET_ID_LAST           = 16
+    BG_BRACKET_ID_LAST           = 15
 };
 
 // must be max value in PvPDificulty slot+1
-#define MAX_BATTLEGROUND_BRACKETS  17
+#define MAX_BATTLEGROUND_BRACKETS  16
 
 enum AreaTeams
 {
@@ -80,7 +80,7 @@ enum AchievementFlags
     ACHIEVEMENT_FLAG_SHOW_CRITERIA_MEMBERS = 0x00010000     //
 };
 
-enum AchievementCriteriaLimits
+enum
 {
     MAX_CRITERIA_REQUIREMENTS          = 2,
     MAX_ADDITIONAL_CRITERIA_CONDITIONS = 3
@@ -104,14 +104,15 @@ enum AchievementCriteriaAdditionalCondition
 {
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_SOURCE_DRUNK_VALUE          = 1, // NYI
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_UNK2                        = 2,
-    ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_ITEM_LEVEL                  = 3, // NYI
+    ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_ITEM_LEVEL                  = 3,
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_TARGET_CREATURE_ENTRY       = 4,
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_TARGET_MUST_BE_PLAYER       = 5,
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_TARGET_MUST_BE_DEAD         = 6,
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_TARGET_MUST_BE_ENEMY        = 7,
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_SOURCE_HAS_AURA             = 8,
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_TARGET_HAS_AURA             = 10,
-    ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_TARGET_HAS_AURA_TYPE        = 11,
+	ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_TARGET_HAS_AURA_TYPE        = 11,
+    ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_TARGET_MUST_BE_MOUNTED      = 12,
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_ITEM_QUALITY_MIN            = 14,
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_ITEM_QUALITY_EQUALS         = 15,
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_UNK16                       = 16,
@@ -127,8 +128,8 @@ enum AchievementCriteriaAdditionalCondition
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_MAX_GROUP_MEMBERS           = 29,
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_TARGET_CREATURE_TYPE        = 30,
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_SOURCE_MAP                  = 32,
-    ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_ITEM_CLASS                  = 33, // NYI
-    ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_ITEM_SUBCLASS               = 34, // NYI
+    ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_ITEM_CLASS                  = 33,
+    ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_ITEM_SUBCLASS               = 34,
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_COMPLETE_QUEST_NOT_IN_GROUP = 35, // NYI
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_MIN_PERSONAL_RATING         = 37, // NYI (when implementing don't forget about ACHIEVEMENT_CRITERIA_CONDITION_NO_LOSE)
     ACHIEVEMENT_CRITERIA_ADDITIONAL_CONDITION_TITLE_BIT_INDEX             = 38,
@@ -165,7 +166,7 @@ enum AchievementCriteriaTimedTypes
     ACHIEVEMENT_TIMED_TYPE_SPELL_TARGET     = 6,    // Timer is started by being target of spell with entry in timerStartEvent
     ACHIEVEMENT_TIMED_TYPE_CREATURE         = 7,    // Timer is started by killing creature with entry in timerStartEvent
     ACHIEVEMENT_TIMED_TYPE_ITEM             = 9,    // Timer is started by using item with entry in timerStartEvent
-    ACHIEVEMENT_TIMED_TYPE_UNK              = 14,   // Unknown
+    ACHIEVEMENT_TIMED_TYPE_UNK              = 10,   // Unknown
 
     ACHIEVEMENT_TIMED_TYPE_MAX
 };
@@ -216,13 +217,13 @@ enum AchievementCriteriaTypes
     ACHIEVEMENT_CRITERIA_TYPE_GAIN_EXALTED_REPUTATION       = 47,
     ACHIEVEMENT_CRITERIA_TYPE_VISIT_BARBER_SHOP             = 48,
     ACHIEVEMENT_CRITERIA_TYPE_EQUIP_EPIC_ITEM               = 49,
-    ACHIEVEMENT_CRITERIA_TYPE_ROLL_NEED_ON_LOOT             = 50, /// @todo itemlevel is mentioned in text but not present in dbc
+    ACHIEVEMENT_CRITERIA_TYPE_ROLL_NEED_ON_LOOT             = 50, // TODO: itemlevel is mentioned in text but not present in dbc
     ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED_ON_LOOT            = 51,
     ACHIEVEMENT_CRITERIA_TYPE_HK_CLASS                      = 52,
     ACHIEVEMENT_CRITERIA_TYPE_HK_RACE                       = 53,
     ACHIEVEMENT_CRITERIA_TYPE_DO_EMOTE                      = 54,
     ACHIEVEMENT_CRITERIA_TYPE_HEALING_DONE                  = 55,
-    ACHIEVEMENT_CRITERIA_TYPE_GET_KILLING_BLOWS             = 56, /// @todo in some cases map not present, and in some cases need do without die
+    ACHIEVEMENT_CRITERIA_TYPE_GET_KILLING_BLOWS             = 56, // TODO: in some cases map not present, and in some cases need do without die
     ACHIEVEMENT_CRITERIA_TYPE_EQUIP_ITEM                    = 57,
     ACHIEVEMENT_CRITERIA_TYPE_MONEY_FROM_VENDORS            = 59,
     ACHIEVEMENT_CRITERIA_TYPE_GOLD_SPENT_FOR_TALENTS        = 60,
@@ -236,8 +237,8 @@ enum AchievementCriteriaTypes
     ACHIEVEMENT_CRITERIA_TYPE_BE_SPELL_TARGET2              = 69,
     ACHIEVEMENT_CRITERIA_TYPE_SPECIAL_PVP_KILL              = 70,
     ACHIEVEMENT_CRITERIA_TYPE_FISH_IN_GAMEOBJECT            = 72,
-    /// @todo 73: Achievements 1515, 1241, 1103 (Name: Mal'Ganis)
-    ACHIEVEMENT_CRITERIA_TYPE_EARNED_PVP_TITLE              = 74, /// @todo title id is not mentioned in dbc
+    // TODO 73: Achievements 1515, 1241, 1103 (Name: Mal'Ganis)
+    ACHIEVEMENT_CRITERIA_TYPE_EARNED_PVP_TITLE              = 74, // TODO: title id is not mentioned in dbc
     ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILLLINE_SPELLS        = 75,
     ACHIEVEMENT_CRITERIA_TYPE_WIN_DUEL                      = 76,
     ACHIEVEMENT_CRITERIA_TYPE_LOSE_DUEL                     = 77,
@@ -255,6 +256,12 @@ enum AchievementCriteriaTypes
     ACHIEVEMENT_CRITERIA_TYPE_RECEIVE_EPIC_ITEM             = 91,
     ACHIEVEMENT_CRITERIA_TYPE_ROLL_NEED                     = 93,
     ACHIEVEMENT_CRITERIA_TYPE_ROLL_GREED                    = 94,
+    ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_HEALTH 		    = 95,
+    ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_POWER 		    = 96,
+    ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_STAT 		    = 97,
+    ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_SPELLPOWER 	    = 98,
+    ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_ARMOR 		    = 99,
+    ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_RATING 		    = 100,
     ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_HIT_DEALT             = 101,
     ACHIEVEMENT_CRITERIA_TYPE_HIGHEST_HIT_RECEIVED          = 102,
     ACHIEVEMENT_CRITERIA_TYPE_TOTAL_DAMAGE_RECEIVED         = 103,
@@ -264,7 +271,7 @@ enum AchievementCriteriaTypes
     ACHIEVEMENT_CRITERIA_TYPE_QUEST_ABANDONED               = 107,
     ACHIEVEMENT_CRITERIA_TYPE_FLIGHT_PATHS_TAKEN            = 108,
     ACHIEVEMENT_CRITERIA_TYPE_LOOT_TYPE                     = 109,
-    ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL2                   = 110, /// @todo target entry is missing
+    ACHIEVEMENT_CRITERIA_TYPE_CAST_SPELL2                   = 110, // TODO: target entry is missing
     ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LINE              = 112,
     ACHIEVEMENT_CRITERIA_TYPE_EARN_HONORABLE_KILL           = 113,
     ACHIEVEMENT_CRITERIA_TYPE_ACCEPTED_SUMMONINGS           = 114,
@@ -286,7 +293,7 @@ enum AchievementCriteriaTypes
     ACHIEVEMENT_CRITERIA_TYPE_COMPLETE_GUILD_CHALLENGE      = 139  //struct { uint32 count; } Guild Challenge
 };
 
-#define ACHIEVEMENT_CRITERIA_TYPE_TOTAL 163
+#define ACHIEVEMENT_CRITERIA_TYPE_TOTAL 140
 
 enum AreaFlags
 {
@@ -324,56 +331,41 @@ enum AreaFlags
 
 enum Difficulty
 {
-    REGULAR_DIFFICULTY                  = 0,    // entry
+    REGULAR_DIFFICULTY           = 0,
 
-    DUNGEON_DIFFICULTY_NORMAL           = 1,    // difficulty_entry_1 
-    DUNGEON_DIFFICULTY_HEROIC           = 2,    // difficulty_entry_2
+    DUNGEON_DIFFICULTY_NORMAL    = 0,
+    DUNGEON_DIFFICULTY_HEROIC    = 1,
+    DUNGEON_DIFFICULTY_EPIC      = 2,
 
-    RAID_DIFFICULTY_10MAN_NORMAL        = 3,    // difficulty_entry_3
-    RAID_DIFFICULTY_25MAN_NORMAL        = 4,    // difficulty_entry_4
-    RAID_DIFFICULTY_10MAN_HEROIC        = 5,    // difficulty_entry_5
-    RAID_DIFFICULTY_25MAN_HEROIC        = 6,    // difficulty_entry_6
-    RAID_DIFFICULTY_25MAN_LFR           = 7,    // difficulty_entry_7
-
-    DUNGEON_DIFFICULTY_CHALLENGE        = 8,    // difficulty_entry_8
-
-    RAID_DIFFICULTY_40MAN_DIFFICULTY    = 9,    // difficulty_entry_9
-                                                // difficulty_entry_10
-    SCENARIO_DIFFICULTY_HEROIC          = 11,   // difficulty_entry_11
-    SCENARIO_DIFFICULTY                 = 12,   // difficulty_entry_12
-                                                // difficulty_entry_13
-    RAID_DIFFICULTY_FLEXIBLE            = 14,   // difficulty_entry_14
-    DUNGEON_DIFFICULTY_MAX              = 15
+    RAID_DIFFICULTY_10MAN_NORMAL = 0,
+    RAID_DIFFICULTY_25MAN_NORMAL = 1,
+    RAID_DIFFICULTY_10MAN_HEROIC = 2,
+    RAID_DIFFICULTY_25MAN_HEROIC = 3
 };
 
-#define MAX_DUNGEON_DIFFICULTY     DUNGEON_DIFFICULTY_CHALLENGE + 1
-#define MAX_RAID_DIFFICULTY        RAID_DIFFICULTY_40MAN_DIFFICULTY + 1
-#define MAX_DIFFICULTY             RAID_DIFFICULTY_FLEXIBLE + 1
+#define RAID_DIFFICULTY_MASK_25MAN 1    // since 25man difficulties are 1 and 3, we can check them like that
+
+#define MAX_DUNGEON_DIFFICULTY     3
+#define MAX_RAID_DIFFICULTY        4
+#define MAX_DIFFICULTY             4
 
 enum SpawnMask
 {
-    SPAWNMASK_CONTINENT             = (1 << REGULAR_DIFFICULTY), // any maps without spawn modes
+    SPAWNMASK_CONTINENT         = (1 << REGULAR_DIFFICULTY), // any maps without spawn modes
 
-    SPAWNMASK_DUNGEON_NORMAL        = (1 << DUNGEON_DIFFICULTY_NORMAL),
-    SPAWNMASK_DUNGEON_HEROIC        = (1 << DUNGEON_DIFFICULTY_HEROIC),
-    SPAWNMASK_DUNGEON_CHALLENGE     = (1 << DUNGEON_DIFFICULTY_CHALLENGE),
-    SPAWNMASK_DUNGEON_ALL           = (SPAWNMASK_DUNGEON_NORMAL | SPAWNMASK_DUNGEON_HEROIC | SPAWNMASK_DUNGEON_CHALLENGE),
+    SPAWNMASK_DUNGEON_NORMAL    = (1 << DUNGEON_DIFFICULTY_NORMAL),
+    SPAWNMASK_DUNGEON_HEROIC    = (1 << DUNGEON_DIFFICULTY_HEROIC),
+    SPAWNMASK_DUNGEON_ALL       = (SPAWNMASK_DUNGEON_NORMAL | SPAWNMASK_DUNGEON_HEROIC),
 
-    SPAWNMASK_RAID_10MAN_NORMAL     = (1 << RAID_DIFFICULTY_10MAN_NORMAL),
-    SPAWNMASK_RAID_25MAN_NORMAL     = (1 << RAID_DIFFICULTY_25MAN_NORMAL),
-    SPAWNMASK_RAID_10MAN_FLEX       = (1 << RAID_DIFFICULTY_FLEXIBLE),
-    SPAWNMASK_RAID_25MAN_LFR        = (1 << RAID_DIFFICULTY_25MAN_LFR),
-    SPAWNMASK_RAID_NORMAL_ALL       = (SPAWNMASK_RAID_10MAN_NORMAL | SPAWNMASK_RAID_25MAN_NORMAL | SPAWNMASK_RAID_10MAN_FLEX | SPAWNMASK_RAID_25MAN_LFR),
+    SPAWNMASK_RAID_10MAN_NORMAL = (1 << RAID_DIFFICULTY_10MAN_NORMAL),
+    SPAWNMASK_RAID_25MAN_NORMAL = (1 << RAID_DIFFICULTY_25MAN_NORMAL),
+    SPAWNMASK_RAID_NORMAL_ALL   = (SPAWNMASK_RAID_10MAN_NORMAL | SPAWNMASK_RAID_25MAN_NORMAL),
 
-    SPAWNMASK_RAID_10MAN_HEROIC     = (1 << RAID_DIFFICULTY_10MAN_HEROIC),
-    SPAWNMASK_RAID_25MAN_HEROIC     = (1 << RAID_DIFFICULTY_25MAN_HEROIC),
-    SPAWNMASK_RAID_HEROIC_ALL       = (SPAWNMASK_RAID_10MAN_HEROIC | SPAWNMASK_RAID_25MAN_HEROIC),
+    SPAWNMASK_RAID_10MAN_HEROIC = (1 << RAID_DIFFICULTY_10MAN_HEROIC),
+    SPAWNMASK_RAID_25MAN_HEROIC = (1 << RAID_DIFFICULTY_25MAN_HEROIC),
+    SPAWNMASK_RAID_HEROIC_ALL   = (SPAWNMASK_RAID_10MAN_HEROIC | SPAWNMASK_RAID_25MAN_HEROIC),
 
-    SPAWNMASK_RAID_ALL              = (SPAWNMASK_RAID_NORMAL_ALL | SPAWNMASK_RAID_HEROIC_ALL),
-
-    SPAWNMASK_SCENARIO_NORMAL       = (1 << REGULAR_DIFFICULTY),
-    SPAWNMASK_SCENARIO_HEROIC       = (1 << SCENARIO_DIFFICULTY_HEROIC),
-    SPAWNMASK_SCENARIO_ALL          = (REGULAR_DIFFICULTY | SCENARIO_DIFFICULTY_HEROIC)
+    SPAWNMASK_RAID_ALL          = (SPAWNMASK_RAID_NORMAL_ALL | SPAWNMASK_RAID_HEROIC_ALL)
 };
 
 enum FactionTemplateFlags
@@ -398,8 +390,7 @@ enum MapTypes                                               // Lua_IsInInstance
     MAP_INSTANCE        = 1,                                // party
     MAP_RAID            = 2,                                // raid
     MAP_BATTLEGROUND    = 3,                                // pvp
-    MAP_ARENA           = 4,                                // arena
-    MAP_SCENARIO        = 5                                 // scenario
+    MAP_ARENA           = 4                                 // arena
 };
 
 enum AbilytyLearnType
@@ -429,7 +420,7 @@ enum ItemExtendedCostFlags
     ITEM_EXT_COST_CURRENCY_REQ_IS_SEASON_EARNED_3   = 0x08,
     ITEM_EXT_COST_CURRENCY_REQ_IS_SEASON_EARNED_4   = 0x10,
     ITEM_EXT_COST_CURRENCY_REQ_IS_SEASON_EARNED_5   = 0x20,
-};
+}; 
 
 enum ItemLimitCategoryMode
 {
@@ -441,23 +432,6 @@ enum MountFlags
 {
     MOUNT_FLAG_CAN_PITCH                = 0x4,                    // client checks MOVEMENTFLAG2_FULL_SPEED_PITCHING
     MOUNT_FLAG_CAN_SWIM                 = 0x8,                    // client checks MOVEMENTFLAG_SWIMMING
-};
-
-enum SkillRaceClassInfoFlags
-{
-    SKILL_FLAG_NO_SKILLUP_MESSAGE       = 0x2,
-    SKILL_FLAG_ALWAYS_MAX_VALUE         = 0x10,
-    SKILL_FLAG_UNLEARNABLE              = 0x20,     // Skill can be unlearned
-    SKILL_FLAG_INCLUDE_IN_SORT          = 0x80,     // Spells belonging to a skill with this flag will additionally compare skill ids when sorting spellbook in client
-    SKILL_FLAG_NOT_TRAINABLE            = 0x100,
-    SKILL_FLAG_MONO_VALUE               = 0x400     // Skill always has value 1 - clientside display flag, real value can be different
-};
-
-enum SpellCategoryFlags
-{
-    SPELL_CATEGORY_FLAG_COOLDOWN_SCALES_WITH_WEAPON_SPEED   = 0x01, // unused
-    SPELL_CATEGORY_FLAG_COOLDOWN_STARTS_ON_EVENT            = 0x04,
-    SPELL_CATEGORY_FLAG_COOLDOWN_EXPIRES_AT_MIDNIGHT        = 0x08
 };
 
 enum TotemCategoryType
@@ -549,7 +523,7 @@ enum VehicleSeatFlags
     VEHICLE_SEAT_FLAG_UNK18                                            = 0x00020000, // Needs research and support (28 vehicles): Allow entering vehicles while keeping specific permanent(?) auras that impose visuals (states like beeing under freeze/stun mechanic, emote state animations).
     VEHICLE_SEAT_FLAG_HAS_VEH_EXIT_ANIM_VOLUNTARY_EXIT                 = 0x00040000,
     VEHICLE_SEAT_FLAG_HAS_VEH_EXIT_ANIM_FORCED_EXIT                    = 0x00080000,
-    VEHICLE_SEAT_FLAG_PASSENGER_NOT_SELECTABLE                         = 0x00100000,
+    VEHICLE_SEAT_FLAG_UNK21                                            = 0x00100000,
     VEHICLE_SEAT_FLAG_UNK22                                            = 0x00200000,
     VEHICLE_SEAT_FLAG_REC_HAS_VEHICLE_ENTER_ANIM                       = 0x00400000,
     VEHICLE_SEAT_FLAG_IS_USING_VEHICLE_CONTROLS                        = 0x00800000, // Lua_IsUsingVehicleControls
@@ -579,40 +553,21 @@ enum VehicleSeatFlagsB
 // CurrencyTypes.dbc
 enum CurrencyTypes
 {
-    CURRENCY_TYPE_DALARAN_JEWELCRAFTERS_TOKEN     = 61,
-    CURRENCY_TYPE_EPICUREAN_AWARD                 = 81,
-    CURRENCY_TYPE_CHAMPIONS_SEAL                  = 241,
-    CURRENCY_TYPE_ILLUSTRIOUS_JEWELCRAFTERS_TOKEN = 361,
-    CURRENCY_TYPE_DWARF_ARCHAEOLOGY_FRAGMENT      = 384,
-    CURRENCY_TYPE_TROLL_ARCHAEOLOGY_FRAGMENT      = 385,
-    CURRENCY_TYPE_CONQUEST_POINTS                 = 390,
-    CURRENCY_TYPE_TOL_BARAD_COMMENDATION          = 391,
-    CURRENCY_TYPE_HONOR_POINTS                    = 392,
-    CURRENCY_TYPE_FOSSIL_ARCHAEOLOGY_FRAGMENT     = 393,
-    CURRENCY_TYPE_NIGHTELF_ARCHAEOLOGY_FRAGMENT   = 394,
-    CURRENCY_TYPE_JUSTICE_POINTS                  = 395,
-    CURRENCY_TYPE_VALOR_POINTS                    = 396,
-    CURRENCY_TYPE_ORC_ARCHAEOLOGY_FRAGMENT        = 397,
-    CURRENCY_TYPE_DRAENEI_ARCHAEOLOGY_FRAGMENT    = 398,
-    CURRENCY_TYPE_VRYKUL_ARCHAEOLOGY_FRAGMENT     = 399,
-    CURRENCY_TYPE_NERUBIAN_ARCHAEOLOGY_FRAGMENT   = 400,
-    CURRENCY_TYPE_TOLVIR_ARCHAEOLOGY_FRAGMENT     = 401,
-    CURRENCY_TYPE_IRONPAW_TOKEN                   = 402,
-    CURRENCY_TYPE_MARK_OF_THE_WORLD_TREE          = 416,
-    CURRENCY_TYPE_CONQUEST_META_ARENA             = 483,
-    CURRENCY_TYPE_CONQUEST_META_RBG               = 484,
-    CURRENCY_TYPE_DARKMOON_PRIZE_TICKET           = 515,
-    CURRENCY_TYPE_MOTE_OF_DARKNESS                = 614,
-    CURRENCY_TYPE_ESSENCE_OF_CORRUPTED_DEATHWING  = 615,
-    CURRENCY_TYPE_PANDAREN_ARCHAEOLOGY_FRAGMENT   = 676,
-    CURRENCY_TYPE_MOGU_ARCHAEOLOGY_FRAGMENT       = 677,
-    CURRENCY_TYPE_ELDER_CHARM_OF_GOOD_FORTUNE     = 697,
-    CURRENCY_TYPE_LESSER_CHARM_OF_GOOD_FORTUNE    = 738,
-    CURRENCY_TYPE_MOGU_RUNE_OF_FATE               = 752,
-    CURRENCY_TYPE_MANTID_ARCHAEOLOGY_FRAGMENT     = 754,
-    CURRENCY_TYPE_WARFORGED_SEAL                  = 776,
-    CURRENCY_TYPE_TIMELESS_COIN                   = 777,
-    CURRENCY_TYPE_BLOODY_COIN                     = 789,
+    CURRENCY_TYPE_ARCHEAOLOGY_DWARF     = 384,
+    CURRENCY_TYPE_ARCHEAOLOGY_TROLL     = 385,
+    CURRENCY_TYPE_CONQUEST_POINTS       = 390,
+    CURRENCY_TYPE_HONOR_POINTS          = 392,
+    CURRENCY_TYPE_ARCHEAOLOGY_FOSSIL    = 393,
+    CURRENCY_TYPE_ARCHEAOLOGY_NIGHT_ELF = 394,
+    CURRENCY_TYPE_JUSTICE_POINTS        = 395,
+    CURRENCY_TYPE_VALOR_POINTS          = 396,
+    CURRENCY_TYPE_ARCHEAOLOGY_ORC       = 397,
+    CURRENCY_TYPE_ARCHEAOLOGY_DRAENEI   = 398,
+    CURRENCY_TYPE_ARCHEAOLOGY_VRYKUL    = 399,
+    CURRENCY_TYPE_ARCHEAOLOGY_NERUBIAN  = 400,
+    CURRENCY_TYPE_ARCHEAOLOGY_TOLVIR    = 401,
+    CURRENCY_TYPE_CONQUEST_META_ARENA   = 483,
+    CURRENCY_TYPE_CONQUEST_META_RBG      = 484,
 };
 
 #endif

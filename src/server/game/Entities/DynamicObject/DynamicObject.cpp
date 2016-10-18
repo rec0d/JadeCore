@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -26,7 +26,6 @@
 #include "CellImpl.h"
 #include "GridNotifiersImpl.h"
 #include "ScriptMgr.h"
-#include "Group.h"
 
 DynamicObject::DynamicObject(bool isWorldObject) : WorldObject(isWorldObject),
     _aura(NULL), _removedAura(NULL), _caster(NULL), _duration(0), _isViewpoint(false)
@@ -55,7 +54,6 @@ void DynamicObject::AddToWorld()
     {
         sObjectAccessor->AddObject(this);
         WorldObject::AddToWorld();
-
         BindToCaster();
     }
 }
@@ -76,45 +74,33 @@ void DynamicObject::RemoveFromWorld()
             return;
 
         UnbindFromCaster();
-
         WorldObject::RemoveFromWorld();
         sObjectAccessor->RemoveObject(this);
     }
 }
 
-bool DynamicObject::CreateDynamicObject(uint32 guidlow, Unit* caster, uint32 spellId, Position const& pos, float radius, DynamicObjectType type)
+bool DynamicObject::CreateDynamicObject(uint32 guidlow, Unit* caster, SpellInfo const* spell, Position const& pos, float radius, DynamicObjectType type)
 {
     SetMap(caster->GetMap());
     Relocate(pos);
     if (!IsPositionValid())
     {
-        TC_LOG_ERROR("misc", "DynamicObject (spell %u) not created. Suggested coordinates isn't valid (X: %f Y: %f)", spellId, GetPositionX(), GetPositionY());
+        sLog->outError(LOG_FILTER_GENERAL, "DynamicObject (spell %u) not created. Suggested coordinates isn't valid (X: %f Y: %f)", spell->Id, GetPositionX(), GetPositionY());
         return false;
     }
 
     WorldObject::_Create(guidlow, HIGHGUID_DYNAMICOBJECT, caster->GetPhaseMask());
-	
-	SetEntry(spellId);
-    SetObjectScale(1.0f);
-	SetUInt64Value(DYNAMICOBJECT_FIELD_CASTER, caster->GetGUID());
 
-    // The lower word of DYNAMICOBJECT_FIELD_TYPE_AND_VISUAL_ID must be 0x0001. This value means that the visual radius will be overriden
-    // by client for most of the "ground patch" visual effect spells and a few "skyfall" ones like Hurricane.
-    // If any other value is used, the client will _always_ use the radius provided in DYNAMICOBJECT_RADIUS, but
-    // precompensation is necessary (eg radius *= 2) for many spells. Anyway, blizz sends 0x0001 for all the spells
-    // I saw sniffed...
+    SetEntry(spell->Id);
+    SetObjectScale(1);
+    SetUInt64Value(DYNAMICOBJECT_CASTER, caster->GetGUID());
+    SetUInt32Value(DYNAMICOBJECT_BYTES, spell->SpellVisual[0] | (type << 28));
+    SetUInt32Value(DYNAMICOBJECT_SPELLID, spell->Id);
 
-    // Blizz set visual spell Id in 3 first byte of DYNAMICOBJECT_FIELD_TYPE_AND_VISUAL_ID after 5.X
-    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
-    if (spellInfo)
-    {
-        uint32 visual = spellInfo->SpellVisual[0] ? spellInfo->SpellVisual[0] : spellInfo->SpellVisual[1];
-        SetUInt32Value(DYNAMICOBJECT_FIELD_TYPE_AND_VISUAL_ID, 0x10000000 | visual);
-    }
+    if(m_type != DYNAMIC_OBJECT_RAID_MARKER)
+        SetFloatValue(DYNAMICOBJECT_RADIUS, radius);
 
-	SetUInt32Value(DYNAMICOBJECT_FIELD_SPELL_ID, spellId);
-	SetFloatValue(DYNAMICOBJECT_FIELD_RADIUS, radius);
-	SetUInt32Value(DYNAMICOBJECT_FIELD_CAST_TIME, getMSTime());
+    SetUInt32Value(DYNAMICOBJECT_CASTTIME, getMSTime());
 
     if (IsWorldObject())
         setActive(true);    //must before add to map to be put in world container
@@ -229,13 +215,26 @@ void DynamicObject::BindToCaster()
     _caster->_RegisterDynObject(this);
 }
 
-
 void DynamicObject::UnbindFromCaster()
 {
-    // Caster must exist
     ASSERT(_caster);
-
-    // Clean up
     _caster->_UnregisterDynObject(this);
     _caster = NULL;
+}
+
+bool DynamicObject::IsInvisibleGMDueToDespawn(WorldObject const* target) const
+{
+    if(m_type == 3)
+    {
+        if(GetCaster())
+        {
+            Player const* plr_caster = GetCaster()->ToPlayer();
+            Player const* plr_target = (target)->ToPlayer();
+
+            if(plr_caster && plr_target)
+                if(!plr_caster->IsInSameGroupWith(plr_target))
+                    return true;
+        }        
+    }   
+    return false;
 }

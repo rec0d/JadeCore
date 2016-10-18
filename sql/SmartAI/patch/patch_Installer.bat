@@ -25,8 +25,8 @@ echo .
 echo    ````````````$````````$
 echo    ````````````$````````$  *SmartAI Lab scripts*
 echo    $$$```$$$``$$$``$$$``$
-echo    $``$`````$``$``$```$`$$$$$    Mists of Pandaria 5.4.x Version
-echo    $$$```$$$$``$``$`````$```$          for JadeCoreDB original
+echo    $``$`````$``$``$```$`$$$$$    Cataclysm 4.3.4a Version
+echo    $$$```$$$$``$``$`````$```$          for CataCoreDB original
 echo    $````$```$``$``$```$`$```$         
 echo    $`````$$$$``$$``$$$``$```$ 
 echo.

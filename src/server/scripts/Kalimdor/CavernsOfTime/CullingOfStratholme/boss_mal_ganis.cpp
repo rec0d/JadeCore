@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,7 +19,7 @@
 SDName: Boss mal_ganis
 SDAuthor: Tartalo
 SD%Complete: 80
-SDComment: @todo Intro & outro
+SDComment: TODO: Intro & outro
 SDCategory:
 Script Data End */
 
@@ -66,9 +64,9 @@ class boss_mal_ganis : public CreatureScript
 public:
     boss_mal_ganis() : CreatureScript("boss_mal_ganis") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_mal_ganisAI(creature);
+        return new boss_mal_ganisAI (creature);
     }
 
     struct boss_mal_ganisAI : public ScriptedAI
@@ -93,7 +91,7 @@ public:
 
         InstanceScript* instance;
 
-        void Reset() override
+        void Reset()
         {
              bYelled = false;
              bYelled2 = false;
@@ -108,20 +106,20 @@ public:
                  instance->SetData(DATA_MAL_GANIS_EVENT, NOT_STARTED);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(SAY_AGGRO);
             if (instance)
                 instance->SetData(DATA_MAL_GANIS_EVENT, IN_PROGRESS);
         }
 
-        void DamageTaken(Unit* done_by, uint32 &damage) override
+        void DamageTaken(Unit* done_by, uint32 &damage)
         {
             if (damage >= me->GetHealth() && done_by != me)
                 damage = me->GetHealth()-1;
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             switch (Phase)
             {
@@ -228,7 +226,7 @@ public:
             }
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             if (instance)
             {
@@ -239,9 +237,9 @@ public:
             }
         }
 
-        void KilledUnit(Unit* victim) override
+        void KilledUnit(Unit* victim)
         {
-            if (victim->GetTypeId() != TYPEID_PLAYER)
+            if (victim == me)
                 return;
 
             Talk(SAY_SLAY);

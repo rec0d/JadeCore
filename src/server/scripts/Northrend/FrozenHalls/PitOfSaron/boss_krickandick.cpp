@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -45,7 +42,7 @@ enum Spells
     SPELL_STRANGULATING                         = 69413, //krick's selfcast in intro
     SPELL_SUICIDE                               = 7,
     SPELL_KRICK_KILL_CREDIT                     = 71308,
-    SPELL_NECROMANTIC_POWER                     = 69753
+    SPELL_NECROMANTIC_POWER                     = 69753,
 };
 
 enum Yells
@@ -74,7 +71,7 @@ enum Yells
     SAY_SYLVANAS_OUTRO_4                        = 1,
     SAY_SYLVANAS_OUTRO_10                       = 2,
     SAY_TYRANNUS_OUTRO_7                        = 1,
-    SAY_TYRANNUS_OUTRO_9                        = 2
+    SAY_TYRANNUS_OUTRO_9                        = 2,
 };
 
 enum Events
@@ -101,24 +98,24 @@ enum Events
     EVENT_OUTRO_11              = 18,
     EVENT_OUTRO_12              = 19,
     EVENT_OUTRO_13              = 20,
-    EVENT_OUTRO_END             = 21
+    EVENT_OUTRO_END             = 21,
 };
 
 enum KrickPhase
 {
     PHASE_COMBAT    = 1,
-    PHASE_OUTRO     = 2
+    PHASE_OUTRO     = 2,
 };
 
 enum Actions
 {
-    ACTION_OUTRO    = 1
+    ACTION_OUTRO    = 1,
 };
 
 enum Points
 {
     POINT_KRICK_INTRO       = 364770,
-    POINT_KRICK_DEATH       = 364771
+    POINT_KRICK_DEATH       = 364771,
 };
 
 static const Position outroPos[8] =
@@ -130,7 +127,7 @@ static const Position outroPos[8] =
     {835.5887f, 139.4345f, 530.9526f, 0.0000000f},  // Tyrannus fly down Position (not sniffed)
     {828.9342f, 118.6247f, 514.5190f, 0.0000000f},  // Krick's Choke Position
     {828.9342f, 118.6247f, 509.4958f, 0.0000000f},  // Kirck's Death Position
-    {914.4820f, 143.1602f, 633.3624f, 0.0000000f}   // Tyrannus fly up (not sniffed)
+    {914.4820f, 143.1602f, 633.3624f, 0.0000000f},  // Tyrannus fly up (not sniffed)
 };
 
 class boss_ick : public CreatureScript
@@ -145,7 +142,15 @@ class boss_ick : public CreatureScript
                 ASSERT(_vehicle);
             }
 
-            void Reset() override
+            void InitializeAI()
+            {
+                if (!instance || static_cast<InstanceMap*>(me->GetMap())->GetScriptId() != sObjectMgr->GetScriptId(PoSScriptName))
+                    me->IsAIEnabled = false;
+                else if (!me->isDead())
+                    Reset();
+            }
+
+            void Reset()
             {
                 events.Reset();
                 instance->SetBossState(DATA_ICK, NOT_STARTED);
@@ -156,10 +161,8 @@ class boss_ick : public CreatureScript
                 return ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_KRICK));
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
-                _EnterCombat();
-
                 if (Creature* krick = GetKrick())
                     krick->AI()->Talk(SAY_KRICK_AGGRO);
 
@@ -167,15 +170,17 @@ class boss_ick : public CreatureScript
                 events.ScheduleEvent(EVENT_TOXIC_WASTE, 5000);
                 events.ScheduleEvent(EVENT_SHADOW_BOLT, 10000);
                 events.ScheduleEvent(EVENT_SPECIAL, urand(30000, 35000));
+
+                instance->SetBossState(DATA_ICK, IN_PROGRESS);
             }
 
-            void EnterEvadeMode() override
+            void EnterEvadeMode()
             {
                 me->GetMotionMaster()->Clear();
                 ScriptedAI::EnterEvadeMode();
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 if (Creature* krick = GetKrick())
                 {
@@ -198,9 +203,9 @@ class boss_ick : public CreatureScript
                 me->AddThreat(target, _tempThreat);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
-                if (!me->IsInCombat())
+                if (!me->isInCombat())
                     return;
 
                 if (!me->GetVictim() && me->getThreatManager().isThreatListEmpty())
@@ -274,9 +279,9 @@ class boss_ick : public CreatureScript
             float _tempThreat;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return GetPitOfSaronAI<boss_ickAI>(creature);
+            return new boss_ickAI(creature);
         }
 };
 
@@ -291,7 +296,15 @@ class boss_krick : public CreatureScript
             {
             }
 
-            void Reset() override
+            void InitializeAI()
+            {
+                if (!_instanceScript || static_cast<InstanceMap*>(me->GetMap())->GetScriptId() != sObjectMgr->GetScriptId(PoSScriptName))
+                    me->IsAIEnabled = false;
+                else if (!me->isDead())
+                    Reset();
+            }
+
+            void Reset()
             {
                 _events.Reset();
                 _phase = PHASE_COMBAT;
@@ -307,7 +320,7 @@ class boss_krick : public CreatureScript
                 return ObjectAccessor::GetCreature(*me, _instanceScript->GetData64(DATA_ICK));
             }
 
-            void KilledUnit(Unit* victim) override
+            void KilledUnit(Unit* victim)
             {
                 if (victim->GetTypeId() != TYPEID_PLAYER)
                     return;
@@ -315,7 +328,7 @@ class boss_krick : public CreatureScript
                 Talk(SAY_KRICK_SLAY);
             }
 
-            void JustSummoned(Creature* summon) override
+            void JustSummoned(Creature* summon)
             {
                 _summons.Summon(summon);
                 if (summon->GetEntry() == NPC_EXPLODING_ORB)
@@ -325,7 +338,7 @@ class boss_krick : public CreatureScript
                 }
             }
 
-            void DoAction(int32 actionId) override
+            void DoAction(const int32 actionId)
             {
                 if (actionId == ACTION_OUTRO)
                 {
@@ -341,7 +354,7 @@ class boss_krick : public CreatureScript
                 }
             }
 
-            void MovementInform(uint32 type, uint32 id) override
+            void MovementInform(uint32 type, uint32 id)
             {
                 if (type != POINT_MOTION_TYPE || id != POINT_KRICK_INTRO)
                     return;
@@ -352,7 +365,7 @@ class boss_krick : public CreatureScript
                 _events.ScheduleEvent(EVENT_OUTRO_1, 1000);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (_phase != PHASE_OUTRO)
                     return;
@@ -435,7 +448,7 @@ class boss_krick : public CreatureScript
                             break;
                         case EVENT_OUTRO_9:
                             Talk(SAY_KRICK_OUTRO_8);
-                            /// @todo Tyrannus starts killing Krick.
+                            // TODO: Tyrannus starts killing Krick.
                             // there shall be some visual spell effect
                             if (Creature* tyrannus = ObjectAccessor::GetCreature(*me, _tyrannusGUID))
                                 tyrannus->CastSpell(me, SPELL_NECROMANTIC_POWER, true);  //not sure if it's the right spell :/
@@ -494,9 +507,9 @@ class boss_krick : public CreatureScript
             uint64 _tyrannusGUID;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return GetPitOfSaronAI<boss_krickAI>(creature);
+            return new boss_krickAI(creature);
         }
 };
 
@@ -517,19 +530,19 @@ class spell_krick_explosive_barrage : public SpellScriptLoader
                     {
                         Map::PlayerList const &players = caster->GetMap()->GetPlayers();
                         for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-                            if (Player* player = itr->GetSource())
+                            if (Player* player = itr->getSource())
                                 if (player->IsWithinDist(caster, 60.0f))    // don't know correct range
                                     caster->CastSpell(player, SPELL_EXPLOSIVE_BARRAGE_SUMMON, true);
                     }
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectPeriodic += AuraEffectPeriodicFn(spell_krick_explosive_barrage_AuraScript::HandlePeriodicTick, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
             }
         };
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const
         {
             return new spell_krick_explosive_barrage_AuraScript();
         }
@@ -561,14 +574,14 @@ class spell_ick_explosive_barrage : public SpellScriptLoader
                     }
             }
 
-            void Register() override
+            void Register()
             {
                 AfterEffectApply += AuraEffectApplyFn(spell_ick_explosive_barrage_AuraScript::HandleEffectApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
                 AfterEffectRemove += AuraEffectRemoveFn(spell_ick_explosive_barrage_AuraScript::HandleEffectRemove, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
             }
         };
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const
         {
             return new spell_ick_explosive_barrage_AuraScript();
         }
@@ -597,13 +610,13 @@ class spell_exploding_orb_hasty_grow : public SpellScriptLoader
                 }
             }
 
-            void Register() override
+            void Register()
             {
                 AfterEffectApply += AuraEffectApplyFn(spell_exploding_orb_hasty_grow_AuraScript::OnStackChange, EFFECT_0, SPELL_AURA_MOD_SCALE, AURA_EFFECT_HANDLE_REAPPLY);
             }
         };
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const
         {
             return new spell_exploding_orb_hasty_grow_AuraScript();
         }
@@ -625,7 +638,7 @@ class spell_krick_pursuit : public SpellScriptLoader
                     {
                         if (Unit* target = ick->AI()->SelectTarget(SELECT_TARGET_RANDOM, 0, 200.0f, true))
                         {
-                            ick->AI()->Talk(SAY_ICK_CHASE_1, target);
+                            ick->AI()->Talk(SAY_ICK_CHASE_1, target->GetGUID());
                             ick->AddAura(GetSpellInfo()->Id, target);
                             CAST_AI(boss_ick::boss_ickAI, ick->AI())->SetTempThreat(ick->getThreatManager().getThreat(target));
                             ick->AddThreat(target, float(GetEffectValue()));
@@ -634,7 +647,7 @@ class spell_krick_pursuit : public SpellScriptLoader
                     }
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectHitTarget += SpellEffectFn(spell_krick_pursuit_SpellScript::HandleScriptEffect, EFFECT_1, SPELL_EFFECT_SCRIPT_EFFECT);
             }
@@ -651,18 +664,18 @@ class spell_krick_pursuit : public SpellScriptLoader
                         CAST_AI(boss_ick::boss_ickAI, creCaster->AI())->_ResetThreat(GetTarget());
             }
 
-            void Register() override
+            void Register()
             {
                 AfterEffectRemove += AuraEffectRemoveFn(spell_krick_pursuit_AuraScript::HandleExtraEffect, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_krick_pursuit_SpellScript();
         }
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const
         {
             return new spell_krick_pursuit_AuraScript();
         }
@@ -689,14 +702,14 @@ class spell_krick_pursuit_confusion : public SpellScriptLoader
                 GetTarget()->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_ATTACK_ME, false);
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectApply += AuraEffectApplyFn(spell_krick_pursuit_confusion_AuraScript::OnApply, EFFECT_2, SPELL_AURA_LINKED, AURA_EFFECT_HANDLE_REAL);
                 OnEffectRemove += AuraEffectRemoveFn(spell_krick_pursuit_confusion_AuraScript::OnRemove, EFFECT_2, SPELL_AURA_LINKED, AURA_EFFECT_HANDLE_REAL);
             }
         };
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const
         {
             return new spell_krick_pursuit_confusion_AuraScript();
         }

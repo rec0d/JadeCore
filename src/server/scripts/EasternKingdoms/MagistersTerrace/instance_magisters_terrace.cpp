@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -61,9 +60,14 @@ class instance_magisters_terrace : public InstanceMapScript
 public:
     instance_magisters_terrace() : InstanceMapScript("instance_magisters_terrace", 585) { }
 
+    InstanceScript* GetInstanceScript(InstanceMap* map) const
+    {
+        return new instance_magisters_terrace_InstanceMapScript(map);
+    }
+
     struct instance_magisters_terrace_InstanceMapScript : public InstanceScript
     {
-        instance_magisters_terrace_InstanceMapScript(Map* map) : InstanceScript(map) { }
+        instance_magisters_terrace_InstanceMapScript(Map* map) : InstanceScript(map) {}
 
         uint32 Encounter[MAX_ENCOUNTER];
         uint32 DelrissaDeathCount;
@@ -82,7 +86,7 @@ public:
         uint32 StatuesState;
         uint8 felCristalIndex;
 
-        void Initialize() override
+        void Initialize()
         {
             memset(&Encounter, 0, sizeof(Encounter));
 
@@ -104,7 +108,7 @@ public:
             felCristalIndex = 0;
         }
 
-        bool IsEncounterInProgress() const override
+        bool IsEncounterInProgress() const
         {
             for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
                 if (Encounter[i] == IN_PROGRESS)
@@ -184,7 +188,7 @@ public:
             SaveToDB();
         }
 
-        void OnCreatureCreate(Creature* creature) override
+        void OnCreatureCreate(Creature* creature)
         {
             switch (creature->GetEntry())
             {
@@ -200,7 +204,7 @@ public:
             }
         }
 
-        void OnGameObjectCreate(GameObject* go) override
+        void OnGameObjectCreate(GameObject* go)
         {
             switch (go->GetEntry())
             {
@@ -231,7 +235,7 @@ public:
             }
         }
 
-        std::string GetSaveData() override
+        std::string GetSaveData()
         {
             OUT_SAVE_INST_DATA;
 
@@ -242,7 +246,7 @@ public:
             return saveStream.str();
         }
 
-        void Load(const char* str) override
+        void Load(const char* str)
         {
             if (!str)
             {
@@ -292,7 +296,7 @@ public:
                 case DATA_FEL_CRYSTAL:
                     if (FelCrystals.size() < felCristalIndex)
                     {
-                        TC_LOG_ERROR("scripts", "Magisters Terrace: No Fel Crystals loaded in Inst Data");
+                        sLog->outError(LOG_FILTER_TSCR, "Magisters Terrace: No Fel Crystals loaded in Inst Data");
                         return 0;
                     }
 
@@ -307,11 +311,6 @@ public:
                 felCristalIndex = value;
         }
     };
-
-    InstanceScript* GetInstanceScript(InstanceMap* map) const override
-    {
-        return new instance_magisters_terrace_InstanceMapScript(map);
-    }
 };
 
 void AddSC_instance_magisters_terrace()

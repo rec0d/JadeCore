@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,14 +19,14 @@
 /* ScriptData
 SDName: Arcatraz
 SD%Complete: 60
-SDComment: Warden Mellichar, event controller for Skyriss event. Millhouse Manastorm. @todo make better combatAI for Millhouse.
+SDComment: Warden Mellichar, event controller for Skyriss event. Millhouse Manastorm. TODO: make better combatAI for Millhouse.
 SDCategory: Tempest Keep, The Arcatraz
 EndScriptData */
 
 /* ContentData
 npc_millhouse_manastorm
 npc_warden_mellichar
-npc_zerekethvoidzone
+mob_zerekethvoidzone
 EndContentData */
 
 #include "ScriptMgr.h"
@@ -38,7 +37,7 @@ EndContentData */
 # npc_millhouse_manastorm
 #####*/
 
-enum MillhouseSays
+enum eMillhouseSays
 {
     SAY_INTRO_1                = 0,
     SAY_INTRO_2                = 1,
@@ -54,7 +53,7 @@ enum MillhouseSays
     SAY_COMPLETE               = 11,
 };
 
-enum MillhouseSpells
+enum eMillhouseSpells
 {
     SPELL_CONJURE_WATER        = 36879,
     SPELL_ARCANE_INTELLECT     = 36880,
@@ -92,7 +91,7 @@ class npc_millhouse_manastorm : public CreatureScript
             uint32 Pyroblast_Timer;
             uint32 Fireball_Timer;
 
-            void Reset() override
+            void Reset()
             {
                 EventProgress_Timer = 2000;
                 LowHp = false;
@@ -112,7 +111,7 @@ class npc_millhouse_manastorm : public CreatureScript
                 }
             }
 
-            void AttackStart(Unit* who) override
+            void AttackStart(Unit* who)
             {
                 if (me->Attack(who, true))
                 {
@@ -123,14 +122,14 @@ class npc_millhouse_manastorm : public CreatureScript
                 }
             }
 
-            void EnterCombat(Unit* /*who*/)override { }
+            void EnterCombat(Unit* /*who*/){}
 
-            void KilledUnit(Unit* /*victim*/) override
+            void KilledUnit(Unit* /*victim*/)
             {
                 Talk(SAY_KILL);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 Talk(SAY_DEATH);
 
@@ -139,7 +138,7 @@ class npc_millhouse_manastorm : public CreatureScript
                 ->FailQuest();*/
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (!Init)
                 {
@@ -222,7 +221,7 @@ class npc_millhouse_manastorm : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_millhouse_manastormAI(creature);
         }
@@ -231,7 +230,7 @@ class npc_millhouse_manastorm : public CreatureScript
 # npc_warden_mellichar
 #####*/
 
-enum WardenSays
+enum eWardenSays
 {
     YELL_INTRO1         = 0,
     YELL_INTRO2         = 1,
@@ -243,7 +242,7 @@ enum WardenSays
     YELL_WELCOME        = 7,
 };
 
-enum WardenUnits
+enum eWardenUnits
 {
     //phase 2(acid mobs)
     ENTRY_TRICKSTER    = 20905,
@@ -260,7 +259,7 @@ enum WardenUnits
     ENTRY_SKYRISS      = 20912,
 };
 
-enum WardenSpells
+enum eWardenSpells
 {
     //TARGET_SCRIPT
     SPELL_TARGET_ALPHA  = 36856,
@@ -294,7 +293,7 @@ class npc_warden_mellichar : public CreatureScript
             uint32 EventProgress_Timer;
             uint32 Phase;
 
-            void Reset() override
+            void Reset()
             {
                 IsRunning = false;
                 CanSpawn = false;
@@ -309,15 +308,14 @@ class npc_warden_mellichar : public CreatureScript
                     instance->SetData(TYPE_HARBINGERSKYRISS, NOT_STARTED);
             }
 
-            void AttackStart(Unit* /*who*/) override { }
+            void AttackStart(Unit* /*who*/) {}
 
-            void MoveInLineOfSight(Unit* who) override
-
+            void MoveInLineOfSight(Unit* who)
             {
                 if (IsRunning)
                     return;
 
-                if (!me->GetVictim() && me->CanCreatureAttack(who))
+                if (!me->GetVictim() && me->canCreatureAttack(who))
                 {
                     if (!me->CanFly() && me->GetDistanceZ(who) > CREATURE_Z_ATTACK_RANGE)
                         return;
@@ -330,7 +328,7 @@ class npc_warden_mellichar : public CreatureScript
                 }
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 Talk(YELL_INTRO1);
                 DoCast(me, SPELL_BUBBLE_VISUAL);
@@ -400,7 +398,7 @@ class npc_warden_mellichar : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (!IsRunning)
                     return;
@@ -516,14 +514,14 @@ class npc_warden_mellichar : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_warden_mellicharAI(creature);
         }
 };
 
 /*#####
-# npc_zerekethvoidzone (this script probably not needed in future -> `creature_template_addon`.`auras`='36120 0')
+# mob_zerekethvoidzone (this script probably not needed in future -> `creature_template_addon`.`auras`='36120 0')
 #####*/
 
 enum ZerekethSpell
@@ -531,32 +529,32 @@ enum ZerekethSpell
     SPELL_VOID_ZONE_DAMAGE = 36120,
 };
 
-class npc_zerekethvoidzone : public CreatureScript
+class mob_zerekethvoidzone : public CreatureScript
 {
     public:
 
-        npc_zerekethvoidzone() : CreatureScript("npc_zerekethvoidzone")
+        mob_zerekethvoidzone() : CreatureScript("mob_zerekethvoidzone")
         {
         }
-        struct npc_zerekethvoidzoneAI : public ScriptedAI
+        struct mob_zerekethvoidzoneAI : public ScriptedAI
         {
-            npc_zerekethvoidzoneAI(Creature* creature) : ScriptedAI(creature) { }
+            mob_zerekethvoidzoneAI(Creature* creature) : ScriptedAI(creature) {}
 
-            void Reset() override
+            void Reset()
             {
-                me->SetUInt32Value(UNIT_FIELD_NPC_FLAGS, 0);
+                me->SetUInt32Value(UNIT_NPC_FLAGS, 0);
                 me->setFaction(16);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
 
                 DoCast(me, SPELL_VOID_ZONE_DAMAGE);
             }
 
-            void EnterCombat(Unit* /*who*/) override { }
+            void EnterCombat(Unit* /*who*/) {}
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return new npc_zerekethvoidzoneAI(creature);
+            return new mob_zerekethvoidzoneAI(creature);
         }
 };
 
@@ -564,5 +562,5 @@ void AddSC_arcatraz()
 {
     new npc_millhouse_manastorm();
     new npc_warden_mellichar();
-    new npc_zerekethvoidzone();
+    new mob_zerekethvoidzone();
 }

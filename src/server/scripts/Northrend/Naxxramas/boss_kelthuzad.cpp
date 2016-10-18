@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -250,11 +248,11 @@ const Position PosWeavers[MAX_WEAVERS] =
 // predicate function to select not charmed target
 struct NotCharmedTargetSelector : public std::unary_function<Unit*, bool>
 {
-    NotCharmedTargetSelector() { }
+    NotCharmedTargetSelector() {}
 
     bool operator()(Unit const* target) const
     {
-        return !target->IsCharmed();
+        return !target->isCharmed();
     }
 };
 
@@ -285,19 +283,7 @@ public:
 
         SummonList spawns; // adds spawn by the trigger. kept in separated list (i.e. not in summons)
 
-        void ResetPlayerScale()
-        {
-            std::map<uint64, float>::const_iterator itr;
-            for (itr = chained.begin(); itr != chained.end(); ++itr)
-            {
-                if (Player* charmed = ObjectAccessor::GetPlayer(*me, itr->first))
-                    charmed->SetObjectScale(itr->second);
-            }
-
-            chained.clear();
-        }
-
-        void Reset() override
+        void Reset()
         {
             _Reset();
 
@@ -306,8 +292,14 @@ public:
 
             me->setFaction(35);
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_NOT_SELECTABLE);
+            std::map<uint64, float>::const_iterator itr;
+            for (itr = chained.begin(); itr != chained.end(); ++itr)
+            {
+                if (Player* charmed = Unit::GetPlayer(*me, (*itr).first))
+                    charmed->SetObjectScale((*itr).second);
+            }
 
-            ResetPlayerScale();
+            chained.clear();
             spawns.DespawnAll();
 
             FindGameObjects();
@@ -338,20 +330,26 @@ public:
             nWeaver = 0;
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_SLAY);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             _JustDied();
             Talk(SAY_DEATH);
 
-            ResetPlayerScale();
+            std::map<uint64, float>::const_iterator itr;
+            for (itr = chained.begin(); itr != chained.end(); ++itr)
+            {
+                if (Player* player = Unit::GetPlayer(*me, (*itr).first))
+                    player->SetObjectScale((*itr).second);
+            }
+            chained.clear();
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             me->setFaction(uiFaction);
 
@@ -366,8 +364,8 @@ public:
             Talk(SAY_SUMMON_MINIONS);
             Phase = 1;
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_NOT_SELECTABLE);
-            me->SetFloatValue(UNIT_FIELD_COMBAT_REACH, 4);
-            me->SetFloatValue(UNIT_FIELD_BOUNDING_RADIUS, 4);
+            me->SetFloatValue(UNIT_FIELD_COMBATREACH, 4);
+            me->SetFloatValue(UNIT_FIELD_BOUNDINGRADIUS, 4);
             events.ScheduleEvent(EVENT_TRIGGER, 5000);
             events.ScheduleEvent(EVENT_WASTE, 15000);
             events.ScheduleEvent(EVENT_ABOMIN, 30000);
@@ -384,7 +382,7 @@ public:
             KTTriggerGUID = instance ? instance->GetData64(DATA_KELTHUZAD_TRIGGER) : 0;
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -476,9 +474,9 @@ public:
                 {
                     if (uiGuardiansOfIcecrownTimer <= diff)
                     {
-                        /// @todo Add missing text
+                        // TODO : Add missing text
                         if (Creature* pGuardian = DoSummon(NPC_ICECROWN, Pos[RAND(2, 5, 8, 11)]))
-                            pGuardian->SetFloatValue(UNIT_FIELD_COMBAT_REACH, 2);
+                            pGuardian->SetFloatValue(UNIT_FIELD_COMBATREACH, 2);
                         ++nGuardiansOfIcecrownCount;
                         uiGuardiansOfIcecrownTimer = 5000;
                     }
@@ -506,10 +504,10 @@ public:
                             for (uint8 i = 1; i <= count; i++)
                             {
                                 Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 1, 200, true);
-                                if (target && !target->IsCharmed() && (chained.find(target->GetGUID()) == chained.end()))
+                                if (target && !target->isCharmed() && (chained.find(target->GetGUID()) == chained.end()))
                                 {
                                     DoCast(target, SPELL_CHAINS_OF_KELTHUZAD);
-                                    float scale = target->GetObjectScale();
+                                    float scale = target->GetFloatValue(OBJECT_FIELD_SCALE_X);
                                     chained.insert(std::make_pair(target->GetGUID(), scale));
                                     target->SetObjectScale(scale * 2);
                                     events.ScheduleEvent(EVENT_CHAINED_SPELL, 2000); //core has 2000ms to set unit flag charm
@@ -525,11 +523,11 @@ public:
                             std::map<uint64, float>::iterator itr;
                             for (itr = chained.begin(); itr != chained.end();)
                             {
-                                if (Unit* player = ObjectAccessor::GetPlayer(*me, itr->first))
+                                if (Unit* player = Unit::GetPlayer(*me, (*itr).first))
                                 {
-                                    if (!player->IsCharmed())
+                                    if (!player->isCharmed())
                                     {
-                                        player->SetObjectScale(itr->second);
+                                        player->SetObjectScale((*itr).second);
                                         std::map<uint64, float>::iterator next = itr;
                                         ++next;
                                         chained.erase(itr);
@@ -649,9 +647,9 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_kelthuzadAI(creature);
+        return new boss_kelthuzadAI (creature);
     }
 };
 
@@ -660,9 +658,9 @@ class at_kelthuzad_center : public AreaTriggerScript
 public:
     at_kelthuzad_center() : AreaTriggerScript("at_kelthuzad_center") { }
 
-    bool OnTrigger(Player* player, const AreaTriggerEntry* /*at*/) override
+    bool OnTrigger(Player* player, const AreaTriggerEntry* /*at*/)
     {
-        if (player->IsGameMaster())
+        if (player->isGameMaster())
             return false;
 
         InstanceScript* instance = player->GetInstanceScript();
@@ -730,14 +728,14 @@ class npc_kelthuzad_abomination : public CreatureScript
                 _instance = creature->GetInstanceScript();
             }
 
-            void Reset() override
+            void Reset()
             {
                 _events.Reset();
                 _events.ScheduleEvent(EVENT_MORTAL_WOUND, urand(2000, 5000));
                 DoCast(me, SPELL_FRENZY, true);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -758,7 +756,7 @@ class npc_kelthuzad_abomination : public CreatureScript
                 }
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 if (_instance)
                     _instance->SetData(DATA_ABOMINATION_KILLED, _instance->GetData(DATA_ABOMINATION_KILLED) + 1);
@@ -769,7 +767,7 @@ class npc_kelthuzad_abomination : public CreatureScript
             EventMap _events;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_kelthuzad_abominationAI(creature);
         }
@@ -784,7 +782,7 @@ class spell_kelthuzad_detonate_mana : public SpellScriptLoader
         {
             PrepareAuraScript(spell_kelthuzad_detonate_mana_AuraScript);
 
-            bool Validate(SpellInfo const* /*spell*/) override
+            bool Validate(SpellInfo const* /*spell*/)
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_MANA_DETONATION_DAMAGE))
                     return false;
@@ -803,13 +801,13 @@ class spell_kelthuzad_detonate_mana : public SpellScriptLoader
                 }
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectPeriodic += AuraEffectPeriodicFn(spell_kelthuzad_detonate_mana_AuraScript::HandleScript, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
             }
         };
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const
         {
             return new spell_kelthuzad_detonate_mana_AuraScript();
         }
@@ -820,7 +818,7 @@ class achievement_just_cant_get_enough : public AchievementCriteriaScript
    public:
        achievement_just_cant_get_enough() : AchievementCriteriaScript("achievement_just_cant_get_enough") { }
 
-       bool OnCheck(Player* /*player*/, Unit* target) override
+       bool OnCheck(Player* /*player*/, Unit* target)
        {
            if (!target)
                return false;

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -85,9 +84,9 @@ class boss_hydross_the_unstable : public CreatureScript
 public:
     boss_hydross_the_unstable() : CreatureScript("boss_hydross_the_unstable") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_hydross_the_unstableAI(creature);
+        return new boss_hydross_the_unstableAI (creature);
     }
 
     struct boss_hydross_the_unstableAI : public ScriptedAI
@@ -95,8 +94,6 @@ public:
         boss_hydross_the_unstableAI(Creature* creature) : ScriptedAI(creature), Summons(me)
         {
             instance = creature->GetInstanceScript();
-            beams[0] = 0;
-            beams[1] = 0;
         }
 
         InstanceScript* instance;
@@ -114,7 +111,7 @@ public:
         bool beam;
         SummonList Summons;
 
-        void Reset() override
+        void Reset()
         {
             DeSummonBeams();
             beams[0] = 0;
@@ -162,16 +159,17 @@ public:
         }
         void DeSummonBeams()
         {
-            for (uint8 i = 0; i < 2; ++i)
+            for (uint8 i=0; i<2; ++i)
             {
-                if (Creature* mob = Unit::GetCreature(*me, beams[i]))
+                Creature* mob = Unit::GetCreature(*me, beams[i]);
+                if (mob)
                 {
                     mob->setDeathState(DEAD);
                     mob->RemoveCorpse();
                 }
             }
         }
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(SAY_AGGRO);
 
@@ -179,12 +177,12 @@ public:
                 instance->SetData(DATA_HYDROSSTHEUNSTABLEEVENT, IN_PROGRESS);
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(CorruptedForm ? SAY_CORRUPT_SLAY : SAY_CLEAN_SLAY);
         }
 
-        void JustSummoned(Creature* summoned) override
+        void JustSummoned(Creature* summoned)
         {
             if (summoned->GetEntry() == ENTRY_PURE_SPAWN)
             {
@@ -200,12 +198,12 @@ public:
             }
         }
 
-        void SummonedCreatureDespawn(Creature* summon) override
+        void SummonedCreatureDespawn(Creature* summon)
         {
             Summons.Despawn(summon);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Talk(CorruptedForm ? SAY_CORRUPT_DEATH : SAY_CLEAN_DEATH);
 
@@ -214,7 +212,7 @@ public:
             Summons.DespawnAll();
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!beam)
             {
@@ -274,7 +272,8 @@ public:
                 //VileSludge_Timer
                 if (VileSludge_Timer <= diff)
                 {
-                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
+                    Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0);
+                    if (target)
                         DoCast(target, SPELL_VILE_SLUDGE);
 
                     VileSludge_Timer = 15000;

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,7 +27,7 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "serpent_shrine.h"
 
-enum Yells
+enum eEnums
 {
     // Yell
     SAY_AGGRO                       = 0,
@@ -39,11 +38,8 @@ enum Yells
     // Emotes
     EMOTE_WATERY_GRAVE              = 5,
     EMOTE_EARTHQUAKE                = 6,
-    EMOTE_WATERY_GLOBULES           = 7
-};
-
-enum Spells
-{
+    EMOTE_WATERY_GLOBULES           = 7,
+    // Spells
     SPELL_TIDAL_WAVE                = 37730,
     SPELL_WATERY_GRAVE              = 38049,
     SPELL_EARTHQUAKE                = 37764,
@@ -58,13 +54,6 @@ enum Spells
     SPELL_SUMMON_WATER_GLOBULE_2    = 37858,
     SPELL_SUMMON_WATER_GLOBULE_3    = 37860,
     SPELL_SUMMON_WATER_GLOBULE_4    = 37861,
-
-    // Water Globule
-    SPELL_GLOBULE_EXPLOSION         = 37871
-};
-
-enum Creatures
-{
     // Creatures
     NPC_WATER_GLOBULE               = 21913,
     NPC_TIDEWALKER_LURKER           = 21920
@@ -90,9 +79,9 @@ class boss_morogrim_tidewalker : public CreatureScript
 public:
     boss_morogrim_tidewalker() : CreatureScript("boss_morogrim_tidewalker") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_morogrim_tidewalkerAI(creature);
+        return new boss_morogrim_tidewalkerAI (creature);
     }
 
     struct boss_morogrim_tidewalkerAI : public ScriptedAI
@@ -117,7 +106,7 @@ public:
         bool Earthquake;
         bool Phase2;
 
-        void Reset() override
+        void Reset()
         {
             TidalWave_Timer = 10000;
             WateryGrave_Timer = 30000;
@@ -143,12 +132,12 @@ public:
                 instance->SetData(DATA_MOROGRIMTIDEWALKEREVENT, IN_PROGRESS);
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_SLAY);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Talk(SAY_DEATH);
 
@@ -156,7 +145,7 @@ public:
                 instance->SetData(DATA_MOROGRIMTIDEWALKEREVENT, DONE);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             PlayerList = &me->GetMap()->GetPlayers();
             Playercount = PlayerList->getSize();
@@ -174,7 +163,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             //Return since we have no target
             if (!UpdateVictim())
@@ -195,9 +184,10 @@ public:
 
                     for (uint8 i = 0; i < 10; ++i)
                     {
-                        if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                            if (Creature* Murloc = me->SummonCreature(NPC_TIDEWALKER_LURKER, MurlocCords[i][0], MurlocCords[i][1], MurlocCords[i][2], MurlocCords[i][3], TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000))
-                                Murloc->AI()->AttackStart(target);
+                        Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0);
+                        Creature* Murloc = me->SummonCreature(NPC_TIDEWALKER_LURKER, MurlocCords[i][0], MurlocCords[i][1], MurlocCords[i][2], MurlocCords[i][3], TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 10000);
+                        if (target && Murloc)
+                            Murloc->AI()->AttackStart(target);
                     }
                     Talk(EMOTE_EARTHQUAKE);
                     Earthquake = false;
@@ -288,23 +278,26 @@ public:
 
 };
 
-class npc_water_globule : public CreatureScript
+//Water Globule AI
+#define SPELL_GLOBULE_EXPLOSION 37871
+
+class mob_water_globule : public CreatureScript
 {
 public:
-    npc_water_globule() : CreatureScript("npc_water_globule") { }
+    mob_water_globule() : CreatureScript("mob_water_globule") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_water_globuleAI(creature);
+        return new mob_water_globuleAI (creature);
     }
 
-    struct npc_water_globuleAI : public ScriptedAI
+    struct mob_water_globuleAI : public ScriptedAI
     {
-        npc_water_globuleAI(Creature* creature) : ScriptedAI(creature) { }
+        mob_water_globuleAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 Check_Timer;
 
-        void Reset() override
+        void Reset()
         {
             Check_Timer = 1000;
 
@@ -313,15 +306,14 @@ public:
             me->setFaction(14);
         }
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/) {}
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
             if (!who || me->GetVictim())
                 return;
 
-            if (me->CanCreatureAttack(who))
+            if (me->canCreatureAttack(who))
             {
                 //no attack radius check - it attacks the first target that moves in his los
                 //who->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
@@ -329,7 +321,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             //Return since we have no target
             if (!UpdateVictim())
@@ -357,5 +349,5 @@ public:
 void AddSC_boss_morogrim_tidewalker()
 {
     new boss_morogrim_tidewalker();
-    new npc_water_globule();
+    new mob_water_globule();
 }

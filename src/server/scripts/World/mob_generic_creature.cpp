@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,7 +36,7 @@ public:
 
     struct generic_creatureAI : public ScriptedAI
     {
-        generic_creatureAI(Creature* creature) : ScriptedAI(creature) { }
+        generic_creatureAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 GlobalCooldown;      //This variable acts like the global cooldown that players have (1.5 seconds)
         uint32 BuffTimer;           //This variable keeps track of buffs
@@ -56,7 +55,7 @@ public:
                 IsSelfRooted = true;
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             //Always decrease our global cooldown first
             if (GlobalCooldown > diff)
@@ -64,7 +63,7 @@ public:
             else GlobalCooldown = 0;
 
             //Buff timer (only buff when we are alive and not in combat
-            if (!me->IsInCombat() && me->IsAlive())
+            if (!me->isInCombat() && me->isAlive())
             {
                 if (BuffTimer <= diff)
                 {
@@ -187,7 +186,7 @@ public:
         uint32 timer, interval;
         const SpellInfo* spell;
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             if (timer <= diff)
             {
@@ -213,7 +212,7 @@ public:
 
     struct trigger_deathAI : public NullCreatureAI
     {
-        trigger_deathAI(Creature* creature) : NullCreatureAI(creature) { }
+        trigger_deathAI(Creature* creature) : NullCreatureAI(creature) {}
         void JustDied(Unit* killer)
         {
             if (me->m_spells[0])

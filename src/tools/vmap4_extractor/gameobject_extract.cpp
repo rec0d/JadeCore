@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 #include "model.h"
 #include "dbcfile.h"
 #include "adtfile.h"
@@ -69,7 +68,13 @@ void ExtractGameobjectModels()
     basepath += "/";
     std::string path;
 
-    FILE * model_list = fopen((basepath + "temp_gameobject_models").c_str(), "wb");
+    std::string modelListPath = basepath + "temp_gameobject_models";
+    FILE* model_list = fopen(modelListPath.c_str(), "wb");
+    if (!model_list)
+    {
+        printf("Fatal error: Could not open file %s\n", modelListPath.c_str());
+        return;
+    }
 
     for (DBCFile::Iterator it = dbc.begin(); it != dbc.end(); ++it)
     {

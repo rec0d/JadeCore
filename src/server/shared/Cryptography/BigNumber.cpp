@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,18 +22,20 @@
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <algorithm>
-#include <ace/Auto_Ptr.h>
 
 BigNumber::BigNumber()
     : _bn(BN_new())
+    , _array(NULL)
 { }
 
 BigNumber::BigNumber(BigNumber const& bn)
     : _bn(BN_dup(bn._bn))
+    , _array(NULL)
 { }
 
 BigNumber::BigNumber(uint32 val)
     : _bn(BN_new())
+    , _array(NULL)
 {
     BN_set_word(_bn, val);
 }
@@ -42,6 +43,7 @@ BigNumber::BigNumber(uint32 val)
 BigNumber::~BigNumber()
 {
     BN_free(_bn);
+    delete[] _array;
 }
 
 void BigNumber::SetDword(uint32 val)
@@ -51,21 +53,16 @@ void BigNumber::SetDword(uint32 val)
 
 void BigNumber::SetQword(uint64 val)
 {
-    BN_set_word(_bn, (uint32)(val >> 32));
+    BN_add_word(_bn, (uint32)(val >> 32));
     BN_lshift(_bn, _bn, 32);
     BN_add_word(_bn, (uint32)(val & 0xFFFFFFFF));
 }
 
 void BigNumber::SetBinary(uint8 const* bytes, int32 len)
 {
-    uint8* array = new uint8[len];
-
-    for (int i = 0; i < len; i++)
-        array[i] = bytes[len - 1 - i];
-
-    BN_bin2bn(array, len, _bn);
-
-    delete[] array;
+    uint8 t[1000];
+    for (int i = 0; i < len; i++) t[i] = bytes[len - 1 - i];
+    BN_bin2bn(t, len, _bn);
 }
 
 void BigNumber::SetHexStr(char const* str)
@@ -171,24 +168,29 @@ bool BigNumber::isZero() const
     return BN_is_zero(_bn);
 }
 
-ACE_Auto_Array_Ptr<uint8> BigNumber::AsByteArray(int32 minSize, bool littleEndian)
+uint8* BigNumber::AsByteArray(int32 minSize, bool reverse)
 {
     int length = (minSize >= GetNumBytes()) ? minSize : GetNumBytes();
 
-    uint8* array = new uint8[length];
+    ACE_GUARD_RETURN(ACE_Mutex, g, _lock, 0);
+
+    if (_array)
+    {
+        delete[] _array;
+        _array = NULL;
+    }
+    _array = new uint8[length];
 
     // If we need more bytes than length of BigNumber set the rest to 0
     if (length > GetNumBytes())
-        memset((void*)array, 0, length);
+        memset((void*)_array, 0, length);
 
-    BN_bn2bin(_bn, (unsigned char *)array);
+    BN_bn2bin(_bn, (unsigned char *)_array);
 
-    // openssl's BN stores data internally in big endian format, reverse if little endian desired
-    if (littleEndian)
-        std::reverse(array, array + length);
+    if (reverse)
+        std::reverse(_array, _array + length);
 
-    ACE_Auto_Array_Ptr<uint8> ret(array);
-    return ret;
+    return _array;
 }
 
 char * BigNumber::AsHexStr() const

@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -37,7 +37,7 @@ void ConfusedMovementGenerator<T>::DoInitialize(T* unit)
     unit->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_CONFUSED);
     unit->GetPosition(i_x, i_y, i_z);
 
-    if (!unit->IsAlive() || unit->IsStopped())
+    if (!unit->isAlive() || unit->IsStopped())
         return;
 
     unit->StopMoving();
@@ -49,7 +49,7 @@ void ConfusedMovementGenerator<T>::DoReset(T* unit)
 {
     i_nextMoveTime.Reset(0);
 
-    if (!unit->IsAlive() || unit->IsStopped())
+    if (!unit->isAlive() || unit->IsStopped())
         return;
 
     unit->StopMoving();

@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,7 +14,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 /* ScriptData
 Name: cheat_commandscript
 %Complete: 100
@@ -40,22 +38,22 @@ public:
 
         static ChatCommand cheatCommandTable[] =
         {
-            { "god",            rbac::RBAC_PERM_COMMAND_CHEAT_GOD,       false, &HandleGodModeCheatCommand,   "", NULL },
-            { "casttime",       rbac::RBAC_PERM_COMMAND_CHEAT_CASTTIME,  false, &HandleCasttimeCheatCommand,  "", NULL },
-            { "cooldown",       rbac::RBAC_PERM_COMMAND_CHEAT_COOLDOWN,  false, &HandleCoolDownCheatCommand,  "", NULL },
-            { "power",          rbac::RBAC_PERM_COMMAND_CHEAT_POWER,     false, &HandlePowerCheatCommand,     "", NULL },
-            { "waterwalk",      rbac::RBAC_PERM_COMMAND_CHEAT_WATERWALK, false, &HandleWaterWalkCheatCommand, "", NULL },
-            { "status",         rbac::RBAC_PERM_COMMAND_CHEAT_STATUS,    false, &HandleCheatStatusCommand,    "", NULL },
-            { "taxi",           rbac::RBAC_PERM_COMMAND_CHEAT_TAXI,      false, &HandleTaxiCheatCommand,      "", NULL },
-            { "explore",        rbac::RBAC_PERM_COMMAND_CHEAT_EXPLORE,   false, &HandleExploreCheatCommand,   "", NULL },
-            { NULL,             0,                                 false, NULL,                         "", NULL }
+            { "god",            SEC_GAMEMASTER,     false, &HandleGodModeCheatCommand,         "", NULL },
+            { "casttime",       SEC_GAMEMASTER,     false, &HandleCasttimeCheatCommand,        "", NULL },
+            { "cooldown",       SEC_GAMEMASTER,     false, &HandleCoolDownCheatCommand,        "", NULL },
+            { "power",          SEC_GAMEMASTER,     false, &HandlePowerCheatCommand,           "", NULL },
+            { "waterwalk",      SEC_GAMEMASTER,     false, &HandleWaterWalkCheatCommand,       "", NULL },
+            { "status",         SEC_GAMEMASTER,     false, &HandleCheatStatusCommand,          "", NULL },
+            { "taxi",           SEC_GAMEMASTER,     false, &HandleTaxiCheatCommand,            "", NULL },
+            { "explore",        SEC_GAMEMASTER,     false, &HandleExploreCheatCommand,         "", NULL },
+            { NULL,             0,                  false, NULL,                               "", NULL }
 
         };
 
         static ChatCommand commandTable[] =
         {
-            { "cheat",          rbac::RBAC_PERM_COMMAND_CHEAT, false, NULL, "", cheatCommandTable },
-            { NULL,             0,                       false, NULL, "", NULL }
+            { "cheat",          SEC_GAMEMASTER,     false, NULL,                  "", cheatCommandTable },
+            { NULL,             0,                  false, NULL,                               "", NULL }
         };
         return commandTable;
     }
@@ -187,11 +185,10 @@ public:
 
         std::string argstr = (char*)args;
 
-        Player* target = handler->GetSession()->GetPlayer();
         if (!*args)
         {
-            argstr = (target->GetCommandStatus(CHEAT_WATERWALK)) ? "off" : "on";
-            if (target->GetCommandStatus(CHEAT_WATERWALK))
+            argstr = (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_WATERWALK)) ? "off" : "on";
+            if (handler->GetSession()->GetPlayer()->GetCommandStatus(CHEAT_WATERWALK))
                 argstr = "off";
             else
                 argstr = "on";
@@ -199,15 +196,17 @@ public:
 
         if (argstr == "off")
         {
-            target->SetCommandStatusOff(CHEAT_WATERWALK);
-            target->SetWaterWalking(false);
+            handler->GetSession()->GetPlayer()->SetCommandStatusOff(CHEAT_WATERWALK);
+            handler->GetSession()->GetPlayer()->RemoveUnitMovementFlag(MOVEMENTFLAG_WATERWALKING);
+            handler->GetSession()->GetPlayer()->SendMovementWaterWalking();         // OFF
             handler->SendSysMessage("Waterwalking is OFF. You can't walk on water.");
             return true;
         }
         else if (argstr == "on")
         {
-            target->SetCommandStatusOn(CHEAT_WATERWALK);
-            target->SetWaterWalking(true);
+            handler->GetSession()->GetPlayer()->SetCommandStatusOn(CHEAT_WATERWALK);
+            handler->GetSession()->GetPlayer()->AddUnitMovementFlag(MOVEMENTFLAG_WATERWALKING);
+            handler->GetSession()->GetPlayer()->SendMovementWaterWalking();         // ON
             handler->SendSysMessage("Waterwalking is ON. You can walk on water.");
             return true;
         }
@@ -288,9 +287,9 @@ public:
         for (uint8 i = 0; i < PLAYER_EXPLORED_ZONES_SIZE; ++i)
         {
             if (flag != 0)
-                handler->GetSession()->GetPlayer()->SetFlag(PLAYER_FIELD_EXPLORED_ZONES+i, 0xFFFFFFFF);
+                handler->GetSession()->GetPlayer()->SetFlag(PLAYER_EXPLORED_ZONES_1+i, 0xFFFFFFFF);
             else
-                handler->GetSession()->GetPlayer()->SetFlag(PLAYER_FIELD_EXPLORED_ZONES+i, 0);
+                handler->GetSession()->GetPlayer()->SetFlag(PLAYER_EXPLORED_ZONES_1+i, 0);
         }
 
         return true;

@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -29,7 +27,6 @@
 #include "SpellScript.h"
 #include "SpellAuraEffects.h"
 #include "GridNotifiers.h"
-#include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 
 // 45102 Romantic Picnic
@@ -205,7 +202,7 @@ enum TrickOrTreatSpells
 class spell_hallow_end_trick_or_treat : public SpellScriptLoader
 {
     public:
-        spell_hallow_end_trick_or_treat() : SpellScriptLoader("spell_hallow_end_trick_or_treat") { }
+        spell_hallow_end_trick_or_treat() : SpellScriptLoader("spell_hallow_end_trick_or_treat") {}
 
         class spell_hallow_end_trick_or_treat_SpellScript : public SpellScript
         {
@@ -371,7 +368,7 @@ class spell_winter_veil_px_238_winter_wondervolt : public SpellScriptLoader
                         if (target->HasAura(spells[i]))
                             return;
 
-                    target->CastSpell(target, spells[urand(0, 3)], true);
+                    GetCaster()->CastSpell(target, spells[urand(0, 3)], true);
                 }
             }
 

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -91,7 +90,7 @@ class boss_grandmaster_vorpil : public CreatureScript
                 _intro = false;
             }
 
-            void Reset() override
+            void Reset() 
             {
                 _Reset();
                 _helpYell = false;
@@ -117,19 +116,19 @@ class boss_grandmaster_vorpil : public CreatureScript
                 }
             }
 
-            void KilledUnit(Unit* who) override
+            void KilledUnit(Unit* who) 
             {
                 if (who->GetTypeId() == TYPEID_PLAYER)
                     Talk(SAY_SLAY);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/) 
             {
                 _JustDied();
                 Talk(SAY_DEATH);
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/) 
             {
                 _EnterCombat();
                 events.ScheduleEvent(EVENT_SHADOWBOLT_VOLLEY, urand(7000, 14000));
@@ -142,7 +141,7 @@ class boss_grandmaster_vorpil : public CreatureScript
                 SummonPortals();
             }
 
-            void MoveInLineOfSight(Unit* who) override
+            void MoveInLineOfSight(Unit* who) 
             {
                 BossAI::MoveInLineOfSight(who);
 
@@ -153,7 +152,7 @@ class boss_grandmaster_vorpil : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff) 
             {
                 if (!UpdateVictim())
                     return;
@@ -181,8 +180,8 @@ class boss_grandmaster_vorpil : public CreatureScript
                                 Map* map = me->GetMap();
                                 Map::PlayerList const &PlayerList = map->GetPlayers();
                                 for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
-                                    if (Player* i_pl = i->GetSource())
-                                        if (i_pl->IsAlive() && !i_pl->HasAura(SPELL_BANISH))
+                                    if (Player* i_pl = i->getSource())
+                                        if (i_pl->isAlive() && !i_pl->HasAura(SPELL_BANISH))
                                             i_pl->TeleportTo(me->GetMapId(), VorpilPosition.GetPositionX(), VorpilPosition.GetPositionY(), VorpilPosition.GetPositionZ(), VorpilPosition.GetOrientation(), TELE_TO_NOT_LEAVE_COMBAT);
 
                                 me->SetPosition(VorpilPosition);
@@ -210,33 +209,33 @@ class boss_grandmaster_vorpil : public CreatureScript
                 bool _helpYell;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const 
         {
             return GetShadowLabyrinthAI<boss_grandmaster_vorpilAI>(creature);
         }
 };
 
-class npc_voidtraveler : public CreatureScript
+class mob_voidtraveler : public CreatureScript
 {
     public:
-        npc_voidtraveler() : CreatureScript("npc_voidtraveler") { }
+        mob_voidtraveler() : CreatureScript("mob_voidtraveler") { }
 
-        struct npc_voidtravelerAI : public ScriptedAI
+        struct mob_voidtravelerAI : public ScriptedAI
         {
-            npc_voidtravelerAI(Creature* creature) : ScriptedAI(creature)
+            mob_voidtravelerAI(Creature* creature) : ScriptedAI(creature)
             {
                 _instance = creature->GetInstanceScript();
             }
 
-            void Reset() override
+            void Reset() 
             {
                 _moveTimer = 0;
                 _sacrificed = false;
             }
 
-            void EnterCombat(Unit* /*who*/) override { }
+            void EnterCombat(Unit* /*who*/)  { }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff) 
             {
                 if (_moveTimer <= diff)
                 {
@@ -271,14 +270,14 @@ class npc_voidtraveler : public CreatureScript
             bool _sacrificed;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const 
         {
-            return GetShadowLabyrinthAI<npc_voidtravelerAI>(creature);
+            return GetShadowLabyrinthAI<mob_voidtravelerAI>(creature);
         }
 };
 
 void AddSC_boss_grandmaster_vorpil()
 {
     new boss_grandmaster_vorpil();
-    new npc_voidtraveler();
+    new mob_voidtraveler();
 }

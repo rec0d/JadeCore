@@ -1,19 +1,19 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
- * option) any later version.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #ifndef TRINITYSERVER_MOVESPLINEINIT_H
@@ -63,6 +63,10 @@ namespace Movement
          */
         void Stop();
 
+        /* Force Done
+        */
+        void ForceDone();
+
         /* Adds movement by parabolic trajectory
          * @param amplitude  - the maximum height of parabola, value could be negative and positive
          * @param start_time - delay between movement starting time and beginning to move by parabolic trajectory
@@ -102,39 +106,31 @@ namespace Movement
          * if not enabled linear spline mode will be choosen. Disabled by default
          */
         void SetSmooth();
-
-        /* Waypoints in packets will be sent without compression
-         */
-        void SetUncompressed();
-
-        /* Enables flying animation. Disabled by default
+        /* Enables CatmullRom spline interpolation mode, enables flying animation. Disabled by default
          */
         void SetFly();
-
         /* Enables walk mode. Disabled by default
          */
-        void SetWalk(bool enable);
+        void EnableTaxiFlight();
+        /* Flags used in taxi
+        */
 
+        void SetWalk(bool enable);
         /* Makes movement cyclic. Disabled by default
          */
         void SetCyclic();
-
         /* Enables falling mode. Disabled by default
          */
         void SetFall();
-
         /* Enters transport. Disabled by default
          */
         void SetTransportEnter();
-
         /* Exits transport. Disabled by default
          */
         void SetTransportExit();
-
         /* Inverses unit model orientation. Disabled by default
          */
         void SetOrientationInversed();
-
         /* Fixes unit's model rotation. Disabled by default
          */
         void SetOrientationFixed(bool enable);
@@ -157,10 +153,9 @@ namespace Movement
         Unit*  unit;
     };
 
-    inline void MoveSplineInit::SetFly() { args.flags.EnableFlying(); }
+    inline void MoveSplineInit::SetFly() { args.flags.flying = true; }
     inline void MoveSplineInit::SetWalk(bool enable) { args.flags.walkmode = enable; }
     inline void MoveSplineInit::SetSmooth() { args.flags.EnableCatmullRom(); }
-    inline void MoveSplineInit::SetUncompressed() { args.flags.uncompressedPath = true; }
     inline void MoveSplineInit::SetCyclic() { args.flags.cyclic = true; }
     inline void MoveSplineInit::SetVelocity(float vel) { args.velocity = vel; args.HasVelocity = true; }
     inline void MoveSplineInit::SetOrientationInversed() { args.flags.orientationInversed = true;}

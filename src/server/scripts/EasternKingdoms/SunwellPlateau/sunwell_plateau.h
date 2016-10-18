@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -63,20 +62,20 @@ enum Creatures
 {
     BOSS_MURU                                     = 25741,
     BOSS_ENTROPIUS                                = 25840,
-    NPC_KALECGOS                                  = 24850,
-    NPC_KALEC                                     = 24891,
-    NPC_SATHROVARR                                = 24892,
+    MOB_KALECGOS                                  = 24850,
+    MOB_KALEC                                     = 24891,
+    MOB_SATHROVARR                                = 24892,
 
-    NPC_DEAD                                      = 25268,
-    NPC_FLIGHT_LEFT                               = 25357,
-    NPC_FLIGHT_RIGHT                              = 25358,
-    NPC_DEATH_CLOUD                               = 25703,
-    NPC_VAPOR                                     = 25265,
-    NPC_VAPOR_TRAIL                               = 25267,
+    MOB_DEAD                                      = 25268,
+    MOB_FLIGHT_LEFT                               = 25357,
+    MOB_FLIGHT_RIGHT                              = 25358,
+    MOB_DEATH_CLOUD                               = 25703,
+    MOB_VAPOR                                     = 25265,
+    MOB_VAPOR_TRAIL                               = 25267,
 
-    NPC_GRAND_WARLOCK_ALYTHESS                    = 25166,
-    NPC_SHADOW_IMAGE                              = 25214,
-    NPC_LADY_SACROLASH                            = 25165,
+    MOB_GRAND_WARLOCK_ALYTHESS                    = 25166,
+    MOB_SHADOW_IMAGE                              = 25214,
+    MOB_LADY_SACROLASH                            = 25165,
 
     CREATURE_ANVEENA                              = 26046, // Embodiment of the Sunwell
     CREATURE_KALECGOS                             = 25319, // Helps the raid throughout the fight

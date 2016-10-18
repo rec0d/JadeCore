@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,9 +25,8 @@ EndScriptData */
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
-#include "hellfire_ramparts.h"
 
-enum Says
+enum eSays
 {
     SAY_TAUNT              = 0,
     SAY_HEAL               = 1,
@@ -38,7 +36,7 @@ enum Says
     SAY_DIE                = 5
 };
 
-enum Spells
+enum eSpells
 {
     SPELL_MORTAL_WOUND     = 30641,
     H_SPELL_MORTAL_WOUND   = 36814,
@@ -46,42 +44,46 @@ enum Spells
     SPELL_RETALIATION      = 22857
 };
 
-enum Events
-{
-    EVENT_MORTAL_WOUND     = 1,
-    EVENT_SURGE            = 2,
-    EVENT_RETALIATION      = 3
-};
-
 class boss_watchkeeper_gargolmar : public CreatureScript
 {
     public:
-        boss_watchkeeper_gargolmar() : CreatureScript("boss_watchkeeper_gargolmar") { }
 
-        struct boss_watchkeeper_gargolmarAI : public BossAI
+        boss_watchkeeper_gargolmar()
+            : CreatureScript("boss_watchkeeper_gargolmar")
         {
-            boss_watchkeeper_gargolmarAI(Creature* creature) : BossAI(creature, DATA_WATCHKEEPER_GARGOLMAR) { }
+        }
 
-            void Reset() override
+        struct boss_watchkeeper_gargolmarAI : public ScriptedAI
+        {
+            boss_watchkeeper_gargolmarAI(Creature* creature) : ScriptedAI(creature)
             {
-                hasTaunted    = false;
-                yelledForHeal = false;
-                retaliation   = false;
-                _Reset();
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            uint32 Surge_Timer;
+            uint32 MortalWound_Timer;
+            uint32 Retaliation_Timer;
+
+            bool HasTaunted;
+            bool YelledForHeal;
+
+            void Reset()
+            {
+                Surge_Timer = 5000;
+                MortalWound_Timer = 4000;
+                Retaliation_Timer = 0;
+
+                HasTaunted = false;
+                YelledForHeal = false;
+            }
+
+            void EnterCombat(Unit* /*who*/)
             {
                 Talk(SAY_AGGRO);
-                events.ScheduleEvent(EVENT_MORTAL_WOUND, 5000);
-                events.ScheduleEvent(EVENT_SURGE, 4000);
-                _EnterCombat();
             }
 
-            void MoveInLineOfSight(Unit* who) override
-
+            void MoveInLineOfSight(Unit* who)
             {
-                if (!me->GetVictim() && me->CanCreatureAttack(who))
+                if (!me->GetVictim() && me->canCreatureAttack(who))
                 {
                     if (!me->CanFly() && me->GetDistanceZ(who) > CREATURE_Z_ATTACK_RANGE)
                         return;
@@ -92,83 +94,74 @@ class boss_watchkeeper_gargolmar : public CreatureScript
                         //who->RemoveSpellsCausingAura(SPELL_AURA_MOD_STEALTH);
                         AttackStart(who);
                     }
-                    else if (!hasTaunted && me->IsWithinDistInMap(who, 60.0f))
+                    else if (!HasTaunted && me->IsWithinDistInMap(who, 60.0f))
                     {
                         Talk(SAY_TAUNT);
-                        hasTaunted = true;
+                        HasTaunted = true;
                     }
                 }
             }
 
-            void KilledUnit(Unit* /*victim*/) override
+            void KilledUnit(Unit* /*victim*/)
             {
                 Talk(SAY_KILL);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 Talk(SAY_DIE);
-                _JustDied();
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (!UpdateVictim())
                     return;
 
-                events.Update(diff);
-
-                while (uint32 eventId = events.ExecuteEvent())
+                if (MortalWound_Timer <= diff)
                 {
-                    switch (eventId)
+                    DoCastVictim(SPELL_MORTAL_WOUND);
+                    MortalWound_Timer = 5000+rand()%8000;
+                }
+                else
+                    MortalWound_Timer -= diff;
+
+                if (Surge_Timer <= diff)
+                {
+                    Talk(SAY_SURGE);
+
+                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
+                        DoCast(target, SPELL_SURGE);
+
+                    Surge_Timer = 5000+rand()%8000;
+                }
+                else
+                    Surge_Timer -= diff;
+
+                if (HealthBelowPct(20))
+                {
+                    if (Retaliation_Timer <= diff)
                     {
-                        case EVENT_MORTAL_WOUND:
-                            DoCastVictim(SPELL_MORTAL_WOUND);
-                            events.ScheduleEvent(EVENT_MORTAL_WOUND, urand (5000, 13000));
-                            break;
-                        case EVENT_SURGE:
-                            Talk(SAY_SURGE);
-                            if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                                DoCast(target, SPELL_SURGE);
-                            events.ScheduleEvent(EVENT_SURGE, urand (5000, 13000));
-                            break;
-                        case EVENT_RETALIATION:
-                            DoCast(me, SPELL_RETALIATION);
-                            events.ScheduleEvent(EVENT_RETALIATION, 30000);
-                            break;
-                        default:
-                            break;
+                        DoCast(me, SPELL_RETALIATION);
+                        Retaliation_Timer = 30000;
                     }
+                    else
+                        Retaliation_Timer -= diff;
                 }
 
-                if (!retaliation)
-                {
-                    if (HealthBelowPct(20))
-                    {
-                        events.ScheduleEvent(EVENT_RETALIATION, 1000);
-                        retaliation = true;
-                    }
-                }
-
-                if (!yelledForHeal)
+                if (!YelledForHeal)
                 {
                     if (HealthBelowPct(40))
                     {
                         Talk(SAY_HEAL);
-                        yelledForHeal = true;
+                        YelledForHeal = true;
                     }
                 }
 
                 DoMeleeAttackIfReady();
             }
-
-            private:
-                bool hasTaunted;
-                bool yelledForHeal;
-                bool retaliation;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_watchkeeper_gargolmarAI(creature);
         }

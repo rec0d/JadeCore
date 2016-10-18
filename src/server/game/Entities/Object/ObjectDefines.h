@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -23,24 +23,21 @@
 
 enum HighGuid
 {
-    HIGHGUID_AREATRIGGER    = 0xF102,
-    HIGHGUID_PETBAR         = 0x00C,
-    HIGHGUID_BATTLEGROUND   = 0x1F1,
-    HIGHGUID_CONTAINER      = 0x400,
-    HIGHGUID_CORPSE         = 0xF0C0,
-    HIGHGUID_DYNAMICOBJECT  = 0xF10,
-    HIGHGUID_GAMEOBJECT     = 0xF11,
+    HIGHGUID_ITEM           = 0x400,                       // blizz 4000
+    HIGHGUID_CONTAINER      = 0x400,                       // blizz 4000
+    HIGHGUID_PLAYER         = 0x000,                       // blizz 0000
+    HIGHGUID_GAMEOBJECT     = 0xF11,                       // blizz F110
+    HIGHGUID_TRANSPORT      = 0xF12,                       // blizz F120 (for GAMEOBJECT_TYPE_TRANSPORT)
+    HIGHGUID_UNIT           = 0xF13,                       // blizz F130
+    HIGHGUID_PET            = 0xF14,                       // blizz F140
+    HIGHGUID_VEHICLE        = 0xF15,                       // blizz F550
+    HIGHGUID_DYNAMICOBJECT  = 0xF10,                       // blizz F100
+    HIGHGUID_CORPSE         = 0xF101,                      // blizz F100
+    HIGHGUID_AREATRIGGER    = 0xF102,                      // blizz F100
+    HIGHGUID_BATTLEGROUND   = 0x1F1,                       // new 4.x
+    HIGHGUID_MO_TRANSPORT   = 0x1FC,                       // blizz 1FC0 (for GAMEOBJECT_TYPE_MO_TRANSPORT)
     HIGHGUID_GROUP          = 0x1F5,
-    HIGHGUID_GUILD          = 0x1FF,
-    HIGHGUID_INSTANCE_SAVE  = 0x104,
-    HIGHGUID_ITEM           = 0x400,
-    HIGHGUID_LOOT           = 0xF19,
-    HIGHGUID_MO_TRANSPORT   = 0x1FC,
-    HIGHGUID_PET            = 0xF14,
-    HIGHGUID_PLAYER         = 0x000,
-    HIGHGUID_TRANSPORT      = 0xF12,
-    HIGHGUID_UNIT           = 0xF13,
-    HIGHGUID_VEHICLE        = 0xF15,
+    HIGHGUID_GUILD          = 0x1FF                        // new 4.x
 };
 
 // used for creating values for respawn for example
@@ -71,7 +68,7 @@ inline bool IS_GROUP_GUID(uint64 guid);
 inline bool IS_AREATRIGGER_GUID(uint64 guid);
 
 // l - OBJECT_FIELD_GUID
-// e - OBJECT_FIELD_ENTRY_ID for GO (except GAMEOBJECT_TYPE_MO_TRANSPORT) and creatures or UNIT_FIELD_PET_NUMBER for pets
+// e - OBJECT_FIELD_ENTRY for GO (except GAMEOBJECT_TYPE_MO_TRANSPORT) and creatures or UNIT_FIELD_PETNUMBER for pets
 // h - OBJECT_FIELD_GUID + 1
 inline uint64 MAKE_NEW_GUID(uint32 l, uint32 e, uint32 h);
 
@@ -237,7 +234,6 @@ bool IsGuidHaveEnPart(uint64 guid)
         case HIGHGUID_CORPSE:
         case HIGHGUID_GROUP:
         case HIGHGUID_GUILD:
-        case HIGHGUID_BATTLEGROUND:
             return false;
         case HIGHGUID_GAMEOBJECT:
         case HIGHGUID_TRANSPORT:
@@ -268,7 +264,6 @@ char const* GetLogNameForGuid(uint64 guid)
         case HIGHGUID_GROUP:        return "group";
         case HIGHGUID_GUILD:        return "guild";
         case HIGHGUID_AREATRIGGER:  return "areatrigger";
-        case HIGHGUID_BATTLEGROUND: return "battleground";
         default:
             return "<unknown>";
     }

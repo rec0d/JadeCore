@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -47,9 +45,9 @@ class boss_anetheron : public CreatureScript
 public:
     boss_anetheron() : CreatureScript("boss_anetheron") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_anetheronAI(creature);
+        return new boss_anetheronAI (creature);
     }
 
     struct boss_anetheronAI : public hyjal_trashAI
@@ -66,7 +64,7 @@ public:
         uint32 InfernoTimer;
         bool go;
 
-        void Reset() override
+        void Reset()
         {
             damageTaken = 0;
             SwarmTimer = 45000;
@@ -78,29 +76,29 @@ public:
                 instance->SetData(DATA_ANETHERONEVENT, NOT_STARTED);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             if (instance && IsEvent)
                 instance->SetData(DATA_ANETHERONEVENT, IN_PROGRESS);
             Talk(SAY_ONAGGRO);
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_ONSLAY);
         }
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId)
         {
             if (waypointId == 7 && instance)
             {
                 Unit* target = Unit::GetUnit(*me, instance->GetData64(DATA_JAINAPROUDMOORE));
-                if (target && target->IsAlive())
+                if (target && target->isAlive())
                     me->AddThreat(target, 0.0f);
             }
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* killer)
         {
             hyjal_trashAI::JustDied(killer);
             if (instance && IsEvent)
@@ -108,7 +106,7 @@ public:
             Talk(SAY_ONDEATH);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (IsEvent)
             {
@@ -174,19 +172,19 @@ public:
 
 };
 
-class npc_towering_infernal : public CreatureScript
+class mob_towering_infernal : public CreatureScript
 {
 public:
-    npc_towering_infernal() : CreatureScript("npc_towering_infernal") { }
+    mob_towering_infernal() : CreatureScript("mob_towering_infernal") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_towering_infernalAI(creature);
+        return new mob_towering_infernalAI (creature);
     }
 
-    struct npc_towering_infernalAI : public ScriptedAI
+    struct mob_towering_infernalAI : public ScriptedAI
     {
-        npc_towering_infernalAI(Creature* creature) : ScriptedAI(creature)
+        mob_towering_infernalAI(Creature* creature) : ScriptedAI(creature)
         {
             instance = creature->GetInstanceScript();
             if (instance)
@@ -198,33 +196,32 @@ public:
         uint64 AnetheronGUID;
         InstanceScript* instance;
 
-        void Reset() override
+        void Reset()
         {
             DoCast(me, SPELL_INFERNO_EFFECT);
             ImmolationTimer = 5000;
             CheckTimer = 5000;
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
         }
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
-            if (me->IsWithinDist(who, 50) && !me->IsInCombat() && me->IsValidAttackTarget(who))
+            if (me->IsWithinDist(who, 50) && !me->isInCombat() && me->IsValidAttackTarget(who))
                 AttackStart(who);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (CheckTimer <= diff)
             {
@@ -260,5 +257,5 @@ public:
 void AddSC_boss_anetheron()
 {
     new boss_anetheron();
-    new npc_towering_infernal();
+    new mob_towering_infernal();
 }

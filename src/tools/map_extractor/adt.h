@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -55,6 +54,8 @@ class adt_MCVT
     uint32 size;
 public:
     float height_map[(ADT_CELL_SIZE+1)*(ADT_CELL_SIZE+1)+ADT_CELL_SIZE*ADT_CELL_SIZE];
+
+    bool  prepareLoadedData();
 };
 
 //
@@ -83,6 +84,7 @@ public:
     // == 0x0F - not show liquid
     uint8 flags[ADT_CELL_SIZE][ADT_CELL_SIZE];
     uint8 data[84];
+    bool  prepareLoadedData();
 };
 
 //
@@ -101,15 +103,8 @@ public:
     uint32 iy;
     uint32 nLayers;
     uint32 nDoodadRefs;
-    union
-    {
-        struct
-        {
-            uint32 offsMCVT;        // height map
-            uint32 offsMCNR;        // Normal vectors for each vertex
-        } offsets;
-        uint64 HighResHoles;        // TODO: maybe use this?
-    } union_5_3_0;
+    uint32 offsMCVT;        // height map
+    uint32 offsMCNR;        // Normal vectors for each vertex
     uint32 offsMCLY;        // Texture layer definitions
     uint32 offsMCRF;        // A list of indices into the parent file's MDDF chunk
     uint32 offsMCAL;        // Alpha maps for additional texture layers
@@ -135,6 +130,48 @@ public:
     uint32 offsMCCV;         // offsColorValues in WotLK
     uint32 props;
     uint32 effectId;
+
+    bool   prepareLoadedData();
+    adt_MCVT *getMCVT()
+    {
+        if (offsMCVT)
+            return (adt_MCVT *)((uint8 *)this + offsMCVT);
+        return 0;
+    }
+    adt_MCLQ *getMCLQ()
+    {
+        if (offsMCLQ)
+            return (adt_MCLQ *)((uint8 *)this + offsMCLQ);
+        return 0;
+    }
+};
+
+//
+// Adt file grid chunk
+//
+class adt_MCIN
+{
+    union{
+        uint32 fcc;
+        char   fcc_txt[4];
+    };
+    uint32 size;
+public:
+    struct adt_CELLS{
+        uint32 offsMCNK;
+        uint32 size;
+        uint32 flags;
+        uint32 asyncId;
+    } cells[ADT_CELLS_PER_GRID][ADT_CELLS_PER_GRID];
+
+    bool   prepareLoadedData();
+    // offset from begin file (used this-84)
+    adt_MCNK *getMCNK(int x, int y)
+    {
+        if (cells[x][y].offsMCNK)
+            return (adt_MCNK *)((uint8 *)this + cells[x][y].offsMCNK - 84);
+        return 0;
+    }
 };
 
 #define ADT_LIQUID_HEADER_FULL_LIGHT   0x01
@@ -170,6 +207,8 @@ public:
         uint32 used;
         uint32 offsData2;
     } liquid[ADT_CELLS_PER_GRID][ADT_CELLS_PER_GRID];
+
+    bool   prepareLoadedData();
 
     adt_liquid_header *getLiquidData(int x, int y)
     {
@@ -221,6 +260,53 @@ public:
             return 0xFFFFFFFFFFFFFFFFuLL;
     }
 
+};
+
+//
+// Adt file header chunk
+//
+class ADT_file;
+class adt_MHDR
+{
+    friend class ADT_file;
+
+    union{
+        uint32 fcc;
+        char   fcc_txt[4];
+    };
+    uint32 size;
+
+    uint32 flags;
+    uint32 offsMCIN;           // MCIN
+    uint32 offsTex;               // MTEX
+    uint32 offsModels;           // MMDX
+    uint32 offsModelsIds;       // MMID
+    uint32 offsMapObejcts;       // MWMO
+    uint32 offsMapObejctsIds;  // MWID
+    uint32 offsDoodsDef;       // MDDF
+    uint32 offsObjectsDef;     // MODF
+    uint32 offsMFBO;           // MFBO
+    uint32 offsMH2O;           // MH2O
+    uint32 data1;
+    uint32 data2;
+    uint32 data3;
+    uint32 data4;
+    uint32 data5;
+public:
+    bool prepareLoadedData();
+    adt_MCIN* getMCIN() { return offsMCIN ? (adt_MCIN *)((uint8 *)&flags+offsMCIN) : NULL; }
+    adt_MH2O* getMH2O() { return offsMH2O ? (adt_MH2O *)((uint8 *)&flags+offsMH2O) : NULL; }
+};
+
+class ADT_file : public FileLoader{
+public:
+    bool prepareLoadedData();
+    ADT_file();
+    ~ADT_file();
+    void free();
+
+    adt_MHDR* a_grid;
+    adt_MCNK* cells[ADT_CELLS_PER_GRID][ADT_CELLS_PER_GRID];
 };
 
 #pragma pack(pop)

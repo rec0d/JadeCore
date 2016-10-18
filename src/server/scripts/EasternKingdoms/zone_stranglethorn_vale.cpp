@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,7 +24,7 @@ SDCategory: Stranglethorn Vale
 EndScriptData */
 
 /* ContentData
-npc_yenniku
+mob_yenniku
 EndContentData */
 
 #include "ScriptMgr.h"
@@ -34,22 +33,22 @@ EndContentData */
 #include "SpellInfo.h"
 
 /*######
-## npc_yenniku
+## mob_yenniku
 ######*/
 
-class npc_yenniku : public CreatureScript
+class mob_yenniku : public CreatureScript
 {
 public:
-    npc_yenniku() : CreatureScript("npc_yenniku") { }
+    mob_yenniku() : CreatureScript("mob_yenniku") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_yennikuAI(creature);
+        return new mob_yennikuAI (creature);
     }
 
-    struct npc_yennikuAI : public ScriptedAI
+    struct mob_yennikuAI : public ScriptedAI
     {
-        npc_yennikuAI(Creature* creature) : ScriptedAI(creature)
+        mob_yennikuAI(Creature* creature) : ScriptedAI(creature)
         {
             bReset = false;
         }
@@ -57,22 +56,20 @@ public:
         uint32 Reset_Timer;
         bool bReset;
 
-        void Reset() override
+        void Reset()
         {
             Reset_Timer = 0;
-            me->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_STATE_NONE);
+            me->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_NONE);
         }
 
-        void SpellHit(Unit* caster, const SpellInfo* spell) override
+        void SpellHit(Unit* caster, const SpellInfo* spell)
         {
-            if (bReset || spell->Id != 3607)
-                return;
-
-            if (Player* player = caster->ToPlayer())
+            if (caster->GetTypeId() == TYPEID_PLAYER)
             {
-                if (player->GetQuestStatus(592) == QUEST_STATUS_INCOMPLETE) //Yenniku's Release
+                                                                //Yenniku's Release
+                if (!bReset && CAST_PLR(caster)->GetQuestStatus(592) == QUEST_STATUS_INCOMPLETE && spell->Id == 3607)
                 {
-                    me->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_STATE_STUN);
+                    me->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_STUN);
                     me->CombatStop();                   //stop combat
                     me->DeleteThreatList();             //unsure of this
                     me->setFaction(83);                 //horde generic
@@ -81,11 +78,12 @@ public:
                     Reset_Timer = 60000;
                 }
             }
+            return;
         }
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/) {}
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (bReset)
             {
@@ -96,14 +94,14 @@ public:
                     me->setFaction(28);                     //troll, bloodscalp
                     return;
                 }
+                else Reset_Timer -= diff;
 
-                Reset_Timer -= diff;
-
-                if (me->IsInCombat() && me->GetVictim())
+                if (me->isInCombat() && me->GetVictim())
                 {
-                    if (Player* player = me->GetVictim()->ToPlayer())
+                    if (me->GetVictim()->GetTypeId() == TYPEID_PLAYER)
                     {
-                        if (player->GetTeam() == HORDE)
+                        Unit* victim = me->GetVictim();
+                        if (CAST_PLR(victim)->GetTeam() == HORDE)
                         {
                             me->CombatStop();
                             me->DeleteThreatList();
@@ -127,5 +125,5 @@ public:
 
 void AddSC_stranglethorn_vale()
 {
-    new npc_yenniku();
+    new mob_yenniku();
 }

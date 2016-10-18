@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -65,7 +64,7 @@ class boss_murmur : public CreatureScript
                 SetCombatMovement(false);
             }
 
-            void Reset() override
+            void Reset() 
             {
                 _Reset();
                 events.ScheduleEvent(EVENT_SONIC_BOOM, 30000);
@@ -85,17 +84,17 @@ class boss_murmur : public CreatureScript
                 me->ResetPlayerDamageReq();
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/) 
             {
                 _EnterCombat();
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/) 
             {
                 _JustDied();
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff) 
             {
                 if (!UpdateVictim())
                     return;
@@ -168,7 +167,7 @@ class boss_murmur : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const 
         {
             return GetShadowLabyrinthAI<boss_murmurAI>(creature);
         }
@@ -184,7 +183,7 @@ class spell_murmur_sonic_boom : public SpellScriptLoader
         {
             PrepareSpellScript(spell_murmur_sonic_boom_SpellScript);
 
-            bool Validate(SpellInfo const* /*spellInfo*/) override
+            bool Validate(SpellInfo const* /*spellInfo*/) 
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_SONIC_BOOM_EFFECT))
                     return false;
@@ -196,13 +195,13 @@ class spell_murmur_sonic_boom : public SpellScriptLoader
                 GetCaster()->CastSpell((Unit*)NULL, SPELL_SONIC_BOOM_EFFECT, true);
             }
 
-            void Register() override
+            void Register() 
             {
                 OnEffectHit += SpellEffectFn(spell_murmur_sonic_boom_SpellScript::HandleEffect, EFFECT_0, SPELL_EFFECT_DUMMY);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const 
         {
             return new spell_murmur_sonic_boom_SpellScript();
         }
@@ -224,13 +223,13 @@ class spell_murmur_sonic_boom_effect : public SpellScriptLoader
                     SetHitDamage(target->CountPctFromMaxHealth(80)); /// @todo: find correct value
             }
 
-            void Register() override
+            void Register() 
             {
                 OnHit += SpellHitFn(spell_murmur_sonic_boom_effect_SpellScript::CalcDamage);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const 
         {
             return new spell_murmur_sonic_boom_effect_SpellScript();
         }
@@ -249,6 +248,7 @@ class ThunderingStormCheck
 
     private:
         WorldObject const* _source;
+        float _dist;
 };
 
 // 39365 - Thundering Storm
@@ -266,13 +266,13 @@ class spell_murmur_thundering_storm : public SpellScriptLoader
                 targets.remove_if(ThunderingStormCheck(GetCaster()));
             }
 
-            void Register() override
+            void Register() 
             {
                 OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_murmur_thundering_storm_SpellScript::FilterTarget, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const 
         {
             return new spell_murmur_thundering_storm_SpellScript();
         }

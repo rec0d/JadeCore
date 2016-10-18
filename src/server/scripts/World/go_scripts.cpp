@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,6 +18,9 @@
 
 /* ContentData
 go_cat_figurine (the "trap" version of GO, two different exist)
+go_northern_crystal_pylon
+go_eastern_crystal_pylon
+go_western_crystal_pylon
 go_barov_journal
 go_ethereum_prison
 go_ethereum_stasis
@@ -51,6 +53,7 @@ EndContentData */
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
+#include "Battleground.h"
 #include "GameObjectAI.h"
 #include "Spell.h"
 #include "Player.h"
@@ -74,6 +77,69 @@ public:
     {
         player->CastSpell(player, SPELL_SUMMON_GHOST_SABER, true);
         return false;
+    }
+};
+
+/*######
+## go_crystal_pylons (3x)
+######*/
+class go_northern_crystal_pylon : public GameObjectScript
+{
+public:
+    go_northern_crystal_pylon() : GameObjectScript("go_northern_crystal_pylon") { }
+
+    bool OnGossipHello(Player* player, GameObject* go)
+    {
+        if (go->GetGoType() == GAMEOBJECT_TYPE_QUESTGIVER)
+        {
+            player->PrepareQuestMenu(go->GetGUID());
+            player->SendPreparedQuest(go->GetGUID());
+        }
+
+        if (player->GetQuestStatus(4285) == QUEST_STATUS_INCOMPLETE)
+            player->AreaExploredOrEventHappens(4285);
+
+        return true;
+    }
+};
+
+class go_eastern_crystal_pylon : public GameObjectScript
+{
+public:
+    go_eastern_crystal_pylon() : GameObjectScript("go_eastern_crystal_pylon") { }
+
+    bool OnGossipHello(Player* player, GameObject* go)
+    {
+        if (go->GetGoType() == GAMEOBJECT_TYPE_QUESTGIVER)
+        {
+            player->PrepareQuestMenu(go->GetGUID());
+            player->SendPreparedQuest(go->GetGUID());
+        }
+
+        if (player->GetQuestStatus(4287) == QUEST_STATUS_INCOMPLETE)
+            player->AreaExploredOrEventHappens(4287);
+
+        return true;
+    }
+};
+
+class go_western_crystal_pylon : public GameObjectScript
+{
+public:
+    go_western_crystal_pylon() : GameObjectScript("go_western_crystal_pylon") { }
+
+    bool OnGossipHello(Player* player, GameObject* go)
+    {
+        if (go->GetGoType() == GAMEOBJECT_TYPE_QUESTGIVER)
+        {
+            player->PrepareQuestMenu(go->GetGUID());
+            player->SendPreparedQuest(go->GetGUID());
+        }
+
+        if (player->GetQuestStatus(4288) == QUEST_STATUS_INCOMPLETE)
+            player->AreaExploredOrEventHappens(4288);
+
+        return true;
     }
 };
 
@@ -186,7 +252,7 @@ class go_tablet_of_the_seven : public GameObjectScript
 public:
     go_tablet_of_the_seven() : GameObjectScript("go_tablet_of_the_seven") { }
 
-    /// @todo use gossip option ("Transcript the Tablet") instead, if Trinity adds support.
+    //TODO: use gossip option ("Transcript the Tablet") instead, if Trinity adds support.
     bool OnGossipHello(Player* player, GameObject* go)
     {
         if (go->GetGoType() != GAMEOBJECT_TYPE_QUESTGIVER)
@@ -252,7 +318,7 @@ public:
         {
             if (!creature->IsHostileTo(player))
             {
-                if (FactionTemplateEntry const* pFaction = creature->GetFactionTemplateEntry())
+                if (FactionTemplateEntry const* pFaction = creature->getFactionTemplateEntry())
                 {
                     uint32 Spell = 0;
 
@@ -269,7 +335,7 @@ public:
                     if (Spell)
                         creature->CastSpell(player, Spell, false);
                     else
-                        TC_LOG_ERROR("scripts", "go_ethereum_prison summoned Creature (entry %u) but faction (%u) are not expected by script.", creature->GetEntry(), creature->getFaction());
+                        sLog->outError(LOG_FILTER_TSCR, "go_ethereum_prison summoned Creature (entry %u) but faction (%u) are not expected by script.", creature->GetEntry(), creature->getFaction());
                 }
             }
         }
@@ -331,10 +397,7 @@ public:
 ## go_sacred_fire_of_life
 ######*/
 
-enum SacredFireOfLife
-{
-    NPC_ARIKARA     = 10882
-};
+#define NPC_ARIKARA  10882
 
 class go_sacred_fire_of_life : public GameObjectScript
 {
@@ -711,11 +774,7 @@ public:
 ## go_blood_filled_orb
 ######*/
 
-enum BloodFilledOrb
-{
-    NPC_ZELEMAR     = 17830
-
-};
+#define NPC_ZELEMAR  17830
 
 class go_blood_filled_orb : public GameObjectScript
 {
@@ -767,7 +826,7 @@ public:
                     pPrisoner = go->FindNearestCreature(NPC_EBON_BLADE_PRISONER_NE, 5.0f, true);
             }
         }
-        if (!pPrisoner || !pPrisoner->IsAlive())
+        if (!pPrisoner || !pPrisoner->isAlive())
             return false;
 
         pPrisoner->DisappearAndDie();
@@ -872,22 +931,56 @@ public:
 
 enum SoulWellData
 {
-    GO_SOUL_WELL                        = 181621,
-    SPELL_HEALTH_STONE                  = 23517
+    GO_SOUL_WELL_R1                     = 181621,
+    GO_SOUL_WELL_R2                     = 193169,
+
+    SPELL_IMPROVED_HEALTH_STONE_R1      = 18692,
+    SPELL_IMPROVED_HEALTH_STONE_R2      = 18693,
+
+    SPELL_CREATE_MASTER_HEALTH_STONE_R0 = 34130,
+    SPELL_CREATE_MASTER_HEALTH_STONE_R1 = 34149,
+    SPELL_CREATE_MASTER_HEALTH_STONE_R2 = 34150,
+
+    SPELL_CREATE_FEL_HEALTH_STONE_R0    = 58890,
+    SPELL_CREATE_FEL_HEALTH_STONE_R1    = 58896,
+    SPELL_CREATE_FEL_HEALTH_STONE_R2    = 58898,
 };
 
 class go_soulwell : public GameObjectScript
 {
     public:
-        go_soulwell() : GameObjectScript("go_soulwell") { }
+        go_soulwell() : GameObjectScript("go_soulwell") {}
 
         struct go_soulwellAI : public GameObjectAI
         {
             go_soulwellAI(GameObject* go) : GameObjectAI(go)
             {
-                _stoneId = 5512;
-                _stoneSpell = SPELL_HEALTH_STONE;
-                if (_stoneSpell == 0)
+                _stoneSpell = 0;
+                _stoneId = 0;
+                switch (go->GetEntry())
+                {
+                    case GO_SOUL_WELL_R1:
+                        _stoneSpell = SPELL_CREATE_MASTER_HEALTH_STONE_R0;
+                        if (Unit* owner = go->GetOwner())
+                        {
+                            if (owner->HasAura(SPELL_IMPROVED_HEALTH_STONE_R1))
+                                _stoneSpell = SPELL_CREATE_MASTER_HEALTH_STONE_R1;
+                            else if (owner->HasAura(SPELL_CREATE_MASTER_HEALTH_STONE_R2))
+                                _stoneSpell = SPELL_CREATE_MASTER_HEALTH_STONE_R2;
+                        }
+                        break;
+                    case GO_SOUL_WELL_R2:
+                        _stoneSpell = SPELL_CREATE_FEL_HEALTH_STONE_R0;
+                        if (Unit* owner = go->GetOwner())
+                        {
+                            if (owner->HasAura(SPELL_IMPROVED_HEALTH_STONE_R1))
+                                _stoneSpell = SPELL_CREATE_FEL_HEALTH_STONE_R1;
+                            else if (owner->HasAura(SPELL_CREATE_MASTER_HEALTH_STONE_R2))
+                                _stoneSpell = SPELL_CREATE_FEL_HEALTH_STONE_R2;
+                        }
+                        break;
+                }
+                if (_stoneSpell == 0) // Should never happen
                     return;
 
                 SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_stoneSpell);
@@ -904,19 +997,24 @@ class go_soulwell : public GameObjectScript
             bool GossipHello(Player* player)
             {
                 Unit* owner = go->GetOwner();
+                if (_stoneSpell == 0 || _stoneId == 0)
+                    return true;
 
                 if (!owner || owner->GetTypeId() != TYPEID_PLAYER || !player->IsInSameRaidWith(owner->ToPlayer()))
                     return true;
 
                 // Don't try to add a stone if we already have one.
-                if (player->HasItemCount(5512, 1))
+                if (player->HasItemCount(_stoneId))
                 {
-                    if (SpellInfo const* spell = sSpellMgr->GetSpellInfo(23517))
+                    if (SpellInfo const* spell = sSpellMgr->GetSpellInfo(_stoneSpell))
                         Spell::SendCastResult(player, spell, 0, SPELL_FAILED_TOO_MANY_OF_ITEM);
                     return true;
                 }
 
-                player->CastSpell(player,23517,true);
+                owner->CastSpell(player, _stoneSpell, true);
+                // Item has to actually be created to remove a charge on the well.
+                if (player->HasItemCount(_stoneId))
+                    go->AddUse();
 
                 return false;
             }
@@ -969,14 +1067,14 @@ public:
             }
         }
 
-        if (!pPrisoner || !pPrisoner->IsAlive())
+        if (!pPrisoner || !pPrisoner->isAlive())
             return true;
 
         Quest const* qInfo = sObjectMgr->GetQuestTemplate(QUEST_PRISONERS_OF_WYRMSKULL);
         if (qInfo)
         {
-            /// @todo prisoner should help player for a short period of time
-            player->KilledMonsterCredit(qInfo->GetQuestObjectiveXIndex(0)->ObjectId);
+            //TODO: prisoner should help player for a short period of time
+            player->KilledMonsterCredit(qInfo->RequiredNpcOrGo[0], 0);
             pPrisoner->DisappearAndDie();
         }
         return true;
@@ -1047,11 +1145,11 @@ public:
         {
             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_USE_OUTHOUSE, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
             player->SEND_GOSSIP_MENU(GOSSIP_OUTHOUSE_VACANT, go->GetGUID());
+            return true;
         }
         else
             player->SEND_GOSSIP_MENU(GOSSIP_OUTHOUSE_INUSE, go->GetGUID());
-
-        return true;
+            return true;
     }
 
     bool OnGossipSelect(Player* player, GameObject* go, uint32 /*sender*/, uint32 action)
@@ -1142,7 +1240,8 @@ class go_gjalerbron_cage : public GameObjectScript
             {
                 if (Creature* prisoner = go->FindNearestCreature(NPC_GJALERBRON_PRISONER, 5.0f))
                 {
-                    player->KilledMonsterCredit(NPC_GJALERBRON_PRISONER, 0);
+                    if (player)
+                        player->KilledMonsterCredit(NPC_GJALERBRON_PRISONER, 0);
 
                     prisoner->AI()->Talk(SAY_FREE);
                     prisoner->DespawnOrUnsummon(6000);
@@ -1268,43 +1367,100 @@ public:
     }
 };
 
+class go_arena_readymark : public GameObjectScript
+{
+public:
+    go_arena_readymark() : GameObjectScript("go_arena_readymark") { }
+
+    bool OnGossipHello(Player* pPlayer, GameObject *pGo)
+    {
+        if (pGo->GetMap()->IsBattleArena())
+        {
+            Battleground *bg = pPlayer->GetBattleground();
+
+            if (!bg || !bg->isArena())
+                return true;
+
+            if (bg->GetStartDelayTime() <= 15000)
+            {
+                pPlayer->GetSession()->SendNotification("Arena already starting soon.");
+                return true;
+            }
+
+            if (!pPlayer->_markedReady)
+            {
+                pPlayer->GetSession()->SendNotification("You are now marked as ready");
+                pGo->DestroyForPlayer(pPlayer);
+                pPlayer->_markedReady = true;
+                uint8 neededPlayers = bg->GetArenaType() * 2;
+
+                if (bg->GetPlayers().size() < neededPlayers) // not everyone joined yet.
+                    return true;
+
+                // Loop through bg players to see if everyone is ready.
+                for (Battleground::BattlegroundPlayerMap::const_iterator itr = bg->GetPlayers().begin(); itr != bg->GetPlayers().end(); ++itr)
+                {
+                    Player* curPlr = sObjectAccessor->FindPlayer(itr->first);
+                    if (!curPlr)
+                        continue;
+
+                    if (!curPlr->_markedReady) // Somone is not marked ready, dont continue.
+                        return true;
+                }
+
+                // Alert the players that the BG begins soon.
+                bg->PlaySoundToAll(8192); // Sounds like flag return in WSG.
+
+                // And set the timer to 15 sec.
+                bg->SetStartDelayTime(15000);
+                bg->SetElapsedTime(45 * IN_MILLISECONDS);
+            }
+        }
+        return true;
+    }
+};
+
 void AddSC_go_scripts()
 {
-    new go_cat_figurine();
-    new go_barov_journal();
-    new go_field_repair_bot_74A();
-    new go_gilded_brazier();
-    new go_orb_of_command();
-    new go_shrine_of_the_birds();
-    new go_southfury_moonstone();
-    new go_tablet_of_madness();
-    new go_tablet_of_the_seven();
-    new go_jump_a_tron();
-    new go_ethereum_prison();
-    new go_ethereum_stasis();
-    new go_resonite_cask();
-    new go_sacred_fire_of_life();
-    new go_tele_to_dalaran_crystal();
-    new go_tele_to_violet_stand();
-    new go_fel_crystalforge();
-    new go_bashir_crystalforge();
-    new go_matrix_punchograph();
-    new go_scourge_cage();
-    new go_arcane_prison();
-    new go_blood_filled_orb();
-    new go_jotunheim_cage();
-    new go_table_theka();
-    new go_inconspicuous_landmark();
-    new go_ethereal_teleport_pad();
-    new go_soulwell();
-    new go_tadpole_cage();
-    new go_dragonflayer_cage();
-    new go_amberpine_outhouse();
-    new go_hive_pod();
-    new go_massive_seaforium_charge();
-    new go_gjalerbron_cage();
-    new go_large_gjalerbron_cage();
-    new go_veil_skith_cage();
-    new go_frostblade_shrine();
-    new go_midsummer_bonfire();
+    new go_cat_figurine;
+    new go_northern_crystal_pylon;
+    new go_eastern_crystal_pylon;
+    new go_western_crystal_pylon;
+    new go_barov_journal;
+    new go_field_repair_bot_74A;
+    new go_gilded_brazier;
+    new go_orb_of_command;
+    new go_shrine_of_the_birds;
+    new go_southfury_moonstone;
+    new go_tablet_of_madness;
+    new go_tablet_of_the_seven;
+    new go_jump_a_tron;
+    new go_ethereum_prison;
+    new go_ethereum_stasis;
+    new go_resonite_cask;
+    new go_sacred_fire_of_life;
+    new go_tele_to_dalaran_crystal;
+    new go_tele_to_violet_stand;
+    new go_fel_crystalforge;
+    new go_bashir_crystalforge;
+    new go_matrix_punchograph;
+    new go_scourge_cage;
+    new go_arcane_prison;
+    new go_blood_filled_orb;
+    new go_jotunheim_cage;
+    new go_table_theka;
+    new go_inconspicuous_landmark;
+    new go_ethereal_teleport_pad;
+    new go_soulwell;
+    new go_tadpole_cage;
+    new go_dragonflayer_cage;
+    new go_amberpine_outhouse;
+    new go_hive_pod;
+    new go_massive_seaforium_charge;
+    new go_gjalerbron_cage;
+    new go_large_gjalerbron_cage;
+    new go_veil_skith_cage;
+    new go_frostblade_shrine;
+    new go_midsummer_bonfire;
+    new go_arena_readymark();
 }

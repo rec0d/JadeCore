@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,54 +24,47 @@ SDCategory: Auchindoun, Auchenai Crypts
 EndScriptData */
 
 /* ContentData
-npc_stolen_soul
+mob_stolen_soul
 boss_exarch_maladaar
-npc_avatar_of_martyred
+mob_avatar_of_martyred
 EndContentData */
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 
-enum Spells
-{
-    SPELL_MOONFIRE              = 37328,
-    SPELL_FIREBALL              = 37329,
-    SPELL_MIND_FLAY             = 37330,
-    SPELL_HEMORRHAGE            = 37331,
-    SPELL_FROSTSHOCK            = 37332,
-    SPELL_CURSE_OF_AGONY        = 37334,
-    SPELL_MORTAL_STRIKE         = 37335,
-    SPELL_FREEZING_TRAP         = 37368,
-    SPELL_HAMMER_OF_JUSTICE     = 37369,
+#define SPELL_MOONFIRE          37328
+#define SPELL_FIREBALL          37329
+#define SPELL_MIND_FLAY         37330
+#define SPELL_HEMORRHAGE        37331
+#define SPELL_FROSTSHOCK        37332
+#define SPELL_CURSE_OF_AGONY    37334
+#define SPELL_MORTAL_STRIKE     37335
+#define SPELL_FREEZING_TRAP     37368
+#define SPELL_HAMMER_OF_JUSTICE 37369
 
-    // Avatar of Martyred
-    SPELL_AV_MORTAL_STRIKE      = 16856,
-    SPELL_AV_SUNDER_ARMOR       = 16145
-};
-
-class npc_stolen_soul : public CreatureScript
+class mob_stolen_soul : public CreatureScript
 {
 public:
-    npc_stolen_soul() : CreatureScript("npc_stolen_soul") { }
+    mob_stolen_soul() : CreatureScript("mob_stolen_soul") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_stolen_soulAI(creature);
+        return new mob_stolen_soulAI (creature);
     }
 
-    struct npc_stolen_soulAI : public ScriptedAI
+    struct mob_stolen_soulAI : public ScriptedAI
     {
-        npc_stolen_soulAI(Creature* creature) : ScriptedAI(creature) { }
+        mob_stolen_soulAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint8 myClass;
         uint32 Class_Timer;
 
-        void Reset() override
+        void Reset()
         {
             Class_Timer = 1000;
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         { }
 
         void SetMyClass(uint8 myclass)
@@ -80,7 +72,7 @@ public:
             myClass = myclass;
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -157,9 +149,9 @@ class boss_exarch_maladaar : public CreatureScript
 public:
     boss_exarch_maladaar() : CreatureScript("boss_exarch_maladaar") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_exarch_maladaarAI(creature);
+        return new boss_exarch_maladaarAI (creature);
     }
 
     struct boss_exarch_maladaarAI : public ScriptedAI
@@ -180,7 +172,7 @@ public:
         bool HasTaunted;
         bool Avatar_summoned;
 
-        void Reset() override
+        void Reset()
         {
             soulmodel = 0;
             soulholder = 0;
@@ -193,8 +185,7 @@ public:
             Avatar_summoned = false;
         }
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
             if (!HasTaunted && me->IsWithinDistInMap(who, 150.0f))
             {
@@ -205,12 +196,12 @@ public:
             ScriptedAI::MoveInLineOfSight(who);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(SAY_AGGRO);
         }
 
-        void JustSummoned(Creature* summoned) override
+        void JustSummoned(Creature* summoned)
         {
             if (summoned->GetEntry() == ENTRY_STOLEN_SOUL)
             {
@@ -222,13 +213,13 @@ public:
                 if (Unit* target = Unit::GetUnit(*me, soulholder))
                 {
 
-                CAST_AI(npc_stolen_soul::npc_stolen_soulAI, summoned->AI())->SetMyClass(soulclass);
+                CAST_AI(mob_stolen_soul::mob_stolen_soulAI, summoned->AI())->SetMyClass(soulclass);
                  summoned->AI()->AttackStart(target);
                 }
             }
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             if (rand()%2)
                 return;
@@ -236,14 +227,14 @@ public:
             Talk(SAY_SLAY);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Talk(SAY_DEATH);
             //When Exarch Maladar is defeated D'ore appear.
             me->SummonCreature(19412, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_TIMED_DESPAWN, 600000);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -303,32 +294,35 @@ public:
 
 };
 
-class npc_avatar_of_martyred : public CreatureScript
+#define SPELL_AV_MORTAL_STRIKE          16856
+#define SPELL_AV_SUNDER_ARMOR           16145
+
+class mob_avatar_of_martyred : public CreatureScript
 {
 public:
-    npc_avatar_of_martyred() : CreatureScript("npc_avatar_of_martyred") { }
+    mob_avatar_of_martyred() : CreatureScript("mob_avatar_of_martyred") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_avatar_of_martyredAI(creature);
+        return new mob_avatar_of_martyredAI (creature);
     }
 
-    struct npc_avatar_of_martyredAI : public ScriptedAI
+    struct mob_avatar_of_martyredAI : public ScriptedAI
     {
-        npc_avatar_of_martyredAI(Creature* creature) : ScriptedAI(creature) { }
+        mob_avatar_of_martyredAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 Mortal_Strike_timer;
 
-        void Reset() override
+        void Reset()
         {
             Mortal_Strike_timer = 10000;
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -348,6 +342,6 @@ public:
 void AddSC_boss_exarch_maladaar()
 {
     new boss_exarch_maladaar();
-    new npc_avatar_of_martyred();
-    new npc_stolen_soul();
+    new mob_avatar_of_martyred();
+    new mob_stolen_soul();
 }

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -51,7 +50,7 @@ class npc_mist : public CreatureScript
 public:
     npc_mist() : CreatureScript("npc_mist") { }
 
-    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) override
+    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest)
     {
         if (quest->GetQuestId() == QUEST_MIST)
             if (npc_mistAI* pMistAI = CAST_AI(npc_mist::npc_mistAI, creature->AI()))
@@ -60,7 +59,7 @@ public:
         return true;
     }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_mistAI(creature);
     }
@@ -69,10 +68,9 @@ public:
     {
         npc_mistAI(Creature* creature) : FollowerAI(creature) { }
 
-        void Reset() override { }
+        void Reset() { }
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
             FollowerAI::MoveInLineOfSight(who);
 
@@ -80,7 +78,7 @@ public:
             {
                 if (me->IsWithinDistInMap(who, 10.0f))
                 {
-                    Talk(SAY_AT_HOME, who);
+                    Talk(SAY_AT_HOME, who->GetGUID());
                     DoComplete();
                 }
             }
@@ -99,7 +97,7 @@ public:
         }
 
         //call not needed here, no known abilities
-        /*void UpdateFollowerAI(const uint32 Diff) override
+        /*void UpdateFollowerAI(const uint32 Diff)
         {
             if (!UpdateVictim())
                 return;

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,24 +19,10 @@
 #ifndef DEF_SHATTERED_H
 #define DEF_SHATTERED_H
 
-uint32 const EncounterCount          = 3;
+#define TYPE_NETHEKURSE         1
+#define DATA_NETHEKURSE         2
+#define DATA_NETHEKURSE_DOOR    3
 
-enum DataTypes
-{
-    DATA_NETHEKURSE                  = 1,
-    DATA_OMROGG                      = 2,
-    DATA_KARGATH                     = 3
-};
-
-enum CreatureIds
-{
-    NPC_GRAND_WARLOCK_NETHEKURSE     = 16807
-};
-
-enum GameobjectIds
-{
-    GO_GRAND_WARLOCK_CHAMBER_DOOR_1  = 182539,
-    GO_GRAND_WARLOCK_CHAMBER_DOOR_2  = 182540
-};
-
+#define TYPE_OMROGG             4
 #endif
+

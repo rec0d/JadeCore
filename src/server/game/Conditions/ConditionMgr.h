@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -57,7 +57,7 @@ enum ConditionTypes
     CONDITION_UNIT_STATE            = 21,                   // unitState        0              0                  true if unit has unitState
     CONDITION_MAPID                 = 22,                   // map_id           0              0                  true if in map_id
     CONDITION_AREAID                = 23,                   // area_id          0              0                  true if in area_id
-    CONDITION_CREATURE_TYPE         = 24,                   // cinfo.type       0              0                  true if creature_template.type = value1
+    CONDITION_UNUSED_24             = 24,                   //
     CONDITION_SPELL                 = 25,                   // spell_id         0              0                  true if player has learned spell
     CONDITION_PHASEMASK             = 26,                   // phasemask        0              0                  true if object is in phasemask
     CONDITION_LEVEL                 = 27,                   // level            ComparisonType 0                  true if unit's level is equal to param1 (param2 can modify the statement)
@@ -129,8 +129,18 @@ enum ConditionSourceType
     CONDITION_SOURCE_TYPE_SMART_EVENT                    = 22,
     CONDITION_SOURCE_TYPE_NPC_VENDOR                     = 23,
     CONDITION_SOURCE_TYPE_SPELL_PROC                     = 24,
-    CONDITION_SOURCE_TYPE_PHASE_DEFINITION               = 25, // only 4.3.4
+    CONDITION_SOURCE_TYPE_PHASE_DEFINITION               = 25,
     CONDITION_SOURCE_TYPE_MAX                            = 26  // MAX
+};
+
+enum ComparisionType
+{
+    COMP_TYPE_EQ = 0,
+    COMP_TYPE_HIGH,
+    COMP_TYPE_LOW,
+    COMP_TYPE_HIGH_EQ,
+    COMP_TYPE_LOW_EQ,
+    COMP_TYPE_MAX
 };
 
 enum RelationType
@@ -151,7 +161,7 @@ enum InstanceInfo
     INSTANCE_INFO_BOSS_STATE
 };
 
-enum MaxConditionTargets
+enum
 {
     MAX_CONDITION_TARGETS = 3
 };
@@ -244,7 +254,7 @@ class ConditionMgr
         ConditionList GetConditionsForSpellClickEvent(uint32 creatureId, uint32 spellId);
         ConditionList GetConditionsForSmartEvent(int32 entryOrGuid, uint32 eventId, uint32 sourceType);
         ConditionList GetConditionsForVehicleSpell(uint32 creatureId, uint32 spellId);
-        ConditionList const* GetConditionsForPhaseDefinition(uint32 zone, uint32 entry);
+        ConditionList GetConditionsForPhaseDefinition(uint32 zone, uint32 entry);
         ConditionList GetConditionsForNpcVendorEvent(uint32 creatureId, uint32 itemId);
 
     private:
@@ -266,6 +276,27 @@ class ConditionMgr
         SmartEventConditionContainer      SmartEventConditionStore;
         PhaseDefinitionConditionContainer PhaseDefinitionsConditionStore;
 };
+
+template <class T> bool CompareValues(ComparisionType type,  T val1, T val2)
+{
+    switch (type)
+    {
+        case COMP_TYPE_EQ:
+            return val1 == val2;
+        case COMP_TYPE_HIGH:
+            return val1 > val2;
+        case COMP_TYPE_LOW:
+            return val1 < val2;
+        case COMP_TYPE_HIGH_EQ:
+            return val1 >= val2;
+        case COMP_TYPE_LOW_EQ:
+            return val1 <= val2;
+        default:
+            // incorrect parameter
+            ASSERT(false);
+            return false;
+    }
+}
 
 #define sConditionMgr ACE_Singleton<ConditionMgr, ACE_Null_Mutex>::instance()
 

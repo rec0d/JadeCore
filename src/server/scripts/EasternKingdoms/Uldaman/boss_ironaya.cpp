@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -46,25 +45,25 @@ class boss_ironaya : public CreatureScript
 
         struct boss_ironayaAI : public ScriptedAI
         {
-            boss_ironayaAI(Creature* creature) : ScriptedAI(creature) { }
+            boss_ironayaAI(Creature* creature) : ScriptedAI(creature) {}
 
             uint32 uiArcingTimer;
             bool bHasCastedWstomp;
             bool bHasCastedKnockaway;
 
-            void Reset() override
+            void Reset()
             {
                 uiArcingTimer = 3000;
                 bHasCastedKnockaway = false;
                 bHasCastedWstomp = false;
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 Talk(SAY_AGGRO);
             }
 
-            void UpdateAI(uint32 uiDiff) override
+            void UpdateAI(const uint32 uiDiff)
             {
                 //Return since we have no target
                 if (!UpdateVictim())
@@ -105,7 +104,7 @@ class boss_ironaya : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_ironayaAI(creature);
         }

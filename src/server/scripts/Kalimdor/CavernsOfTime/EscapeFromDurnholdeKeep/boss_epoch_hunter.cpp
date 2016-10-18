@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -51,9 +50,9 @@ class boss_epoch_hunter : public CreatureScript
 public:
     boss_epoch_hunter() : CreatureScript("boss_epoch_hunter") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_epoch_hunterAI(creature);
+        return new boss_epoch_hunterAI (creature);
     }
 
     struct boss_epoch_hunterAI : public ScriptedAI
@@ -70,7 +69,7 @@ public:
         uint32 WingBuffet_Timer;
         uint32 Mda_Timer;
 
-        void Reset() override
+        void Reset()
         {
             SandBreath_Timer = urand(8000, 16000);
             ImpendingDeath_Timer = urand(25000, 30000);
@@ -78,17 +77,17 @@ public:
             Mda_Timer = 40000;
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(SAY_AGGRO);
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_SLAY);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Talk(SAY_DEATH);
 
@@ -96,7 +95,7 @@ public:
                 instance->SetData(TYPE_THRALL_PART4, DONE);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             //Return since we have no target
             if (!UpdateVictim())

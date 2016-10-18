@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -25,6 +25,8 @@ ChannelMgr::~ChannelMgr()
 {
     for (ChannelMap::iterator itr = channels.begin(); itr != channels.end(); ++itr)
         delete itr->second;
+
+    channels.clear();
 }
 
 ChannelMgr* ChannelMgr::forTeam(uint32 team)
@@ -38,18 +40,13 @@ ChannelMgr* ChannelMgr::forTeam(uint32 team)
     if (team == HORDE)
         return ACE_Singleton<HordeChannelMgr, ACE_Null_Mutex>::instance();
 
-    if (team == PANDAREN_NEUTRAL)
-        return ACE_Singleton<NeutralChannelMgr, ACE_Null_Mutex>::instance();
-
     return NULL;
 }
 
 Channel* ChannelMgr::GetJoinChannel(std::string const& name, uint32 channelId)
 {
     std::wstring wname;
-    if (!Utf8toWStr(name, wname))
-        return NULL;
-
+    Utf8toWStr(name, wname);
     wstrToLower(wname);
 
     ChannelMap::const_iterator i = channels.find(wname);
@@ -67,9 +64,7 @@ Channel* ChannelMgr::GetJoinChannel(std::string const& name, uint32 channelId)
 Channel* ChannelMgr::GetChannel(std::string const& name, Player* player, bool pkt)
 {
     std::wstring wname;
-    if (!Utf8toWStr(name, wname))
-        return NULL;
-
+    Utf8toWStr(name, wname);
     wstrToLower(wname);
 
     ChannelMap::const_iterator i = channels.find(wname);
@@ -92,9 +87,7 @@ Channel* ChannelMgr::GetChannel(std::string const& name, Player* player, bool pk
 void ChannelMgr::LeftChannel(std::string const& name)
 {
     std::wstring wname;
-    if (!Utf8toWStr(name, wname))
-        return;
-
+    Utf8toWStr(name, wname);
     wstrToLower(wname);
 
     ChannelMap::const_iterator i = channels.find(wname);

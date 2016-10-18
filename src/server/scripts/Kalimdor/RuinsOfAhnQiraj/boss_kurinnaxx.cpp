@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -47,6 +44,20 @@ enum Texts
     SAY_KURINAXX_DEATH      = 5, // Yelled by Ossirian the Unscarred
 };
 
+enum Special
+{
+    NPC_GENERAL_ANDOROV     = 15471,
+    NPC_ELITE_KALDOREI      = 15473,
+};
+
+Position const PosVendorGuards[4] =
+{
+    { -8884.51f, 1653.19f, 21.45f, 6.09f }, // Kaldorei Elites
+    { -8885.86f, 1650.48f, 21.43f, 6.09f },
+    { -8888.03f, 1645.74f, 21.44f, 6.09f },
+    { -8888.84f, 1643.06f, 21.43f, 6.09f },
+};
+
 class boss_kurinnaxx : public CreatureScript
 {
     public:
@@ -58,7 +69,7 @@ class boss_kurinnaxx : public CreatureScript
             {
             }
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 _enraged = false;
@@ -68,7 +79,7 @@ class boss_kurinnaxx : public CreatureScript
                 events.ScheduleEvent(EVENT_WIDE_SLASH, 11000);
             }
 
-            void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/) override
+            void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/)
             {
                 if (!_enraged && HealthBelowPct(30))
                 {
@@ -77,14 +88,19 @@ class boss_kurinnaxx : public CreatureScript
                 }
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 _JustDied();
                 if (Creature* Ossirian = me->GetMap()->GetCreature(instance->GetData64(DATA_OSSIRIAN)))
                     sCreatureTextMgr->SendChat(Ossirian, SAY_KURINAXX_DEATH, 0, CHAT_MSG_ADDON, LANG_ADDON, TEXT_RANGE_ZONE);
+
+                for (uint8 i = 0; i < 4; ++i)
+                    me->SummonCreature(NPC_ELITE_KALDOREI, PosVendorGuards[i], TEMPSUMMON_DEAD_DESPAWN, 0);
+
+               me->SummonCreature(NPC_GENERAL_ANDOROV, -8886.75f, 1648.11f, 21.41f, 6.09f, TEMPSUMMON_DEAD_DESPAWN, 0);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -128,9 +144,9 @@ class boss_kurinnaxx : public CreatureScript
                 bool _enraged;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return new boss_kurinnaxxAI(creature);
+            return new boss_kurinnaxxAI (creature);
         }
 };
 

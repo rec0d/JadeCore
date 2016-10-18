@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,14 +19,12 @@
 /* ScriptData
 SDName: Winterspring
 SD%Complete: Almost Completely Emptied
-SDComment: Vendor Rivern Frostwind. Quest Support 4901
+SDComment: Vendor Rivern Frostwind.
 SDCategory: Winterspring
 EndScriptData */
 
 /* ContentData
 npc_rivern_frostwind
-npc_ranshalla
-go_elune_fire
 EndContentData */
 
 #include "ScriptMgr.h"
@@ -46,7 +43,7 @@ class npc_rivern_frostwind : public CreatureScript
 public:
     npc_rivern_frostwind() : CreatureScript("npc_rivern_frostwind") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         if (action == GOSSIP_ACTION_TRADE)
@@ -55,7 +52,7 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (creature->IsQuestGiver())
             player->PrepareQuestMenu(creature->GetGUID());
@@ -67,6 +64,7 @@ public:
 
         return true;
     }
+
 };
 
 enum Says
@@ -159,8 +157,9 @@ public:
     DialogueHelper(DialogueEntry const* dialogueArray) :
       _dialogueArray(dialogueArray),
           _currentEntry(NULL),
-          _actionTimer(0)
-      { }
+          _actionTimer(0),
+          _isFirstSide(true)
+      {}
       // The array MUST be terminated by {0, 0, 0, 0, 0}
 
       /// Function to initialize the dialogue helper for instances. If not used with instances, GetSpeakerByEntry MUST be overwritten to obtain the speakers
@@ -200,7 +199,7 @@ public:
 
 protected:
     /// Will be called when a dialogue step was done
-    virtual void JustDidDialogueStep(int32 /*entry*/) { }
+    virtual void JustDidDialogueStep(int32 /*entry*/) {}
     /// Will be called to get a speaker, MUST be implemented if not used in instances
     virtual Creature* GetSpeakerByEntry(int32 /*entry*/) { return NULL; }
 
@@ -237,6 +236,7 @@ private:
     DialogueEntry const* _currentEntry;
 
     uint32 _actionTimer;
+    bool _isFirstSide;
 };
 
 const DialogueEntry introDialogue[] =
@@ -293,7 +293,7 @@ class npc_ranshalla : public CreatureScript
 {
 public:
     npc_ranshalla() : CreatureScript("npc_ranshalla") { }
-    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) override
+    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) 
     {
         if (quest->GetQuestId() == QUEST_GUARDIANS_ALTAR)
         {
@@ -308,7 +308,7 @@ public:
 
         return false;
     }
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const 
     {
         return new npc_ranshallaAI(creature);
     }
@@ -329,7 +329,7 @@ public:
         uint64 _voiceEluneGUID;
         uint64 _altarGUID;
 
-        void Reset() override
+        void Reset() 
         {
             _delayTimer = 0;
         }
@@ -355,13 +355,13 @@ public:
             {
                 if (GameObject* go = GetClosestGameObjectWithEntry(me, GO_ELUNE_ALTAR, 10.0f))
                 {
-                    go->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                    go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
                     me->SetFacingToObject(go);
                     _altarGUID = go->GetGUID();
                 }
             }
             else if (GameObject* go = GetClosestGameObjectWithEntry(me, GO_ELUNE_FIRE, 10.0f))
-                go->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
 
             // Yell and set escort to pause
             Talk(SAY_REACH_TORCH);
@@ -395,7 +395,7 @@ public:
             StartNextDialogueText(SAY_PRIESTESS_ALTAR_3);
         }
 
-        void WaypointReached(uint32 pointId) override
+        void WaypointReached(uint32 pointId) 
         {
             switch (pointId)
             {
@@ -525,7 +525,7 @@ public:
                     if (Player* player = GetPlayerForEscort())
                     {
                         me->SetFacingToObject(player);
-                        Talk(SAY_RANSHALLA_END_1, player);
+                        Talk(SAY_RANSHALLA_END_1, player->GetGUID());
                     }
                     break;
                 case SAY_RANSHALLA_END_2:
@@ -539,7 +539,7 @@ public:
                     if (Player* player = GetPlayerForEscort())
                     {
                         player->GroupEventHappens(QUEST_GUARDIANS_ALTAR, me);
-                        Talk(SAY_RANSHALLA_END_2, player);
+                        Talk(SAY_RANSHALLA_END_2, player->GetGUID());
                     }
                     me->DespawnOrUnsummon(4000);
                     break;
@@ -564,7 +564,7 @@ public:
 
         }
 
-        void UpdateEscortAI(const uint32 diff) override
+        void UpdateEscortAI(const uint32 diff) 
         {
             DialogueUpdate(diff);
 
@@ -597,7 +597,7 @@ class go_elune_fire : public GameObjectScript
 {
 public:
     go_elune_fire() : GameObjectScript("go_elune_fire") { }
-    bool OnGossipHello(Player* /*player*/, GameObject* go) override
+    bool OnGossipHello(Player* /*player*/, GameObject* go) 
     {
         // Check if we are using the torches or the altar
         bool isAltar = false;
@@ -610,9 +610,112 @@ public:
             if (npc_ranshalla::npc_ranshallaAI* escortAI = dynamic_cast<npc_ranshalla::npc_ranshallaAI*>(ranshalla->AI()))
                 escortAI->DoContinueEscort(isAltar);
         }
-        go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+        go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
 
         return false;
+    }
+};
+
+/*######
+## npc_witch_doctor_mauari
+######*/
+
+#define GOSSIP_HWDM "I'd like you to make me a new Cache of Mau'ari please."
+
+class npc_witch_doctor_mauari : public CreatureScript
+{
+public:
+    npc_witch_doctor_mauari() : CreatureScript("npc_witch_doctor_mauari") { }
+
+    bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
+    {
+        pPlayer->PlayerTalkClass->ClearMenus();
+        if (uiAction == GOSSIP_ACTION_INFO_DEF+1)
+        {
+            pPlayer->CLOSE_GOSSIP_MENU();
+            pCreature->CastSpell(pPlayer, 16351, false);
+        }
+
+        return true;
+    }
+
+    bool OnGossipHello(Player* pPlayer, Creature* pCreature)
+    {
+        if (pCreature->IsQuestGiver())
+            pPlayer->PrepareQuestMenu(pCreature->GetGUID());
+
+        if (pPlayer->GetQuestRewardStatus(975))
+        {
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_HWDM, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+            pPlayer->SEND_GOSSIP_MENU(3377, pCreature->GetGUID());
+        }else
+            pPlayer->SEND_GOSSIP_MENU(3375, pCreature->GetGUID());
+
+        return true;
+    }
+};
+
+/*######
+## npc_lorax
+######*/
+
+#define GOSSIP_HL "Talk to me"
+
+#define GOSSIP_SL1 "What do you do here?"
+#define GOSSIP_SL2 "I can help you"
+#define GOSSIP_SL3 "What deal?"
+#define GOSSIP_SL4 "Then what happened?"
+#define GOSSIP_SL5 "He is not safe, i'll make sure of that."
+
+class npc_lorax : public CreatureScript
+{
+public:
+    npc_lorax() : CreatureScript("npc_lorax") { }
+
+    bool OnGossipSelect(Player* pPlayer, Creature* pCreature, uint32 /*uiSender*/, uint32 uiAction)
+    {
+        pPlayer->PlayerTalkClass->ClearMenus();
+        switch (uiAction)
+        {
+            case GOSSIP_ACTION_INFO_DEF:
+                pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_SL1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+                pPlayer->SEND_GOSSIP_MENU(3759, pCreature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+1:
+                pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_SL2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 2);
+                pPlayer->SEND_GOSSIP_MENU(3760, pCreature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+2:
+                pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_SL3, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 3);
+                pPlayer->SEND_GOSSIP_MENU(3761, pCreature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+3:
+                pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_SL4, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 4);
+                pPlayer->SEND_GOSSIP_MENU(3762, pCreature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+4:
+                pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_SL5, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 5);
+                pPlayer->SEND_GOSSIP_MENU(3763, pCreature->GetGUID());
+                break;
+            case GOSSIP_ACTION_INFO_DEF+5:
+                pPlayer->CLOSE_GOSSIP_MENU();
+                pPlayer->AreaExploredOrEventHappens(5126);
+                break;
+        }
+        return true;
+    }
+
+    bool OnGossipHello(Player* pPlayer, Creature* pCreature)
+    {
+        if (pCreature->IsQuestGiver())
+            pPlayer->PrepareQuestMenu(pCreature->GetGUID());
+
+        if (pPlayer->GetQuestStatus(5126) == QUEST_STATUS_INCOMPLETE)
+            pPlayer->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_HL, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF);
+
+        pPlayer->SEND_GOSSIP_MENU(pPlayer->GetGossipTextId(pCreature), pCreature->GetGUID());
+
+        return true;
     }
 };
 
@@ -621,4 +724,6 @@ void AddSC_winterspring()
     new npc_rivern_frostwind();
     new npc_ranshalla();
     new go_elune_fire();
+    new npc_witch_doctor_mauari();
+    new npc_lorax();
 }

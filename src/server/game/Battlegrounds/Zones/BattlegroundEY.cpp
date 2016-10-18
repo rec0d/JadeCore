@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -50,7 +50,9 @@ BattlegroundEY::BattlegroundEY()
     StartMessageIds[BG_STARTING_EVENT_FOURTH] = LANG_BG_EY_HAS_BEGUN;
 }
 
-BattlegroundEY::~BattlegroundEY() { }
+BattlegroundEY::~BattlegroundEY()
+{
+}
 
 void BattlegroundEY::PostUpdateImpl(uint32 diff)
 {
@@ -120,7 +122,7 @@ void BattlegroundEY::StartingEventOpenDoors()
     }
 
     // Achievement: Flurry
-    StartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, BG_EY_EVENT_START_BATTLE);
+    StartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, EY_EVENT_START_BATTLE);
 }
 
 void BattlegroundEY::AddPoints(uint32 Team, uint32 Points)
@@ -150,7 +152,7 @@ void BattlegroundEY::CheckSomeoneJoinedPoint()
                 Player* player = ObjectAccessor::FindPlayer(m_PlayersNearPoint[EY_POINTS_MAX][j]);
                 if (!player)
                 {
-                    TC_LOG_ERROR("bg.battleground", "BattlegroundEY:CheckSomeoneJoinedPoint: Player (GUID: %u) not found!", GUID_LOPART(m_PlayersNearPoint[EY_POINTS_MAX][j]));
+                    sLog->outError(LOG_FILTER_BATTLEGROUND, "BattlegroundEY:CheckSomeoneJoinedPoint: Player (GUID: %u) not found!", GUID_LOPART(m_PlayersNearPoint[EY_POINTS_MAX][j]));
                     ++j;
                     continue;
                 }
@@ -190,7 +192,7 @@ void BattlegroundEY::CheckSomeoneLeftPoint()
                 Player* player = ObjectAccessor::FindPlayer(m_PlayersNearPoint[i][j]);
                 if (!player)
                 {
-                    TC_LOG_ERROR("bg.battleground", "BattlegroundEY:CheckSomeoneLeftPoint Player (GUID: %u) not found!", GUID_LOPART(m_PlayersNearPoint[i][j]));
+                    sLog->outError(LOG_FILTER_BATTLEGROUND, "BattlegroundEY:CheckSomeoneLeftPoint Player (GUID: %u) not found!", GUID_LOPART(m_PlayersNearPoint[i][j]));
                     //move not existed player to "free space" - this will cause many error showing in log, but it is a very important bug
                     m_PlayersNearPoint[EY_POINTS_MAX].push_back(m_PlayersNearPoint[i][j]);
                     m_PlayersNearPoint[i].erase(m_PlayersNearPoint[i].begin() + j);
@@ -270,7 +272,7 @@ void BattlegroundEY::UpdatePointStatuses()
 void BattlegroundEY::UpdateTeamScore(uint32 Team)
 {
     uint32 score = GetTeamScore(Team);
-    /// @todo there should be some sound played when one team is near victory!! - and define variables
+    //TODO there should be some sound played when one team is near victory!! - and define variables
     /*if (!m_IsInformedNearVictory && score >= BG_EY_WARNING_NEAR_VICTORY_SCORE)
     {
         if (Team == ALLIANCE)
@@ -348,6 +350,8 @@ void BattlegroundEY::AddPlayer(Player* player)
     m_PlayersNearPoint[EY_POINTS_MAX].push_back(player->GetGUID());
 
     PlayerScores[player->GetGUID()] = sc;
+    sc->BgTeam = player->GetBGTeam();
+    sc->TalentTree = player->GetPrimaryTalentTree(player->GetActiveSpec());
 }
 
 void BattlegroundEY::RemovePlayer(Player* player, uint64 guid, uint32 /*team*/)
@@ -379,7 +383,7 @@ void BattlegroundEY::HandleAreaTrigger(Player* player, uint32 trigger)
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
 
-    if (!player->IsAlive())                                  //hack code, must be removed later
+    if (!player->isAlive())                                  //hack code, must be removed later
         return;
 
     switch (trigger)
@@ -425,8 +429,8 @@ void BattlegroundEY::HandleAreaTrigger(Player* player, uint32 trigger)
 bool BattlegroundEY::SetupBattleground()
 {
         // doors
-    if (!AddObject(BG_EY_OBJECT_DOOR_A, BG_OBJECT_A_DOOR_EY_ENTRY, 2527.6f, 1596.91f, 1245.12f, 3.031230f, -0.173642f, -0.001515f, 0.98477f, -0.008594f, RESPAWN_IMMEDIATELY)
-        || !AddObject(BG_EY_OBJECT_DOOR_H, BG_OBJECT_H_DOOR_EY_ENTRY, 1803.21f, 1539.49f, 1245.12f, 3.14159f, 0.173648f, 0, 0.984808f, 0, RESPAWN_IMMEDIATELY)
+    if (!AddObject(BG_EY_OBJECT_DOOR_A, BG_OBJECT_A_DOOR_EY_ENTRY, 2527.6f, 1596.91f, 1262.13f, -3.12414f, -0.173642f, -0.001515f, 0.98477f, -0.008594f, RESPAWN_IMMEDIATELY)
+        || !AddObject(BG_EY_OBJECT_DOOR_H, BG_OBJECT_H_DOOR_EY_ENTRY, 1803.21f, 1539.49f, 1261.09f, 3.14159f, 0.173648f, 0, 0.984808f, 0, RESPAWN_IMMEDIATELY)
         // banners (alliance)
         || !AddObject(BG_EY_OBJECT_A_BANNER_FEL_REAVER_CENTER, BG_OBJECT_A_BANNER_EY_ENTRY, 2057.46f, 1735.07f, 1187.91f, -0.925024f, 0, 0, 0.446198f, -0.894934f, RESPAWN_ONE_DAY)
         || !AddObject(BG_EY_OBJECT_A_BANNER_FEL_REAVER_LEFT, BG_OBJECT_A_BANNER_EY_ENTRY, 2032.25f, 1729.53f, 1190.33f, 1.8675f, 0, 0, 0.803857f, 0.594823f, RESPAWN_ONE_DAY)
@@ -467,7 +471,7 @@ bool BattlegroundEY::SetupBattleground()
         || !AddObject(BG_EY_OBJECT_N_BANNER_MAGE_TOWER_LEFT, BG_OBJECT_N_BANNER_EY_ENTRY, 2269.13f, 1737.7f, 1186.66f, 0.994838f, 0, 0, 0.477159f, 0.878817f, RESPAWN_ONE_DAY)
         || !AddObject(BG_EY_OBJECT_N_BANNER_MAGE_TOWER_RIGHT, BG_OBJECT_N_BANNER_EY_ENTRY, 2300.86f, 1741.25f, 1187.7f, -0.785398f, 0, 0, 0.382683f, -0.92388f, RESPAWN_ONE_DAY)
         // flags
-        || !AddObject(BG_EY_OBJECT_FLAG_NETHERSTORM, BG_OBJECT_FLAG2_EY_ENTRY, 2174.867676f, 1569.774536f, 1159.935547f, -1.448624f, 0, 0, 0.662620f, -0.748956f, RESPAWN_ONE_DAY)
+        || !AddObject(BG_EY_OBJECT_FLAG_NETHERSTORM, BG_OBJECT_FLAG2_EY_ENTRY, 2174.782227f, 1569.054688f, 1160.361938f, -1.448624f, 0, 0, 0.662620f, -0.748956f, RESPAWN_ONE_DAY)
         || !AddObject(BG_EY_OBJECT_FLAG_FEL_REAVER, BG_OBJECT_FLAG1_EY_ENTRY, 2044.28f, 1729.68f, 1189.96f, -0.017453f, 0, 0, 0.008727f, -0.999962f, RESPAWN_ONE_DAY)
         || !AddObject(BG_EY_OBJECT_FLAG_BLOOD_ELF, BG_OBJECT_FLAG1_EY_ENTRY, 2048.83f, 1393.65f, 1194.49f, 0.20944f, 0, 0, 0.104528f, 0.994522f, RESPAWN_ONE_DAY)
         || !AddObject(BG_EY_OBJECT_FLAG_DRAENEI_RUINS, BG_OBJECT_FLAG1_EY_ENTRY, 2286.56f, 1402.36f, 1197.11f, 3.72381f, 0, 0, 0.957926f, -0.287016f, RESPAWN_ONE_DAY)
@@ -479,7 +483,7 @@ bool BattlegroundEY::SetupBattleground()
         || !AddObject(BG_EY_OBJECT_TOWER_CAP_MAGE_TOWER, BG_OBJECT_HU_TOWER_CAP_EY_ENTRY, 2282.121582f, 1760.006958f, 1189.707153f, 1.919862f, 0, 0, 0.819152f, 0.573576f, RESPAWN_ONE_DAY)
 )
     {
-        TC_LOG_ERROR("sql.sql", "BatteGroundEY: Failed to spawn some object Battleground not created!");
+        sLog->outError(LOG_FILTER_SQL, "BatteGroundEY: Failed to spawn some object Battleground not created!");
         return false;
     }
 
@@ -489,28 +493,28 @@ bool BattlegroundEY::SetupBattleground()
         AreaTriggerEntry const* at = sAreaTriggerStore.LookupEntry(m_Points_Trigger[i]);
         if (!at)
         {
-            TC_LOG_ERROR("bg.battleground", "BattlegroundEY: Unknown trigger: %u", m_Points_Trigger[i]);
+            sLog->outError(LOG_FILTER_BATTLEGROUND, "BattlegroundEY: Unknown trigger: %u", m_Points_Trigger[i]);
             continue;
         }
         if (!AddObject(BG_EY_OBJECT_SPEEDBUFF_FEL_REAVER + i * 3, Buff_Entries[0], at->x, at->y, at->z, 0.907571f, 0, 0, 0.438371f, 0.898794f, RESPAWN_ONE_DAY)
             || !AddObject(BG_EY_OBJECT_SPEEDBUFF_FEL_REAVER + i * 3 + 1, Buff_Entries[1], at->x, at->y, at->z, 0.907571f, 0, 0, 0.438371f, 0.898794f, RESPAWN_ONE_DAY)
             || !AddObject(BG_EY_OBJECT_SPEEDBUFF_FEL_REAVER + i * 3 + 2, Buff_Entries[2], at->x, at->y, at->z, 0.907571f, 0, 0, 0.438371f, 0.898794f, RESPAWN_ONE_DAY)
 )
-            TC_LOG_ERROR("bg.battleground", "BattlegroundEY: Cannot spawn buff");
+            sLog->outError(LOG_FILTER_BATTLEGROUND, "BattlegroundEY: Cannot spawn buff");
     }
 
     WorldSafeLocsEntry const* sg = NULL;
     sg = sWorldSafeLocsStore.LookupEntry(EY_GRAVEYARD_MAIN_ALLIANCE);
     if (!sg || !AddSpiritGuide(EY_SPIRIT_MAIN_ALLIANCE, sg->x, sg->y, sg->z, 3.124139f, ALLIANCE))
     {
-        TC_LOG_ERROR("sql.sql", "BatteGroundEY: Failed to spawn spirit guide! Battleground not created!");
+        sLog->outError(LOG_FILTER_SQL, "BatteGroundEY: Failed to spawn spirit guide! Battleground not created!");
         return false;
     }
 
     sg = sWorldSafeLocsStore.LookupEntry(EY_GRAVEYARD_MAIN_HORDE);
     if (!sg || !AddSpiritGuide(EY_SPIRIT_MAIN_HORDE, sg->x, sg->y, sg->z, 3.193953f, HORDE))
     {
-        TC_LOG_ERROR("sql.sql", "BatteGroundEY: Failed to spawn spirit guide! Battleground not created!");
+        sLog->outError(LOG_FILTER_SQL, "BatteGroundEY: Failed to spawn spirit guide! Battleground not created!");
         return false;
     }
 
@@ -575,7 +579,7 @@ void BattlegroundEY::RespawnFlagAfterDrop()
     if (obj)
         obj->Delete();
     else
-        TC_LOG_ERROR("bg.battleground", "BattlegroundEY: Unknown dropped flag guid: %u", GUID_LOPART(GetDroppedFlagGUID()));
+        sLog->outError(LOG_FILTER_BATTLEGROUND, "BattlegroundEY: Unknown dropped flag guid: %u", GUID_LOPART(GetDroppedFlagGUID()));
 
     SetDroppedFlagGUID(0);
 }
@@ -589,16 +593,16 @@ void BattlegroundEY::HandleKillPlayer(Player* player, Player* killer)
     EventPlayerDroppedFlag(player);
 }
 
-void BattlegroundEY::EventPlayerDroppedFlag(Player* player)
+void BattlegroundEY::EventPlayerDroppedFlag(Player* Source)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)
     {
         // if not running, do not cast things at the dropper player, neither send unnecessary messages
         // just take off the aura
-        if (IsFlagPickedup() && GetFlagPickerGUID() == player->GetGUID())
+        if (IsFlagPickedup() && GetFlagPickerGUID() == Source->GetGUID())
         {
             SetFlagPicker(0);
-            player->RemoveAurasDueToSpell(BG_EY_NETHERSTORM_FLAG_SPELL);
+            Source->RemoveAurasDueToSpell(BG_EY_NETHERSTORM_FLAG_SPELL);
         }
         return;
     }
@@ -606,31 +610,31 @@ void BattlegroundEY::EventPlayerDroppedFlag(Player* player)
     if (!IsFlagPickedup())
         return;
 
-    if (GetFlagPickerGUID() != player->GetGUID())
+    if (GetFlagPickerGUID() != Source->GetGUID())
         return;
 
     SetFlagPicker(0);
-    player->RemoveAurasDueToSpell(BG_EY_NETHERSTORM_FLAG_SPELL);
+    Source->RemoveAurasDueToSpell(BG_EY_NETHERSTORM_FLAG_SPELL);
     m_FlagState = BG_EY_FLAG_STATE_ON_GROUND;
     m_FlagsTimer = BG_EY_FLAG_RESPAWN_TIME;
-    player->CastSpell(player, SPELL_RECENTLY_DROPPED_FLAG, true);
-    player->CastSpell(player, BG_EY_PLAYER_DROPPED_FLAG_SPELL, true);
+    Source->CastSpell(Source, SPELL_RECENTLY_DROPPED_FLAG, true);
+    Source->CastSpell(Source, BG_EY_PLAYER_DROPPED_FLAG_SPELL, true);
     //this does not work correctly :((it should remove flag carrier name)
     UpdateWorldState(NETHERSTORM_FLAG_STATE_HORDE, BG_EY_FLAG_STATE_WAIT_RESPAWN);
     UpdateWorldState(NETHERSTORM_FLAG_STATE_ALLIANCE, BG_EY_FLAG_STATE_WAIT_RESPAWN);
 
-    if (player->GetTeam() == ALLIANCE)
+    if (Source->GetTeam() == ALLIANCE)
         SendMessageToAll(LANG_BG_EY_DROPPED_FLAG, CHAT_MSG_BG_SYSTEM_ALLIANCE, NULL);
     else
         SendMessageToAll(LANG_BG_EY_DROPPED_FLAG, CHAT_MSG_BG_SYSTEM_HORDE, NULL);
 }
 
-void BattlegroundEY::EventPlayerClickedOnFlag(Player* player, GameObject* target_obj)
+void BattlegroundEY::EventPlayerClickedOnFlag(Player* Source, GameObject* target_obj)
 {
-    if (GetStatus() != STATUS_IN_PROGRESS || IsFlagPickedup() || !player->IsWithinDistInMap(target_obj, 10))
+    if (GetStatus() != STATUS_IN_PROGRESS || IsFlagPickedup() || !Source->IsWithinDistInMap(target_obj, 10))
         return;
 
-    if (player->GetTeam() == ALLIANCE)
+    if (Source->GetTeam() == ALLIANCE)
     {
         UpdateWorldState(NETHERSTORM_FLAG_STATE_ALLIANCE, BG_EY_FLAG_STATE_ON_PLAYER);
         PlaySoundToAll(BG_EY_SOUND_FLAG_PICKED_UP_ALLIANCE);
@@ -646,18 +650,18 @@ void BattlegroundEY::EventPlayerClickedOnFlag(Player* player, GameObject* target
     m_FlagState = BG_EY_FLAG_STATE_ON_PLAYER;
 
     SpawnBGObject(BG_EY_OBJECT_FLAG_NETHERSTORM, RESPAWN_ONE_DAY);
-    SetFlagPicker(player->GetGUID());
+    SetFlagPicker(Source->GetGUID());
     //get flag aura on player
-    player->CastSpell(player, BG_EY_NETHERSTORM_FLAG_SPELL, true);
-    player->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
+    Source->CastSpell(Source, BG_EY_NETHERSTORM_FLAG_SPELL, true);
+    Source->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
 
-    if (player->GetTeam() == ALLIANCE)
-        PSendMessageToAll(LANG_BG_EY_HAS_TAKEN_FLAG, CHAT_MSG_BG_SYSTEM_ALLIANCE, NULL, player->GetName().c_str());
+    if (Source->GetTeam() == ALLIANCE)
+        PSendMessageToAll(LANG_BG_EY_HAS_TAKEN_FLAG, CHAT_MSG_BG_SYSTEM_ALLIANCE, NULL, Source->GetName().c_str());
     else
-        PSendMessageToAll(LANG_BG_EY_HAS_TAKEN_FLAG, CHAT_MSG_BG_SYSTEM_HORDE, NULL, player->GetName().c_str());
+        PSendMessageToAll(LANG_BG_EY_HAS_TAKEN_FLAG, CHAT_MSG_BG_SYSTEM_HORDE, NULL, Source->GetName().c_str());
 }
 
-void BattlegroundEY::EventTeamLostPoint(Player* player, uint32 Point)
+void BattlegroundEY::EventTeamLostPoint(Player* Source, uint32 Point)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
@@ -693,9 +697,9 @@ void BattlegroundEY::EventTeamLostPoint(Player* player, uint32 Point)
     m_PointState[Point] = EY_POINT_NO_OWNER;
 
     if (Team == ALLIANCE)
-        SendMessageToAll(m_LosingPointTypes[Point].MessageIdAlliance, CHAT_MSG_BG_SYSTEM_ALLIANCE, player);
+        SendMessageToAll(m_LosingPointTypes[Point].MessageIdAlliance, CHAT_MSG_BG_SYSTEM_ALLIANCE, Source);
     else
-        SendMessageToAll(m_LosingPointTypes[Point].MessageIdHorde, CHAT_MSG_BG_SYSTEM_HORDE, player);
+        SendMessageToAll(m_LosingPointTypes[Point].MessageIdHorde, CHAT_MSG_BG_SYSTEM_HORDE, Source);
 
     UpdatePointsIcons(Team, Point);
     UpdatePointsCount(Team);
@@ -705,12 +709,12 @@ void BattlegroundEY::EventTeamLostPoint(Player* player, uint32 Point)
          DelCreature(Point + 6);//NULL checks are in DelCreature! 0-5 spirit guides
 }
 
-void BattlegroundEY::EventTeamCapturedPoint(Player* player, uint32 Point)
+void BattlegroundEY::EventTeamCapturedPoint(Player* Source, uint32 Point)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
 
-    uint32 Team = player->GetTeam();
+    uint32 Team = Source->GetTeam();
 
     SpawnBGObject(m_CapturingPointTypes[Point].DespawnNeutralObjectType, RESPAWN_ONE_DAY);
     SpawnBGObject(m_CapturingPointTypes[Point].DespawnNeutralObjectType + 1, RESPAWN_ONE_DAY);
@@ -737,9 +741,9 @@ void BattlegroundEY::EventTeamCapturedPoint(Player* player, uint32 Point)
     m_PointState[Point] = EY_POINT_UNDER_CONTROL;
 
     if (Team == ALLIANCE)
-        SendMessageToAll(m_CapturingPointTypes[Point].MessageIdAlliance, CHAT_MSG_BG_SYSTEM_ALLIANCE, player);
+        SendMessageToAll(m_CapturingPointTypes[Point].MessageIdAlliance, CHAT_MSG_BG_SYSTEM_ALLIANCE, Source);
     else
-        SendMessageToAll(m_CapturingPointTypes[Point].MessageIdHorde, CHAT_MSG_BG_SYSTEM_HORDE, player);
+        SendMessageToAll(m_CapturingPointTypes[Point].MessageIdHorde, CHAT_MSG_BG_SYSTEM_HORDE, Source);
 
     if (BgCreatures[Point])
         DelCreature(Point);
@@ -747,7 +751,7 @@ void BattlegroundEY::EventTeamCapturedPoint(Player* player, uint32 Point)
     WorldSafeLocsEntry const* sg = NULL;
     sg = sWorldSafeLocsStore.LookupEntry(m_CapturingPointTypes[Point].GraveYardId);
     if (!sg || !AddSpiritGuide(Point, sg->x, sg->y, sg->z, 3.124139f, Team))
-        TC_LOG_ERROR("bg.battleground", "BatteGroundEY: Failed to spawn spirit guide! point: %u, team: %u, graveyard_id: %u",
+        sLog->outError(LOG_FILTER_BATTLEGROUND, "BatteGroundEY: Failed to spawn spirit guide! point: %u, team: %u, graveyard_id: %u",
             Point, Team, m_CapturingPointTypes[Point].GraveYardId);
 
 //    SpawnBGCreature(Point, RESPAWN_IMMEDIATELY);
@@ -772,18 +776,18 @@ void BattlegroundEY::EventTeamCapturedPoint(Player* player, uint32 Point)
     }
 }
 
-void BattlegroundEY::EventPlayerCapturedFlag(Player* player, uint32 BgObjectType)
+void BattlegroundEY::EventPlayerCapturedFlag(Player* Source, uint32 BgObjectType)
 {
-    if (GetStatus() != STATUS_IN_PROGRESS || GetFlagPickerGUID() != player->GetGUID())
+    if (GetStatus() != STATUS_IN_PROGRESS || GetFlagPickerGUID() != Source->GetGUID())
         return;
 
     SetFlagPicker(0);
     m_FlagState = BG_EY_FLAG_STATE_WAIT_RESPAWN;
-    player->RemoveAurasDueToSpell(BG_EY_NETHERSTORM_FLAG_SPELL);
+    Source->RemoveAurasDueToSpell(BG_EY_NETHERSTORM_FLAG_SPELL);
 
-    player->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
+    Source->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_ENTER_PVP_COMBAT);
 
-    if (player->GetTeam() == ALLIANCE)
+    if (Source->GetTeam() == ALLIANCE)
         PlaySoundToAll(BG_EY_SOUND_FLAG_CAPTURED_ALLIANCE);
     else
         PlaySoundToAll(BG_EY_SOUND_FLAG_CAPTURED_HORDE);
@@ -794,26 +798,26 @@ void BattlegroundEY::EventPlayerCapturedFlag(Player* player, uint32 BgObjectType
     m_FlagCapturedBgObjectType = BgObjectType;
 
     uint8 team_id = 0;
-    if (player->GetTeam() == ALLIANCE)
+    if (Source->GetTeam() == ALLIANCE)
     {
         team_id = TEAM_ALLIANCE;
-        SendMessageToAll(LANG_BG_EY_CAPTURED_FLAG_A, CHAT_MSG_BG_SYSTEM_ALLIANCE, player);
+        SendMessageToAll(LANG_BG_EY_CAPTURED_FLAG_A, CHAT_MSG_BG_SYSTEM_ALLIANCE, Source);
     }
     else
     {
         team_id = TEAM_HORDE;
-        SendMessageToAll(LANG_BG_EY_CAPTURED_FLAG_H, CHAT_MSG_BG_SYSTEM_HORDE, player);
+        SendMessageToAll(LANG_BG_EY_CAPTURED_FLAG_H, CHAT_MSG_BG_SYSTEM_HORDE, Source);
     }
 
     if (m_TeamPointsCount[team_id] > 0)
-        AddPoints(player->GetTeam(), BG_EY_FlagPoints[m_TeamPointsCount[team_id] - 1]);
+        AddPoints(Source->GetTeam(), BG_EY_FlagPoints[m_TeamPointsCount[team_id] - 1]);
 
-    UpdatePlayerScore(player, SCORE_FLAG_CAPTURES, 1);
+    UpdatePlayerScore(Source, SCORE_FLAG_CAPTURES, 1);
 }
 
-void BattlegroundEY::UpdatePlayerScore(Player* player, uint32 type, uint32 value, bool doAddHonor)
+void BattlegroundEY::UpdatePlayerScore(Player* Source, uint32 type, uint32 value, bool doAddHonor)
 {
-    BattlegroundScoreMap::iterator itr = PlayerScores.find(player->GetGUID());
+    BattlegroundScoreMap::iterator itr = PlayerScores.find(Source->GetGUID());
     if (itr == PlayerScores.end())                         // player not found
         return;
 
@@ -821,62 +825,62 @@ void BattlegroundEY::UpdatePlayerScore(Player* player, uint32 type, uint32 value
     {
         case SCORE_FLAG_CAPTURES:                           // flags captured
             ((BattlegroundEYScore*)itr->second)->FlagCaptures += value;
-            player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE, EY_OBJECTIVE_CAPTURE_FLAG);
+            Source->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE, EY_OBJECTIVE_CAPTURE_FLAG);
             break;
         default:
-            Battleground::UpdatePlayerScore(player, type, value, doAddHonor);
+            Battleground::UpdatePlayerScore(Source, type, value, doAddHonor);
             break;
     }
 }
 
-void BattlegroundEY::FillInitialWorldStates(WorldStateBuilder& builder)
+void BattlegroundEY::FillInitialWorldStates(WorldPacket& data)
 {
-    builder.AppendState(EY_HORDE_BASE, m_TeamPointsCount[TEAM_HORDE]);
-    builder.AppendState(EY_ALLIANCE_BASE, m_TeamPointsCount[TEAM_ALLIANCE]);
-    builder.AppendState(0xab6, 0x0);
-    builder.AppendState(0xab5, 0x0);
-    builder.AppendState(0xab4, 0x0);
-    builder.AppendState(0xab3, 0x0);
-    builder.AppendState(0xab2, 0x0);
-    builder.AppendState(0xab1, 0x0);
-    builder.AppendState(0xab0, 0x0);
-    builder.AppendState(0xaaf, 0x0);
+    data << uint32(EY_HORDE_BASE) << uint32(m_TeamPointsCount[TEAM_HORDE]);
+    data << uint32(EY_ALLIANCE_BASE) << uint32(m_TeamPointsCount[TEAM_ALLIANCE]);
+    data << uint32(0xab6) << uint32(0x0);
+    data << uint32(0xab5) << uint32(0x0);
+    data << uint32(0xab4) << uint32(0x0);
+    data << uint32(0xab3) << uint32(0x0);
+    data << uint32(0xab2) << uint32(0x0);
+    data << uint32(0xab1) << uint32(0x0);
+    data << uint32(0xab0) << uint32(0x0);
+    data << uint32(0xaaf) << uint32(0x0);
 
-    builder.AppendState(DRAENEI_RUINS_HORDE_CONTROL     , m_PointOwnedByTeam[DRAENEI_RUINS] == HORDE && m_PointState[DRAENEI_RUINS] == EY_POINT_UNDER_CONTROL);
+    data << uint32(DRAENEI_RUINS_HORDE_CONTROL)     << uint32(m_PointOwnedByTeam[DRAENEI_RUINS] == HORDE && m_PointState[DRAENEI_RUINS] == EY_POINT_UNDER_CONTROL);
 
-    builder.AppendState(DRAENEI_RUINS_ALLIANCE_CONTROL  , m_PointOwnedByTeam[DRAENEI_RUINS] == ALLIANCE && m_PointState[DRAENEI_RUINS] == EY_POINT_UNDER_CONTROL);
+    data << uint32(DRAENEI_RUINS_ALLIANCE_CONTROL)  << uint32(m_PointOwnedByTeam[DRAENEI_RUINS] == ALLIANCE && m_PointState[DRAENEI_RUINS] == EY_POINT_UNDER_CONTROL);
 
-    builder.AppendState(DRAENEI_RUINS_UNCONTROL         , m_PointState[DRAENEI_RUINS] != EY_POINT_UNDER_CONTROL);
+    data << uint32(DRAENEI_RUINS_UNCONTROL)         << uint32(m_PointState[DRAENEI_RUINS] != EY_POINT_UNDER_CONTROL);
 
-    builder.AppendState(MAGE_TOWER_ALLIANCE_CONTROL     , m_PointOwnedByTeam[MAGE_TOWER] == ALLIANCE && m_PointState[MAGE_TOWER] == EY_POINT_UNDER_CONTROL);
+    data << uint32(MAGE_TOWER_ALLIANCE_CONTROL)     << uint32(m_PointOwnedByTeam[MAGE_TOWER] == ALLIANCE && m_PointState[MAGE_TOWER] == EY_POINT_UNDER_CONTROL);
 
-    builder.AppendState(MAGE_TOWER_HORDE_CONTROL        , m_PointOwnedByTeam[MAGE_TOWER] == HORDE && m_PointState[MAGE_TOWER] == EY_POINT_UNDER_CONTROL);
+    data << uint32(MAGE_TOWER_HORDE_CONTROL)        << uint32(m_PointOwnedByTeam[MAGE_TOWER] == HORDE && m_PointState[MAGE_TOWER] == EY_POINT_UNDER_CONTROL);
 
-    builder.AppendState(MAGE_TOWER_UNCONTROL            , m_PointState[MAGE_TOWER] != EY_POINT_UNDER_CONTROL);
+    data << uint32(MAGE_TOWER_UNCONTROL)            << uint32(m_PointState[MAGE_TOWER] != EY_POINT_UNDER_CONTROL);
 
-    builder.AppendState(FEL_REAVER_HORDE_CONTROL        , m_PointOwnedByTeam[FEL_REAVER] == HORDE && m_PointState[FEL_REAVER] == EY_POINT_UNDER_CONTROL);
+    data << uint32(FEL_REAVER_HORDE_CONTROL)        << uint32(m_PointOwnedByTeam[FEL_REAVER] == HORDE && m_PointState[FEL_REAVER] == EY_POINT_UNDER_CONTROL);
 
-    builder.AppendState(FEL_REAVER_ALLIANCE_CONTROL     , m_PointOwnedByTeam[FEL_REAVER] == ALLIANCE && m_PointState[FEL_REAVER] == EY_POINT_UNDER_CONTROL);
+    data << uint32(FEL_REAVER_ALLIANCE_CONTROL)     << uint32(m_PointOwnedByTeam[FEL_REAVER] == ALLIANCE && m_PointState[FEL_REAVER] == EY_POINT_UNDER_CONTROL);
 
-    builder.AppendState(FEL_REAVER_UNCONTROL            , m_PointState[FEL_REAVER] != EY_POINT_UNDER_CONTROL);
+    data << uint32(FEL_REAVER_UNCONTROL)            << uint32(m_PointState[FEL_REAVER] != EY_POINT_UNDER_CONTROL);
 
-    builder.AppendState(BLOOD_ELF_HORDE_CONTROL         , m_PointOwnedByTeam[BLOOD_ELF] == HORDE && m_PointState[BLOOD_ELF] == EY_POINT_UNDER_CONTROL);
+    data << uint32(BLOOD_ELF_HORDE_CONTROL)         << uint32(m_PointOwnedByTeam[BLOOD_ELF] == HORDE && m_PointState[BLOOD_ELF] == EY_POINT_UNDER_CONTROL);
 
-    builder.AppendState(BLOOD_ELF_ALLIANCE_CONTROL      , m_PointOwnedByTeam[BLOOD_ELF] == ALLIANCE && m_PointState[BLOOD_ELF] == EY_POINT_UNDER_CONTROL);
+    data << uint32(BLOOD_ELF_ALLIANCE_CONTROL)      << uint32(m_PointOwnedByTeam[BLOOD_ELF] == ALLIANCE && m_PointState[BLOOD_ELF] == EY_POINT_UNDER_CONTROL);
 
-    builder.AppendState(BLOOD_ELF_UNCONTROL             , m_PointState[BLOOD_ELF] != EY_POINT_UNDER_CONTROL);
+    data << uint32(BLOOD_ELF_UNCONTROL)             << uint32(m_PointState[BLOOD_ELF] != EY_POINT_UNDER_CONTROL);
 
-    builder.AppendState(NETHERSTORM_FLAG                , m_FlagState == BG_EY_FLAG_STATE_ON_BASE);
+    data << uint32(NETHERSTORM_FLAG)                << uint32(m_FlagState == BG_EY_FLAG_STATE_ON_BASE);
 
-    builder.AppendState(0xad2, 0x1);
-    builder.AppendState(0xad1, 0x1);
-    builder.AppendState(0xabe, GetTeamScore(TEAM_HORDE));
-    builder.AppendState(0xabd, GetTeamScore(TEAM_ALLIANCE));
-    builder.AppendState(0xa05, 0x8e);
-    builder.AppendState(0xaa0, 0x0);
-    builder.AppendState(0xa9f, 0x0);
-    builder.AppendState(0xa9e, 0x0);
-    builder.AppendState(0xc0d, 0x17b);
+    data << uint32(0xad2) << uint32(0x1);
+    data << uint32(0xad1) << uint32(0x1);
+    data << uint32(0xabe) << uint32(GetTeamScore(TEAM_HORDE));
+    data << uint32(0xabd) << uint32(GetTeamScore(TEAM_ALLIANCE));
+    data << uint32(0xa05) << uint32(0x8e);
+    data << uint32(0xaa0) << uint32(0x0);
+    data << uint32(0xa9f) << uint32(0x0);
+    data << uint32(0xa9e) << uint32(0x0);
+    data << uint32(0xc0d) << uint32(0x17b);
 }
 
 WorldSafeLocsEntry const* BattlegroundEY::GetClosestGraveYard(Player* player)
@@ -899,7 +903,7 @@ WorldSafeLocsEntry const* BattlegroundEY::GetClosestGraveYard(Player* player)
 
     if (!entry)
     {
-        TC_LOG_ERROR("bg.battleground", "BattlegroundEY: Not found the main team graveyard. Graveyard system isn't working!");
+        sLog->outError(LOG_FILTER_BATTLEGROUND, "BattlegroundEY: Not found the main team graveyard. Graveyard system isn't working!");
         return NULL;
     }
 
@@ -916,7 +920,7 @@ WorldSafeLocsEntry const* BattlegroundEY::GetClosestGraveYard(Player* player)
         {
             entry = sWorldSafeLocsStore.LookupEntry(m_CapturingPointTypes[i].GraveYardId);
             if (!entry)
-                TC_LOG_ERROR("bg.battleground", "BattlegroundEY: Not found graveyard: %u", m_CapturingPointTypes[i].GraveYardId);
+                sLog->outError(LOG_FILTER_BATTLEGROUND, "BattlegroundEY: Not found graveyard: %u", m_CapturingPointTypes[i].GraveYardId);
             else
             {
                 distance = (entry->x - plr_x)*(entry->x - plr_x) + (entry->y - plr_y)*(entry->y - plr_y) + (entry->z - plr_z)*(entry->z - plr_z);
@@ -932,7 +936,7 @@ WorldSafeLocsEntry const* BattlegroundEY::GetClosestGraveYard(Player* player)
     return nearestEntry;
 }
 
-bool BattlegroundEY::IsAllNodesControlledByTeam(uint32 team) const
+bool BattlegroundEY::IsAllNodesConrolledByTeam(uint32 team) const
 {
     uint32 count = 0;
     for (int i = 0; i < EY_POINTS_MAX; ++i)

@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -18,7 +15,7 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/// @todo Harpoon chain from 62505 should not get removed when other chain is applied
+//TODO: Harpoon chain from 62505 should not get removed when other chain is applied
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
@@ -140,12 +137,8 @@ enum Events
 
 #define GROUND_Z                                 391.517f
 #define GOSSIP_ITEM_1                            "Activate Harpoons!"
-
-enum Misc
-{
-    DATA_QUICK_SHAVE                             = 29192921, // 2919, 2921 are achievement IDs
-    DATA_IRON_DWARF_MEDIUM_RARE                  = 29232924
-};
+#define DATA_QUICK_SHAVE                         29192921 // 2919, 2921 are achievement IDs
+#define DATA_IRON_DWARF_MEDIUM_RARE              29232924
 
 const Position PosEngRepair[4] =
 {
@@ -195,13 +188,13 @@ class boss_razorscale_controller : public CreatureScript
                 me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
             }
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 me->SetReactState(REACT_PASSIVE);
             }
 
-            void SpellHit(Unit* /*caster*/, SpellInfo const* spell) override
+            void SpellHit(Unit* /*caster*/, SpellInfo const* spell)
             {
                 switch (spell->Id)
                 {
@@ -226,12 +219,12 @@ class boss_razorscale_controller : public CreatureScript
                 }
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 _JustDied();
             }
 
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 if (instance->GetBossState(BOSS_RAZORSCALE) != IN_PROGRESS)
                     return;
@@ -250,7 +243,7 @@ class boss_razorscale_controller : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 Diff) override
+            void UpdateAI(uint32 const Diff)
             {
                 events.Update(Diff);
 
@@ -301,7 +294,7 @@ class boss_razorscale_controller : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_razorscale_controllerAI(creature);
         }
@@ -310,13 +303,13 @@ class boss_razorscale_controller : public CreatureScript
 class go_razorscale_harpoon : public GameObjectScript
 {
     public:
-        go_razorscale_harpoon() : GameObjectScript("go_razorscale_harpoon") { }
+        go_razorscale_harpoon() : GameObjectScript("go_razorscale_harpoon") {}
 
-        bool OnGossipHello(Player* /*player*/, GameObject* go) override
+        bool OnGossipHello(Player* /*player*/, GameObject* go)
         {
             InstanceScript* instance = go->GetInstanceScript();
             if (ObjectAccessor::GetCreature(*go, instance ? instance->GetData64(BOSS_RAZORSCALE) : 0))
-                go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
             return false;
         }
 };
@@ -342,7 +335,7 @@ class boss_razorscale : public CreatureScript
             bool PermaGround;
             bool Enraged;
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 me->SetCanFly(true);
@@ -354,7 +347,7 @@ class boss_razorscale : public CreatureScript
                     commander->AI()->DoAction(ACTION_COMMANDER_RESET);
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 _EnterCombat();
                 if (Creature* controller = ObjectAccessor::GetCreature(*me, instance ? instance->GetData64(DATA_RAZORSCALE_CONTROL) : 0))
@@ -369,20 +362,20 @@ class boss_razorscale : public CreatureScript
                 events.ScheduleEvent(EVENT_FLIGHT, 0, 0, PHASE_GROUND);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 _JustDied();
                 if (Creature* controller = ObjectAccessor::GetCreature(*me, instance ? instance->GetData64(DATA_RAZORSCALE_CONTROL) : 0))
                     controller->AI()->Reset();
             }
 
-            void SpellHit(Unit* /*caster*/, SpellInfo const* spell) override
+            void SpellHit(Unit* /*caster*/, SpellInfo const* spell)
             {
                 if (spell->Id == SPELL_HARPOON_TRIGGER)
                     ++HarpoonCounter;
             }
 
-            void MovementInform(uint32 type, uint32 id) override
+            void MovementInform(uint32 type, uint32 id)
             {
                 if (type == EFFECT_MOTION_TYPE && id == 1)
                 {
@@ -392,7 +385,7 @@ class boss_razorscale : public CreatureScript
                 }
             }
 
-            uint32 GetData(uint32 type) const override
+            uint32 GetData(uint32 type) const
             {
                 if (type == DATA_QUICK_SHAVE)
                     if (FlyCount <= 2)
@@ -401,7 +394,7 @@ class boss_razorscale : public CreatureScript
                 return 0;
             }
 
-            void UpdateAI(uint32 Diff) override
+            void UpdateAI(uint32 const Diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -569,7 +562,7 @@ class boss_razorscale : public CreatureScript
                 }
             }
 
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 switch (action)
                 {
@@ -582,7 +575,7 @@ class boss_razorscale : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<boss_razorscaleAI>(creature);
         }
@@ -610,7 +603,7 @@ class npc_expedition_commander : public CreatureScript
             Creature* Engineer[4];
             Creature* Defender[4];
 
-            void Reset() override
+            void Reset()
             {
                 AttackStartTimer = 0;
                 Phase = 0;
@@ -618,8 +611,7 @@ class npc_expedition_commander : public CreatureScript
                 summons.clear();
             }
 
-            void MoveInLineOfSight(Unit* who) override
-
+            void MoveInLineOfSight(Unit* who)
             {
                 if (!Greet && me->IsWithinDistInMap(who, 10.0f) && who->GetTypeId() == TYPEID_PLAYER)
                 {
@@ -628,12 +620,12 @@ class npc_expedition_commander : public CreatureScript
                 }
             }
 
-            void JustSummoned(Creature* summoned) override
+            void JustSummoned(Creature* summoned)
             {
                 summons.push_back(summoned->GetGUID());
             }
 
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 switch (action)
                 {
@@ -642,12 +634,12 @@ class npc_expedition_commander : public CreatureScript
                         break;
                     case ACTION_COMMANDER_RESET:
                         summons.clear();
-                        me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                        me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                         break;
                 }
             }
 
-            void UpdateAI(uint32 Diff) override
+            void UpdateAI(uint32 const Diff)
             {
                 if (AttackStartTimer <= Diff)
                 {
@@ -684,9 +676,9 @@ class npc_expedition_commander : public CreatureScript
                             break;
                         case 4:
                             for (uint8 n = 0; n < RAID_MODE(2, 4); n++)
-                                Engineer[n]->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_STATE_USE_STANDING);
+                                Engineer[n]->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_USE_STANDING);
                             for (uint8 n = 0; n < 4; ++n)
-                                Defender[n]->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_STATE_READY2H);
+                                Defender[n]->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_READY2H);
                             Talk(SAY_AGGRO_2);
                             AttackStartTimer = 16000;
                             Phase = 5;
@@ -707,7 +699,7 @@ class npc_expedition_commander : public CreatureScript
             }
         };
 
-        bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+        bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
         {
             player->PlayerTalkClass->ClearMenus();
             switch (action)
@@ -720,7 +712,7 @@ class npc_expedition_commander : public CreatureScript
             return true;
         }
 
-        bool OnGossipHello(Player* player, Creature* creature) override
+        bool OnGossipHello(Player* player, Creature* creature)
         {
             InstanceScript* instance = creature->GetInstanceScript();
             if (instance && instance->GetBossState(BOSS_RAZORSCALE) == NOT_STARTED)
@@ -736,7 +728,7 @@ class npc_expedition_commander : public CreatureScript
             return true;
         }
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_expedition_commanderAI(creature);
         }
@@ -747,11 +739,10 @@ class npc_mole_machine_trigger : public CreatureScript
     public:
         npc_mole_machine_trigger() : CreatureScript("npc_mole_machine_trigger") { }
 
-        struct npc_mole_machine_triggerAI : public ScriptedAI
+        struct npc_mole_machine_triggerAI : public Scripted_NoMovementAI
         {
-            npc_mole_machine_triggerAI(Creature* creature) : ScriptedAI(creature)
+            npc_mole_machine_triggerAI(Creature* creature) : Scripted_NoMovementAI(creature)
             {
-                SetCombatMovement(false);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_PACIFIED);
             }
 
@@ -761,7 +752,7 @@ class npc_mole_machine_trigger : public CreatureScript
             bool GobSummoned;
             bool NpcSummoned;
 
-            void Reset() override
+            void Reset()
             {
                 SummonGobTimer = 2000;
                 SummonNpcTimer = 6000;
@@ -770,7 +761,7 @@ class npc_mole_machine_trigger : public CreatureScript
                 NpcSummoned = false;
             }
 
-            void UpdateAI(uint32 Diff) override
+            void UpdateAI(uint32 const Diff)
             {
                 if (!GobSummoned && SummonGobTimer <= Diff)
                 {
@@ -810,13 +801,13 @@ class npc_mole_machine_trigger : public CreatureScript
                     DissapearTimer -= Diff;
             }
 
-            void JustSummoned(Creature* summoned) override
+            void JustSummoned(Creature* summoned)
             {
                 summoned->AI()->DoZoneInCombat();
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_mole_machine_triggerAI(creature);
         }
@@ -827,21 +818,20 @@ class npc_devouring_flame : public CreatureScript
     public:
         npc_devouring_flame() : CreatureScript("npc_devouring_flame") { }
 
-        struct npc_devouring_flameAI : public ScriptedAI
+        struct npc_devouring_flameAI : public Scripted_NoMovementAI
         {
-            npc_devouring_flameAI(Creature* creature) : ScriptedAI(creature)
+            npc_devouring_flameAI(Creature* creature) : Scripted_NoMovementAI(creature)
             {
-                SetCombatMovement(false);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_PACIFIED);
             }
 
-            void Reset() override
+            void Reset()
             {
                 DoCast(SPELL_FLAME_GROUND);
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_devouring_flameAI(creature);
         }
@@ -854,18 +844,18 @@ class npc_darkrune_watcher : public CreatureScript
 
         struct npc_darkrune_watcherAI : public ScriptedAI
         {
-            npc_darkrune_watcherAI(Creature* creature) : ScriptedAI(creature){ }
+            npc_darkrune_watcherAI(Creature* creature) : ScriptedAI(creature){}
 
             uint32 ChainTimer;
             uint32 LightTimer;
 
-            void Reset() override
+            void Reset()
             {
                 ChainTimer = urand(10000, 15000);
                 LightTimer = urand(1000, 3000);
             }
 
-            void UpdateAI(uint32 Diff) override
+            void UpdateAI(uint32 const Diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -890,7 +880,7 @@ class npc_darkrune_watcher : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_darkrune_watcherAI(creature);
         }
@@ -903,29 +893,29 @@ class npc_darkrune_guardian : public CreatureScript
 
         struct npc_darkrune_guardianAI : public ScriptedAI
         {
-            npc_darkrune_guardianAI(Creature* creature) : ScriptedAI(creature){ }
+            npc_darkrune_guardianAI(Creature* creature) : ScriptedAI(creature){}
 
             uint32 StormTimer;
 
-            void Reset() override
+            void Reset()
             {
                 StormTimer = urand(3000, 6000);
                 killedByBreath = false;
             }
 
-            uint32 GetData(uint32 type) const override
+            uint32 GetData(uint32 type) const
             {
                 return type == DATA_IRON_DWARF_MEDIUM_RARE ? killedByBreath : 0;
             }
 
-            void SetData(uint32 type, uint32 value) override
+            void SetData(uint32 type, uint32 value)
             {
                 if (type == DATA_IRON_DWARF_MEDIUM_RARE)
                     killedByBreath = value;
             }
 
 
-            void UpdateAI(uint32 Diff) override
+            void UpdateAI(uint32 const Diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -945,7 +935,7 @@ class npc_darkrune_guardian : public CreatureScript
             bool killedByBreath;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_darkrune_guardianAI(creature);
         }
@@ -958,20 +948,20 @@ class npc_darkrune_sentinel : public CreatureScript
 
         struct npc_darkrune_sentinelAI : public ScriptedAI
         {
-            npc_darkrune_sentinelAI(Creature* creature) : ScriptedAI(creature){ }
+            npc_darkrune_sentinelAI(Creature* creature) : ScriptedAI(creature){}
 
             uint32 HeroicTimer;
             uint32 WhirlTimer;
             uint32 ShoutTimer;
 
-            void Reset() override
+            void Reset()
             {
                 HeroicTimer = urand(4000, 8000);
                 WhirlTimer = urand(20000, 25000);
                 ShoutTimer = urand(15000, 30000);
             }
 
-            void UpdateAI(uint32 Diff) override
+            void UpdateAI(uint32 const Diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -1004,7 +994,7 @@ class npc_darkrune_sentinel : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_darkrune_sentinelAI(creature);
         }
@@ -1031,13 +1021,13 @@ class spell_razorscale_devouring_flame : public SpellScriptLoader
                 caster->SummonCreature(entry, summonLocation->GetPositionX(), summonLocation->GetPositionY(), GROUND_Z, 0.0f, TEMPSUMMON_TIMED_DESPAWN, 20000);
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectHit += SpellEffectFn(spell_razorscale_devouring_flame_SpellScript::HandleSummon, EFFECT_0, SPELL_EFFECT_SUMMON);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_razorscale_devouring_flame_SpellScript();
         }
@@ -1062,13 +1052,13 @@ class spell_razorscale_flame_breath : public SpellScriptLoader
                     target->AI()->SetData(DATA_IRON_DWARF_MEDIUM_RARE, 1);
             }
 
-            void Register() override
+            void Register()
             {
                 OnHit += SpellHitFn(spell_razorscale_flame_breath_SpellScript::CheckDamage);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_razorscale_flame_breath_SpellScript();
         }
@@ -1081,7 +1071,7 @@ class achievement_iron_dwarf_medium_rare : public AchievementCriteriaScript
         {
         }
 
-        bool OnCheck(Player* /*player*/, Unit* target) override
+        bool OnCheck(Player* /*player*/, Unit* target)
         {
             return target && target->IsAIEnabled && target->GetAI()->GetData(DATA_IRON_DWARF_MEDIUM_RARE);
         }
@@ -1092,7 +1082,7 @@ class achievement_quick_shave : public AchievementCriteriaScript
     public:
         achievement_quick_shave() : AchievementCriteriaScript("achievement_quick_shave") { }
 
-        bool OnCheck(Player* /*source*/, Unit* target) override
+        bool OnCheck(Player* /*source*/, Unit* target)
         {
             if (target)
                 if (Creature* razorscale = target->ToCreature())

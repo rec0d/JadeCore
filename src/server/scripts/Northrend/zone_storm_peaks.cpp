@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,18 +26,128 @@
 #include "Player.h"
 #include "WorldSession.h"
 
+/*######
+## npc_agnetta_tyrsdottar
+######*/
+
+#define GOSSIP_AGNETTA             "Skip the warmup, sister... or are you too scared to face soemeone your own size?"
+
+enum eAgnetta
+{
+    QUEST_ITS_THAT_YOUR_GOBLIN      = 12969,
+    FACTION_HOSTILE_AT1             = 45,
+    SAY_AGGRO                       = 0
+};
+
+class npc_agnetta_tyrsdottar : public CreatureScript
+{
+public:
+    npc_agnetta_tyrsdottar() : CreatureScript("npc_agnetta_tyrsdottar") { }
+
+    struct npc_agnetta_tyrsdottarAI : public ScriptedAI
+    {
+        npc_agnetta_tyrsdottarAI(Creature* creature) : ScriptedAI(creature) { }
+
+        void Reset()
+        {
+            me->RestoreFaction();
+        }
+    };
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_agnetta_tyrsdottarAI(creature);
+    }
+
+    bool OnGossipHello(Player* player, Creature* creature)
+    {
+        if (player->GetQuestStatus(QUEST_ITS_THAT_YOUR_GOBLIN) == QUEST_STATUS_INCOMPLETE)
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_AGNETTA, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+
+        player->SEND_GOSSIP_MENU(13691, creature->GetGUID());
+        return true;
+    }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
+    {
+        player->PlayerTalkClass->ClearMenus();
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
+        {
+            creature->AI()->Talk(SAY_AGGRO);
+            player->CLOSE_GOSSIP_MENU();
+            creature->setFaction(FACTION_HOSTILE_AT1);
+            creature->AI()->AttackStart(player);
+        }
+
+        return true;
+    }
+};
+
+/*######
+## npc_frostborn_scout
+######*/
+
+#define GOSSIP_ITEM1    "Are you okay? I've come to take you back to Frosthold if you can stand."
+#define GOSSIP_ITEM2    "I'm sorry that I didn't get here sooner. What happened?"
+#define GOSSIP_ITEM3    "I'll go get some help. Hang in there."
+
+enum eFrostbornScout
+{
+    QUEST_MISSING_SCOUTS  =  12864
+};
+
+class npc_frostborn_scout : public CreatureScript
+{
+public:
+    npc_frostborn_scout() : CreatureScript("npc_frostborn_scout") { }
+
+    bool OnGossipHello(Player* player, Creature* creature)
+    {
+
+        if (player->GetQuestStatus(QUEST_MISSING_SCOUTS) == QUEST_STATUS_INCOMPLETE)
+        {
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+            player->PlayerTalkClass->SendGossipMenu(13611, creature->GetGUID());
+        }
+
+        return true;
+    }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
+    {
+        player->PlayerTalkClass->ClearMenus();
+        switch (action)
+        {
+        case GOSSIP_ACTION_INFO_DEF+1:
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM2, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+2);
+            player->PlayerTalkClass->SendGossipMenu(13612, creature->GetGUID());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+2:
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_ITEM3, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+3);
+            player->PlayerTalkClass->SendGossipMenu(13613, creature->GetGUID());
+            break;
+        case GOSSIP_ACTION_INFO_DEF+3:
+            player->PlayerTalkClass->SendGossipMenu(13614, creature->GetGUID());
+            player->AreaExploredOrEventHappens(QUEST_MISSING_SCOUTS);
+            break;
+        }
+
+        return true;
+    }
+};
+
 /////////////////////
 ///npc_injured_goblin
 /////////////////////
 
-enum InjuredGoblinMiner
+enum eInjuredGoblin
 {
     QUEST_BITTER_DEPARTURE     = 12832,
     SAY_QUEST_ACCEPT           = 0,
-    SAY_END_WP_REACHED         = 1,
-    GOSSIP_ID                  = 9859,
-    GOSSIP_OPTION_ID           = 0
+    SAY_END_WP_REACHED         = 1
 };
+
+#define GOSSIP_ITEM_1       "I am ready, lets get you out of here"
 
 class npc_injured_goblin : public CreatureScript
 {
@@ -50,7 +158,7 @@ public:
     {
         npc_injured_goblinAI(Creature* creature) : npc_escortAI(creature) { }
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId)
         {
             Player* player = GetPlayerForEscort();
             if (!player)
@@ -59,7 +167,7 @@ public:
             switch (waypointId)
             {
                 case 26:
-                    Talk(SAY_END_WP_REACHED, player);
+                    Talk(SAY_END_WP_REACHED, player->GetGUID());
                     break;
                 case 27:
                     player->GroupEventHappens(QUEST_BITTER_DEPARTURE, me);
@@ -67,47 +175,65 @@ public:
             }
         }
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/) {}
 
-        void Reset() override { }
+        void Reset() {}
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Player* player = GetPlayerForEscort();
             if (HasEscortState(STATE_ESCORT_ESCORTING) && player)
                 player->FailQuest(QUEST_BITTER_DEPARTURE);
         }
 
-       void UpdateAI(uint32 uiDiff) override
+       void UpdateAI(const uint32 uiDiff)
         {
             npc_escortAI::UpdateAI(uiDiff);
             if (!UpdateVictim())
                 return;
             DoMeleeAttackIfReady();
         }
-
-        void sGossipSelect(Player* player, uint32 sender, uint32 action) override
-        {
-            if (sender == GOSSIP_ID && action == GOSSIP_OPTION_ID)
-            {
-                player->CLOSE_GOSSIP_MENU();
-                me->setFaction(113);
-                npc_escortAI::Start(true, true, player->GetGUID());
-            }
-        }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_injured_goblinAI(creature);
     }
 
-    bool OnQuestAccept(Player* /*player*/, Creature* creature, Quest const* quest) override
+    bool OnGossipHello(Player* player, Creature* creature)
+    {
+        if (creature->IsQuestGiver())
+            player->PrepareQuestMenu(creature->GetGUID());
+
+        if (player->GetQuestStatus(QUEST_BITTER_DEPARTURE) == QUEST_STATUS_INCOMPLETE)
+        {
+            player->ADD_GOSSIP_ITEM(0, GOSSIP_ITEM_1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+            player->PlayerTalkClass->SendGossipMenu(9999999, creature->GetGUID());
+        }
+        else
+            player->SEND_GOSSIP_MENU(999999, creature->GetGUID());
+        return true;
+    }
+
+    bool OnQuestAccept(Player* /*player*/, Creature* creature, Quest const* quest)
     {
         if (quest->GetQuestId() == QUEST_BITTER_DEPARTURE)
             creature->AI()->Talk(SAY_QUEST_ACCEPT);
 
         return false;
+    }
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
+    {
+        player->PlayerTalkClass->ClearMenus();
+        npc_escortAI* pEscortAI = CAST_AI(npc_injured_goblin::npc_injured_goblinAI, creature->AI());
+
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
+        {
+            pEscortAI->Start(true, true, player->GetGUID());
+            creature->setFaction(113);
+        }
+        return true;
     }
 };
 
@@ -115,18 +241,15 @@ public:
 ## npc_roxi_ramrocket
 ######*/
 
-enum RoxiRamrocket
-{
-    SPELL_MECHANO_HOG               = 60866,
-    SPELL_MEKGINEERS_CHOPPER        = 60867
-};
+#define SPELL_MECHANO_HOG           60866
+#define SPELL_MEKGINEERS_CHOPPER    60867
 
 class npc_roxi_ramrocket : public CreatureScript
 {
 public:
     npc_roxi_ramrocket() : CreatureScript("npc_roxi_ramrocket") { }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         //Quest Menu
         if (creature->IsQuestGiver())
@@ -145,7 +268,7 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         switch (action)
@@ -180,31 +303,33 @@ public:
 
     struct npc_brunnhildar_prisonerAI : public ScriptedAI
     {
-        npc_brunnhildar_prisonerAI(Creature* creature) : ScriptedAI(creature) { }
+        npc_brunnhildar_prisonerAI(Creature* creature) : ScriptedAI(creature) {}
 
         bool freed;
 
-        void Reset() override
+        void Reset()
         {
             freed = false;
             me->CastSpell(me, SPELL_ICE_PRISON, true);
         }
 
-        void JustRespawned() override
+        void JustRespawned()
         {
             Reset();
         }
 
-        void UpdateAI(uint32 /*diff*/) override
+        void UpdateAI(const uint32 /*diff*/)
         {
             if (!freed)
                 return;
 
-            if (!me->GetVehicle())
+            if (!me->HasUnitState(UNIT_STATE_ONVEHICLE))
+            {
                 me->DespawnOrUnsummon();
+            }
         }
 
-        void SpellHit(Unit* caster, const SpellInfo* spell) override
+        void SpellHit(Unit* caster, const SpellInfo* spell)
         {
             if (spell->Id != SPELL_ICE_LANCE)
                 return;
@@ -219,7 +344,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_brunnhildar_prisonerAI(creature);
     }
@@ -231,19 +356,33 @@ public:
 
 enum FreedProtoDrake
 {
-    NPC_DRAKE                           = 29709,
-
     AREA_VALLEY_OF_ANCIENT_WINTERS      = 4437,
-
     TEXT_EMOTE                          = 0,
-
     SPELL_KILL_CREDIT_PRISONER          = 55144,
     SPELL_SUMMON_LIBERATED              = 55073,
-    SPELL_KILL_CREDIT_DRAKE             = 55143,
-
-    EVENT_CHECK_AREA                    = 1,
-    EVENT_REACHED_HOME                  = 2,
+    SPELL_KILL_CREDIT_DRAKE             = 55143
 };
+
+const Position FreedDrakeWaypoints[16] =
+{
+    {7294.96f, -2418.733f, 823.869f, 0.0f},
+    {7315.984f, -2331.46f, 826.3972f, 0.0f},
+    {7271.826f, -2271.479f, 833.5917f, 0.0f},
+    {7186.253f, -2218.475f, 847.5632f, 0.0f},
+    {7113.195f, -2164.288f, 850.2301f, 0.0f},
+    {7078.018f, -2063.106f, 854.7581f, 0.0f},
+    {7073.221f, -1983.382f, 861.9246f, 0.0f},
+    {7061.455f, -1885.899f, 865.119f, 0.0f},
+    {7033.32f, -1826.775f, 876.2578f, 0.0f},
+    {6999.902f, -1784.012f, 897.4521f, 0.0f},
+    {6954.913f, -1747.043f, 897.4521f, 0.0f},
+    {6933.856f, -1720.698f, 882.2022f, 0.0f},
+    {6932.729f, -1687.306f, 866.1189f, 0.0f},
+    {6952.458f, -1663.802f, 849.8133f, 0.0f},
+    {7002.819f, -1651.681f, 831.397f, 0.0f},
+    {7026.531f, -1649.239f, 828.8406f, 0.0f}
+};
+
 
 class npc_freed_protodrake : public CreatureScript
 {
@@ -252,67 +391,81 @@ public:
 
     struct npc_freed_protodrakeAI : public VehicleAI
     {
-        npc_freed_protodrakeAI(Creature* creature) : VehicleAI(creature) { }
+        npc_freed_protodrakeAI(Creature* creature) : VehicleAI(creature) {}
 
-        EventMap events;
+        bool autoMove;
+        bool wpReached;
+        uint16 CheckTimer;
+        uint16 countWP;
 
-        void Reset() override
+        void Reset()
         {
-            events.ScheduleEvent(EVENT_CHECK_AREA, 5000);
+            autoMove = false;
+            wpReached = false;
+            CheckTimer = 5000;
+            countWP = 0;
         }
 
-        void MovementInform(uint32 type, uint32 id) override
+        void MovementInform(uint32 type, uint32 id)
         {
-            if (type != WAYPOINT_MOTION_TYPE)
+            if (type != POINT_MOTION_TYPE)
                 return;
 
-            if (id == 15)
+            if (id < 15)
+            {
+                ++countWP;
+                wpReached = true;
+            }
+            else
             // drake reached village
-            events.ScheduleEvent(EVENT_REACHED_HOME, 2000);
+            {
+                // get player that rides drake (from seat 0)
+                Unit* player = me->GetVehicleKit()->GetPassenger(0);
+                if (player && player->GetTypeId() == TYPEID_PLAYER)
+                {
+                    // for each prisoner on drake, give credit
+                    for (uint8 i = 1; i < 4; ++i)
+                        if (Unit* prisoner = me->GetVehicleKit()->GetPassenger(i))
+                        {
+                            if (prisoner->GetTypeId() != TYPEID_UNIT)
+                                return;
+                            prisoner->CastSpell(player, SPELL_KILL_CREDIT_PRISONER, true);
+                            prisoner->CastSpell(prisoner, SPELL_SUMMON_LIBERATED, true);
+                            prisoner->ExitVehicle();
+                        }
+                    me->CastSpell(me, SPELL_KILL_CREDIT_DRAKE, true);
+                    player->ExitVehicle();
+                }
+            }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
-            events.Update(diff);
-
-            switch (events.ExecuteEvent())
+            if (!autoMove)
             {
-                case EVENT_CHECK_AREA:
+                if (CheckTimer < diff)
+                {
+                    CheckTimer = 5000;
                     if (me->GetAreaId() == AREA_VALLEY_OF_ANCIENT_WINTERS)
                     {
-                        if (Vehicle* vehicle = me->GetVehicleKit())
-                            if (Unit* passenger = vehicle->GetPassenger(0))
-                            {
-                                Talk(TEXT_EMOTE, passenger);
-                                me->GetMotionMaster()->MovePath(NPC_DRAKE, false);
-                            }
+                        Talk(TEXT_EMOTE, me->GetVehicleKit()->GetPassenger(0)->GetGUID());
+                        autoMove = true;
+                        wpReached = true;
                     }
-                    else
-                        events.ScheduleEvent(EVENT_CHECK_AREA, 5000);
-                    break;
-                case EVENT_REACHED_HOME:
-                    Unit* player = me->GetVehicleKit()->GetPassenger(0);
-                    if (player && player->GetTypeId() == TYPEID_PLAYER)
-                    {
-                        // for each prisoner on drake, give credit
-                        for (uint8 i = 1; i < 4; ++i)
-                            if (Unit* prisoner = me->GetVehicleKit()->GetPassenger(i))
-                            {
-                                if (prisoner->GetTypeId() != TYPEID_UNIT)
-                                    return;
-                                prisoner->CastSpell(player, SPELL_KILL_CREDIT_PRISONER, true);
-                                prisoner->CastSpell(prisoner, SPELL_SUMMON_LIBERATED, true);
-                                prisoner->ExitVehicle();
-                            }
-                        me->CastSpell(me, SPELL_KILL_CREDIT_DRAKE, true);
-                        player->ExitVehicle();
-                    }
-                    break;
+                }
+                else
+                    CheckTimer -= diff;
+            }
+
+            if (wpReached && autoMove)
+            {
+                wpReached = false;
+                me->GetMotionMaster()->MovePoint(countWP, FreedDrakeWaypoints[countWP]);
             }
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_freed_protodrakeAI(creature);
     }
@@ -325,13 +478,13 @@ public:
 
     struct npc_icefangAI : public npc_escortAI
     {
-        npc_icefangAI(Creature* creature) : npc_escortAI(creature) { }
+        npc_icefangAI(Creature* creature) : npc_escortAI(creature) {}
 
-        void AttackStart(Unit* /*who*/) override { }
-        void EnterCombat(Unit* /*who*/) override { }
-        void EnterEvadeMode() override { }
+        void AttackStart(Unit* /*who*/) {}
+        void EnterCombat(Unit* /*who*/) {}
+        void EnterEvadeMode() {}
 
-        void PassengerBoarded(Unit* who, int8 /*seatId*/, bool apply) override
+        void PassengerBoarded(Unit* who, int8 /*seatId*/, bool apply)
         {
             if (who->GetTypeId() == TYPEID_PLAYER)
             {
@@ -340,19 +493,19 @@ public:
             }
         }
 
-        void WaypointReached(uint32 /*waypointId*/) override
+        void WaypointReached(uint32 /*waypointId*/)
         {
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
         }
 
-        void OnCharmed(bool /*apply*/) override
+        void OnCharmed(bool /*apply*/)
         {
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             npc_escortAI::UpdateAI(diff);
 
@@ -361,9 +514,9 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_icefangAI(creature);
+        return new npc_icefangAI (creature);
     }
 };
 
@@ -380,9 +533,9 @@ class npc_hyldsmeet_protodrake : public CreatureScript
         class npc_hyldsmeet_protodrakeAI : public CreatureAI
         {
             public:
-                npc_hyldsmeet_protodrakeAI(Creature* creature) : CreatureAI(creature), _accessoryRespawnTimer(0), _vehicleKit(creature->GetVehicleKit()) { }
+                npc_hyldsmeet_protodrakeAI(Creature* creature) : CreatureAI(creature), _accessoryRespawnTimer(0), _vehicleKit(creature->GetVehicleKit()) {}
 
-                void PassengerBoarded(Unit* who, int8 /*seat*/, bool apply) override
+                void PassengerBoarded(Unit* who, int8 /*seat*/, bool apply)
                 {
                     if (apply)
                         return;
@@ -391,7 +544,7 @@ class npc_hyldsmeet_protodrake : public CreatureScript
                         _accessoryRespawnTimer = 5 * MINUTE * IN_MILLISECONDS;
                 }
 
-                void UpdateAI(uint32 diff) override
+                void UpdateAI(uint32 const diff)
                 {
                     //! We need to manually reinstall accessories because the vehicle itself is friendly to players,
                     //! so EnterEvadeMode is never triggered. The accessory on the other hand is hostile and killable.
@@ -409,9 +562,9 @@ class npc_hyldsmeet_protodrake : public CreatureScript
                 Vehicle* _vehicleKit;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return new npc_hyldsmeet_protodrakeAI(creature);
+            return new npc_hyldsmeet_protodrakeAI (creature);
         }
 };
 
@@ -429,13 +582,13 @@ class spell_close_rift : public SpellScriptLoader
         {
             PrepareAuraScript(spell_close_rift_AuraScript);
 
-            bool Load() override
+            bool Load()
             {
                 _counter = 0;
                 return true;
             }
 
-            bool Validate(SpellInfo const* /*spell*/) override
+            bool Validate(SpellInfo const* /*spell*/)
             {
                 return sSpellMgr->GetSpellInfo(SPELL_DESPAWN_RIFT);
             }
@@ -446,7 +599,7 @@ class spell_close_rift : public SpellScriptLoader
                     GetTarget()->CastSpell((Unit*)NULL, SPELL_DESPAWN_RIFT, true);
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectPeriodic += AuraEffectPeriodicFn(spell_close_rift_AuraScript::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_TRIGGER_SPELL);
             }
@@ -456,7 +609,7 @@ class spell_close_rift : public SpellScriptLoader
 
         };
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const
         {
             return new spell_close_rift_AuraScript();
         }
@@ -464,6 +617,8 @@ class spell_close_rift : public SpellScriptLoader
 
 void AddSC_storm_peaks()
 {
+    new npc_agnetta_tyrsdottar();
+    new npc_frostborn_scout();
     new npc_injured_goblin();
     new npc_roxi_ramrocket();
     new npc_brunnhildar_prisoner();

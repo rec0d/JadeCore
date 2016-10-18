@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -40,19 +40,21 @@ struct PlayerQueueInfo                                      // stores informatio
 
 struct GroupQueueInfo                                       // stores information about the group in queue (also used when joined as solo!)
 {
-    std::map<uint64, PlayerQueueInfo*> players;             // player queue info map
-    uint32  team;                                           // Player team (ALLIANCE/HORDE)
-    uint64  leaderGUID;                                     // GUID of the group leader
-    BattlegroundTypeId bgTypeId;                            // battleground type id
-    RatedType ratedType;                               // 2v2, 3v3, 5v5, 10v10 or 0 when BG
-    bool    isRated;                                        // rated
-    uint32  joinTime;                                       // time when group was added
-    uint32  removeInviteTime;                               // time when we will remove invite for players in group
-    uint32  isInvitedToBGInstanceGUID;                      // was invited to certain BG
-    uint32  teamRating;                                     // if rated match, inited to the rating of the team
-    uint32  teamMatchmakerRating;                           // if rated match, inited to the rating of the team
-    uint32  opponentsTeamRating;                            // for rated arena matches
-    uint32  opponentsTeamMatchmakerRating;                  // for rated arena matches
+    std::map<uint64, PlayerQueueInfo*> Players;             // player queue info map
+    uint32  Team;                                           // Player team (ALLIANCE/HORDE)
+    BattlegroundTypeId BgTypeId;                            // battleground type id
+    bool    IsRated;                                        // rated
+    uint8   ArenaType;                                      // 2v2, 3v3, 5v5 or 0 when BG
+    uint32  ArenaTeamId;                                    // team id if rated match
+    uint32  JoinTime;                                       // time when group was added
+    uint32  RemoveInviteTime;                               // time when we will remove invite for players in group
+    uint32  IsInvitedToBGInstanceGUID;                      // was invited to certain BG
+    uint32  ArenaTeamRating;                                // if rated match, inited to the rating of the team
+    uint32  ArenaMatchmakerRating;                          // if rated match, inited to the rating of the team
+    uint32  OpponentsTeamRating;                            // for rated arena matches
+    uint32  OpponentsMatchmakerRating;                      // for rated arena matches
+    uint32  ratingRange;                                    // for rated arena matches
+    uint32  ratingRangeIncreaseCounter;                     // for rated arena matches
 };
 
 enum BattlegroundQueueGroupTypes
@@ -71,24 +73,25 @@ class BattlegroundQueue
         BattlegroundQueue();
         ~BattlegroundQueue();
 
-        void BattlegroundQueueUpdate(uint32 diff, BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket_id, RatedType ratedType = RATED_TYPE_NOT_RATED, bool isRated = false, uint32 minRating = 0);
+        void BattlegroundQueueUpdate(uint32 diff, BattlegroundTypeId bgTypeId, BattlegroundBracketId bracket_id, uint8 arenaType = 0, bool isRated = false, uint32 minRating = 0);
         void UpdateEvents(uint32 diff);
 
         void FillPlayersToBG(Battleground* bg, BattlegroundBracketId bracket_id);
         bool CheckPremadeMatch(BattlegroundBracketId bracket_id, uint32 MinPlayersPerTeam, uint32 MaxPlayersPerTeam);
         bool CheckNormalMatch(Battleground* bg_template, BattlegroundBracketId bracket_id, uint32 minPlayers, uint32 maxPlayers);
         bool CheckSkirmishForSameFaction(BattlegroundBracketId bracket_id, uint32 minPlayersPerTeam);
-        GroupQueueInfo* AddGroup(Player* leader, Group* group, BattlegroundTypeId bgTypeId, PvPDifficultyEntry const*  bracketEntry, RatedType ratedType, bool isRated, bool isPremade, uint32 ArenaRating, uint32 MatchmakerRating);
+        GroupQueueInfo* AddGroup(Player* leader, Group* group, BattlegroundTypeId bgTypeId, PvPDifficultyEntry const*  bracketEntry, uint8 ArenaType, bool isRated, bool isPremade, uint32 ArenaRating, uint32 MatchmakerRating, uint32 ArenaTeamId = 0);
         void RemovePlayer(uint64 guid, bool decreaseInvitedCount);
         bool IsPlayerInvited(uint64 pl_guid, const uint32 bgInstanceGuid, const uint32 removeTime);
         bool GetPlayerGroupInfoData(uint64 guid, GroupQueueInfo* ginfo);
         void PlayerInvitedToBGUpdateAverageWaitTime(GroupQueueInfo* ginfo, BattlegroundBracketId bracket_id);
         uint32 GetAverageQueueWaitTime(GroupQueueInfo* ginfo, BattlegroundBracketId bracket_id) const;
+        void IncreaseTeamMMrRange(GroupQueueInfo* ginfo);
 
         typedef std::map<uint64, PlayerQueueInfo> QueuedPlayersMap;
         QueuedPlayersMap m_QueuedPlayers;
 
-        //do NOT use deque because deque.erase() invalidates ALL iterators
+        //we need constant add to begin and constant remove / add from the end, therefore deque suits our problem well
         typedef std::list<GroupQueueInfo*> GroupsQueueType;
 
         /*
@@ -106,7 +109,7 @@ class BattlegroundQueue
         class SelectionPool
         {
         public:
-            SelectionPool(): PlayerCount(0) { };
+            SelectionPool(): PlayerCount(0) {};
             void Init();
             bool AddGroup(GroupQueueInfo* ginfo, uint32 desiredCount);
             bool KickGroup(uint32 size);
@@ -138,8 +141,8 @@ class BattlegroundQueue
 class BGQueueInviteEvent : public BasicEvent
 {
     public:
-        BGQueueInviteEvent(uint64 pl_guid, uint32 BgInstanceGUID, BattlegroundTypeId BgTypeId, RatedType ratedType, uint32 removeTime) :
-          m_PlayerGuid(pl_guid), m_BgInstanceGUID(BgInstanceGUID), m_BgTypeId(BgTypeId), m_RatedType(ratedType), m_RemoveTime(removeTime)
+        BGQueueInviteEvent(uint64 pl_guid, uint32 BgInstanceGUID, BattlegroundTypeId BgTypeId, uint8 arenaType, uint32 removeTime) :
+          m_PlayerGuid(pl_guid), m_BgInstanceGUID(BgInstanceGUID), m_BgTypeId(BgTypeId), m_ArenaType(arenaType), m_RemoveTime(removeTime)
           { }
         virtual ~BGQueueInviteEvent() { }
 
@@ -149,7 +152,7 @@ class BGQueueInviteEvent : public BasicEvent
         uint64 m_PlayerGuid;
         uint32 m_BgInstanceGUID;
         BattlegroundTypeId m_BgTypeId;
-        RatedType m_RatedType;
+        uint8  m_ArenaType;
         uint32 m_RemoveTime;
 };
 
@@ -161,17 +164,18 @@ class BGQueueInviteEvent : public BasicEvent
 class BGQueueRemoveEvent : public BasicEvent
 {
     public:
-        BGQueueRemoveEvent(uint64 pl_guid, uint32 bgInstanceGUID, BattlegroundTypeId BgTypeId, BattlegroundQueueTypeId bgQueueTypeId, uint32 removeTime)
-            : m_PlayerGuid(pl_guid), m_BgInstanceGUID(bgInstanceGUID), m_RemoveTime(removeTime), m_BgTypeId(BgTypeId), m_BgQueueTypeId(bgQueueTypeId)
-        { }
+        BGQueueRemoveEvent(uint64 pl_guid, uint32 bgInstanceGUID, BattlegroundTypeId BgTypeId, uint8 ArenaType, BattlegroundQueueTypeId bgQueueTypeId, uint32 removeTime)
+            : m_PlayerGuid(pl_guid), m_BgInstanceGUID(bgInstanceGUID), m_ArenaType(ArenaType), m_RemoveTime(removeTime), m_BgTypeId(BgTypeId), m_BgQueueTypeId(bgQueueTypeId)
+        {}
 
-        virtual ~BGQueueRemoveEvent() { }
+        virtual ~BGQueueRemoveEvent() {}
 
         virtual bool Execute(uint64 e_time, uint32 p_time);
         virtual void Abort(uint64 e_time);
     private:
         uint64 m_PlayerGuid;
         uint32 m_BgInstanceGUID;
+        uint8 m_ArenaType;
         uint32 m_RemoveTime;
         BattlegroundTypeId m_BgTypeId;
         BattlegroundQueueTypeId m_BgQueueTypeId;

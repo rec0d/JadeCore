@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -139,14 +138,12 @@ bool WMORoot::ConvertToVMAPRootWmo(FILE* pOutfile)
     return true;
 }
 
-WMORoot::~WMORoot()
-{
-}
-
 WMOGroup::WMOGroup(const std::string &filename) :
     filename(filename), MOPY(0), MOVI(0), MoviEx(0), MOVT(0), MOBA(0), MobaEx(0),
     hlq(0), LiquEx(0), LiquBytes(0), groupName(0), descGroupName(0), mogpFlags(0),
-    mopy_size(0), moba_size(0), LiquEx_size(0), nVertices(0), nTriangles(0)
+    moprIdx(0), moprNItems(0), nBatchA(0), nBatchB(0), nBatchC(0), fogIdx(0),
+    liquidType(0), groupWMOID(0), mopy_size(0), moba_size(0), LiquEx_size(0),
+    nVertices(0), nTriangles(0), liquflags(0)
 {
     memset(bbcorn1, 0, sizeof(bbcorn1));
     memset(bbcorn2, 0, sizeof(bbcorn2));
@@ -226,7 +223,7 @@ bool WMOGroup::open()
         else if (!strcmp(fourcc,"MLIQ"))
         {
             liquflags |= 1;
-            hlq = new WMOLiquidHeader;
+            hlq = new WMOLiquidHeader();
             f.read(hlq, 0x1E);
             LiquEx_size = sizeof(WMOLiquidVert) * hlq->xverts * hlq->yverts;
             LiquEx = new WMOLiquidVert[hlq->xverts * hlq->yverts];
@@ -405,9 +402,9 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, WMORoot *rootWMO, bool precise
     }
 
     //------LIQU------------------------
-    if(LiquEx_size != 0)
+    if (LiquEx_size != 0)
     {
-        int LIQU_h[] = {0x5551494C, static_cast<int>(sizeof(WMOLiquidHeader)+LiquEx_size)+hlq->xtiles*hlq->ytiles};// "LIQU"
+        int LIQU_h[] = {0x5551494C, static_cast<int>(sizeof(WMOLiquidHeader) + LiquEx_size) + hlq->xtiles*hlq->ytiles};// "LIQU"
         fwrite(LIQU_h, 4, 2, output);
 
         // according to WoW.Dev Wiki:
@@ -442,7 +439,7 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, WMORoot *rootWMO, bool precise
 
         if (liquidEntry && liquidEntry < 21)
         {
-            switch (((uint8)liquidEntry - 1) & 3)
+            switch ((liquidEntry - 1) & 3)
             {
                 case 0:
                     liquidEntry = ((mogpFlags & 0x80000) != 0) + 13;
@@ -455,8 +452,6 @@ int WMOGroup::ConvertToVMAPGroupWmo(FILE *output, WMORoot *rootWMO, bool precise
                     break;
                 case 3:
                     liquidEntry = 20;
-                    break;
-                default:
                     break;
             }
         }
@@ -491,7 +486,7 @@ WMOGroup::~WMOGroup()
 }
 
 WMOInstance::WMOInstance(MPQFile& f, char const* WmoInstName, uint32 mapID, uint32 tileX, uint32 tileY, FILE* pDirfile)
-    : currx(0), curry(0), wmo(NULL), doodadset(0), pos(), indx(0), d3(0)
+    : currx(0), curry(0), wmo(NULL), doodadset(0), pos(), indx(0), id(0), d2(0), d3(0)
 {
     float ff[3];
     f.read(&id, 4);

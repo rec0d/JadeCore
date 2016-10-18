@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -45,7 +44,7 @@ EndContentData */
 ## npc_aeranas
 ######*/
 
-enum Aeranas
+enum eAeranas
 {
     SAY_SUMMON              = 0,
     SAY_FREE                = 1,
@@ -62,32 +61,32 @@ class npc_aeranas : public CreatureScript
 public:
     npc_aeranas() : CreatureScript("npc_aeranas") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_aeranasAI(creature);
+        return new npc_aeranasAI (creature);
     }
 
     struct npc_aeranasAI : public ScriptedAI
     {
-        npc_aeranasAI(Creature* creature) : ScriptedAI(creature) { }
+        npc_aeranasAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 Faction_Timer;
         uint32 EnvelopingWinds_Timer;
         uint32 Shock_Timer;
 
-        void Reset() override
+        void Reset()
         {
             Faction_Timer = 8000;
             EnvelopingWinds_Timer = 9000;
             Shock_Timer = 5000;
 
-            me->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+            me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
             me->setFaction(FACTION_FRIENDLY);
 
             Talk(SAY_SUMMON);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (Faction_Timer)
             {
@@ -104,7 +103,7 @@ public:
             if (HealthBelowPct(30))
             {
                 me->setFaction(FACTION_FRIENDLY);
-                me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+                me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
                 me->RemoveAllAuras();
                 me->DeleteThreatList();
                 me->CombatStop(true);
@@ -133,7 +132,7 @@ public:
 ## npc_ancestral_wolf
 ######*/
 
-enum AncestralWolf
+enum eAncestralWolf
 {
     EMOTE_WOLF_LIFT_HEAD            = 0,
     EMOTE_WOLF_HOWL                 = 1,
@@ -149,7 +148,7 @@ class npc_ancestral_wolf : public CreatureScript
 public:
     npc_ancestral_wolf() : CreatureScript("npc_ancestral_wolf") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_ancestral_wolfAI(creature);
     }
@@ -161,7 +160,7 @@ public:
             if (creature->GetOwner() && creature->GetOwner()->GetTypeId() == TYPEID_PLAYER)
                 Start(false, false, creature->GetOwner()->GetGUID());
             else
-                TC_LOG_ERROR("scripts", "TRINITY: npc_ancestral_wolf can not obtain owner or owner is not a player.");
+                sLog->outError(LOG_FILTER_TSCR, "TRINITY: npc_ancestral_wolf can not obtain owner or owner is not a player.");
 
             creature->SetSpeed(MOVE_WALK, 1.5f);
             Reset();
@@ -169,14 +168,13 @@ public:
 
         Creature* pRyga;
 
-        void Reset() override
+        void Reset()
         {
             pRyga = NULL;
             DoCast(me, SPELL_ANCESTRAL_WOLF_BUFF, true);
         }
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
             if (!pRyga && who->GetEntry() == NPC_RYGA && me->IsWithinDistInMap(who, 15.0f))
                 if (Creature* temp = who->ToCreature())
@@ -185,7 +183,7 @@ public:
             npc_escortAI::MoveInLineOfSight(who);
         }
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId)
         {
             switch (waypointId)
             {
@@ -196,7 +194,7 @@ public:
                     Talk(EMOTE_WOLF_HOWL);
                     break;
                 case 50:
-                    if (pRyga && pRyga->IsAlive() && !pRyga->IsInCombat())
+                    if (pRyga && pRyga->isAlive() && !pRyga->isInCombat())
                         pRyga->AI()->Talk(SAY_WOLF_WELCOME);
                     break;
             }
@@ -210,7 +208,7 @@ public:
 
 #define GOSSIP_NALADU_ITEM1 "Why don't you escape?"
 
-enum Naladu
+enum eNaladu
 {
     GOSSIP_TEXTID_NALADU1   = 9788
 };
@@ -220,7 +218,7 @@ class npc_naladu : public CreatureScript
 public:
     npc_naladu() : CreatureScript("npc_naladu") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         if (action == GOSSIP_ACTION_INFO_DEF+1)
@@ -229,7 +227,7 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (creature->IsQuestGiver())
             player->PrepareQuestMenu(creature->GetGUID());
@@ -248,7 +246,7 @@ public:
 #define GOSSIP_TRACY_PROUDWELL_ITEM1    "I heard that your dog Fei Fei took Klatu's prayer beads..."
 #define GOSSIP_TRACY_PROUDWELL_ITEM2    "<back>"
 
-enum Tracy
+enum eTracy
 {
     GOSSIP_TEXTID_TRACY_PROUDWELL1       = 10689,
     QUEST_DIGGING_FOR_PRAYER_BEADS       = 10916
@@ -259,7 +257,7 @@ class npc_tracy_proudwell : public CreatureScript
 public:
     npc_tracy_proudwell() : CreatureScript("npc_tracy_proudwell") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         switch (action)
@@ -279,7 +277,7 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (creature->IsQuestGiver())
             player->PrepareQuestMenu(creature->GetGUID());
@@ -303,7 +301,7 @@ public:
 #define GOSSIP_TROLLBANE_ITEM2      "<more>"
 #define GOSSIP_TROLLBANE_ITEM3      "Tell me of your homeland."
 
-enum Trollbane
+enum eTrollbane
 {
     GOSSIP_TEXTID_TROLLBANE1        = 9932,
     GOSSIP_TEXTID_TROLLBANE2        = 9933,
@@ -315,7 +313,7 @@ class npc_trollbane : public CreatureScript
 public:
     npc_trollbane() : CreatureScript("npc_trollbane") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         switch (action)
@@ -335,7 +333,7 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (creature->IsQuestGiver())
             player->PrepareQuestMenu(creature->GetGUID());
@@ -351,7 +349,7 @@ public:
 ## npc_wounded_blood_elf
 ######*/
 
-enum WoundedBloodElf
+enum eWoundedBloodElf
 {
     SAY_ELF_START               = 0,
     SAY_ELF_SUMMON1             = 1,
@@ -368,7 +366,7 @@ class npc_wounded_blood_elf : public CreatureScript
 public:
     npc_wounded_blood_elf() : CreatureScript("npc_wounded_blood_elf") { }
 
-    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest) override
+    bool OnQuestAccept(Player* player, Creature* creature, Quest const* quest)
     {
         if (quest->GetQuestId() == QUEST_ROAD_TO_FALCON_WATCH)
         {
@@ -382,16 +380,16 @@ public:
         return true;
     }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_wounded_blood_elfAI(creature);
     }
 
     struct npc_wounded_blood_elfAI : public npc_escortAI
     {
-        npc_wounded_blood_elfAI(Creature* creature) : npc_escortAI(creature) { }
+        npc_wounded_blood_elfAI(Creature* creature) : npc_escortAI(creature) {}
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId)
         {
             Player* player = GetPlayerForEscort();
             if (!player)
@@ -400,40 +398,40 @@ public:
             switch (waypointId)
             {
                 case 0:
-                    Talk(SAY_ELF_START, player);
+                    Talk(SAY_ELF_START, player->GetGUID());
                     break;
                 case 9:
-                    Talk(SAY_ELF_SUMMON1, player);
+                    Talk(SAY_ELF_SUMMON1, player->GetGUID());
                     // Spawn two Haal'eshi Talonguard
                     DoSpawnCreature(16967, -15, -15, 0, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 5000);
                     DoSpawnCreature(16967, -17, -17, 0, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 5000);
                     break;
                 case 13:
-                    Talk(SAY_ELF_RESTING, player);
+                    Talk(SAY_ELF_RESTING, player->GetGUID());
                     break;
                 case 14:
-                    Talk(SAY_ELF_SUMMON2, player);
+                    Talk(SAY_ELF_SUMMON2, player->GetGUID());
                     // Spawn two Haal'eshi Windwalker
                     DoSpawnCreature(16966, -15, -15, 0, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 5000);
                     DoSpawnCreature(16966, -17, -17, 0, 0, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 5000);
                     break;
                 case 27:
-                    Talk(SAY_ELF_COMPLETE, player);
+                    Talk(SAY_ELF_COMPLETE, player->GetGUID());
                     // Award quest credit
                     player->GroupEventHappens(QUEST_ROAD_TO_FALCON_WATCH, me);
                     break;
             }
         }
 
-        void Reset() override { }
+        void Reset() { }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             if (HasEscortState(STATE_ESCORT_ESCORTING))
                 Talk(SAY_ELF_AGGRO);
         }
 
-        void JustSummoned(Creature* summoned) override
+        void JustSummoned(Creature* summoned)
         {
             summoned->AI()->AttackStart(me);
         }
@@ -444,7 +442,7 @@ public:
 ## npc_fel_guard_hound
 ######*/
 
-enum FelGuard
+enum eFelGuard
 {
     SPELL_SUMMON_POO                              = 37688,
 
@@ -456,25 +454,25 @@ class npc_fel_guard_hound : public CreatureScript
 public:
     npc_fel_guard_hound() : CreatureScript("npc_fel_guard_hound") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_fel_guard_houndAI(creature);
     }
 
     struct npc_fel_guard_houndAI : public ScriptedAI
     {
-        npc_fel_guard_houndAI(Creature* creature) : ScriptedAI(creature) { }
+        npc_fel_guard_houndAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 uiCheckTimer;
         uint64 uiHelboarGUID;
 
-        void Reset() override
+        void Reset()
         {
             uiCheckTimer = 5000; //check for creature every 5 sec
             uiHelboarGUID = 0;
         }
 
-        void MovementInform(uint32 uiType, uint32 uiId) override
+        void MovementInform(uint32 uiType, uint32 uiId)
         {
             if (uiType != POINT_MOTION_TYPE || uiId != 1)
                 return;
@@ -489,7 +487,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 uiDiff) override
+        void UpdateAI(const uint32 uiDiff)
         {
             if (uiCheckTimer <= uiDiff)
             {

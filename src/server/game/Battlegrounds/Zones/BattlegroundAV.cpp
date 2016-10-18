@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -39,9 +39,11 @@ BattlegroundAV::BattlegroundAV()
     StartMessageIds[BG_STARTING_EVENT_FOURTH] = LANG_BG_AV_HAS_BEGUN;
 }
 
-BattlegroundAV::~BattlegroundAV() { }
+BattlegroundAV::~BattlegroundAV()
+{
+}
 
-uint16 BattlegroundAV::GetBonusHonor(uint8 kills) /// @todo move this function to Battleground.cpp (needs to find a way to get m_MaxLevel)
+uint16 BattlegroundAV::GetBonusHonor(uint8 kills) //TODO: move this function to Battleground.cpp (needs to find a way to get m_MaxLevel)
 {
     return Trinity::Honor::hk_honor_at_level(m_MaxLevel, kills);
 }
@@ -57,7 +59,7 @@ void BattlegroundAV::HandleKillPlayer(Player* player, Player* killer)
 
 void BattlegroundAV::HandleKillUnit(Creature* unit, Player* killer)
 {
-    TC_LOG_DEBUG("bg.battleground", "bg_av HandleKillUnit %i", unit->GetEntry());
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "bg_av HandleKillUnit %i", unit->GetEntry());
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
     uint32 entry = unit->GetEntry();
@@ -92,7 +94,7 @@ void BattlegroundAV::HandleKillUnit(Creature* unit, Player* killer)
     {
         if (!m_CaptainAlive[0])
         {
-            TC_LOG_ERROR("bg.battleground", "Killed a Captain twice, please report this bug, if you haven't done \".respawn\"");
+            sLog->outError(LOG_FILTER_BATTLEGROUND, "Killed a Captain twice, please report this bug, if you haven't done \".respawn\"");
             return;
         }
         m_CaptainAlive[0]=false;
@@ -111,7 +113,7 @@ void BattlegroundAV::HandleKillUnit(Creature* unit, Player* killer)
     {
         if (!m_CaptainAlive[1])
         {
-            TC_LOG_ERROR("bg.battleground", "Killed a Captain twice, please report this bug, if you haven't done \".respawn\"");
+            sLog->outError(LOG_FILTER_BATTLEGROUND, "Killed a Captain twice, please report this bug, if you haven't done \".respawn\"");
             return;
         }
         m_CaptainAlive[1]=false;
@@ -137,8 +139,8 @@ void BattlegroundAV::HandleQuestComplete(uint32 questid, Player* player)
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;//maybe we should log this, cause this must be a cheater or a big bug
     uint8 team = GetTeamIndexByTeamId(player->GetTeam());
-    /// @todo add reputation, events (including quest not available anymore, next quest availabe, go/npc de/spawning)and maybe honor
-    TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed", questid);
+    //TODO add reputation, events (including quest not available anymore, next quest availabe, go/npc de/spawning)and maybe honor
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed", questid);
     switch (questid)
     {
         case AV_QUEST_A_SCRAPS1:
@@ -148,7 +150,7 @@ void BattlegroundAV::HandleQuestComplete(uint32 questid, Player* player)
             m_Team_QuestStatus[team][0]+=20;
             if (m_Team_QuestStatus[team][0] == 500 || m_Team_QuestStatus[team][0] == 1000 || m_Team_QuestStatus[team][0] == 1500) //25, 50, 75 turn ins
             {
-                TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed starting with unit upgrading..", questid);
+                sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed starting with unit upgrading..", questid);
                 for (BG_AV_Nodes i = BG_AV_NODES_FIRSTAID_STATION; i <= BG_AV_NODES_FROSTWOLF_HUT; ++i)
                     if (m_Nodes[i].Owner == player->GetTeam() && m_Nodes[i].State == POINT_CONTROLED)
                     {
@@ -163,21 +165,21 @@ void BattlegroundAV::HandleQuestComplete(uint32 questid, Player* player)
             m_Team_QuestStatus[team][1]++;
             RewardReputationToTeam(team, 1, player->GetTeam());
             if (m_Team_QuestStatus[team][1] == 30)
-                TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here", questid);
+                sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed (need to implement some events here", questid);
             break;
         case AV_QUEST_A_COMMANDER2:
         case AV_QUEST_H_COMMANDER2:
             m_Team_QuestStatus[team][2]++;
             RewardReputationToTeam(team, 1, player->GetTeam());
             if (m_Team_QuestStatus[team][2] == 60)
-                TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here", questid);
+                sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed (need to implement some events here", questid);
             break;
         case AV_QUEST_A_COMMANDER3:
         case AV_QUEST_H_COMMANDER3:
             m_Team_QuestStatus[team][3]++;
             RewardReputationToTeam(team, 1, player->GetTeam());
             if (m_Team_QuestStatus[team][3] == 120)
-                TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here", questid);
+                sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed (need to implement some events here", questid);
             break;
         case AV_QUEST_A_BOSS1:
         case AV_QUEST_H_BOSS1:
@@ -186,16 +188,16 @@ void BattlegroundAV::HandleQuestComplete(uint32 questid, Player* player)
         case AV_QUEST_H_BOSS2:
             m_Team_QuestStatus[team][4]++;
             if (m_Team_QuestStatus[team][4] >= 200)
-                TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here", questid);
+                sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed (need to implement some events here", questid);
             break;
         case AV_QUEST_A_NEAR_MINE:
         case AV_QUEST_H_NEAR_MINE:
             m_Team_QuestStatus[team][5]++;
             if (m_Team_QuestStatus[team][5] == 28)
             {
-                TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here", questid);
+                sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed (need to implement some events here", questid);
                 if (m_Team_QuestStatus[team][6] == 7)
-                    TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here - ground assault ready", questid);
+                    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed (need to implement some events here - ground assault ready", questid);
             }
             break;
         case AV_QUEST_A_OTHER_MINE:
@@ -203,9 +205,9 @@ void BattlegroundAV::HandleQuestComplete(uint32 questid, Player* player)
             m_Team_QuestStatus[team][6]++;
             if (m_Team_QuestStatus[team][6] == 7)
             {
-                TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here", questid);
+                sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed (need to implement some events here", questid);
                 if (m_Team_QuestStatus[team][5] == 20)
-                    TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here - ground assault ready", questid);
+                    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed (need to implement some events here - ground assault ready", questid);
             }
             break;
         case AV_QUEST_A_RIDER_HIDE:
@@ -213,9 +215,9 @@ void BattlegroundAV::HandleQuestComplete(uint32 questid, Player* player)
             m_Team_QuestStatus[team][7]++;
             if (m_Team_QuestStatus[team][7] == 25)
             {
-                TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here", questid);
+                sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed (need to implement some events here", questid);
                 if (m_Team_QuestStatus[team][8] == 25)
-                    TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here - rider assault ready", questid);
+                    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed (need to implement some events here - rider assault ready", questid);
             }
             break;
         case AV_QUEST_A_RIDER_TAME:
@@ -223,13 +225,13 @@ void BattlegroundAV::HandleQuestComplete(uint32 questid, Player* player)
             m_Team_QuestStatus[team][8]++;
             if (m_Team_QuestStatus[team][8] == 25)
             {
-                TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here", questid);
+                sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed (need to implement some events here", questid);
                 if (m_Team_QuestStatus[team][7] == 25)
-                    TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed (need to implement some events here - rider assault ready", questid);
+                    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed (need to implement some events here - rider assault ready", questid);
             }
             break;
         default:
-            TC_LOG_DEBUG("bg.battleground", "BG_AV Quest %i completed but is not interesting at all", questid);
+            sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV Quest %i completed but is not interesting at all", questid);
             return; //was no interesting quest at all
             break;
     }
@@ -296,7 +298,7 @@ Creature* BattlegroundAV::AddAVCreature(uint16 cinfoid, uint16 type)
     if (!creature)
         return NULL;
     if (creature->GetEntry() == BG_AV_CreatureInfo[AV_NPC_A_CAPTAIN][0] || creature->GetEntry() == BG_AV_CreatureInfo[AV_NPC_H_CAPTAIN][0])
-        creature->SetRespawnDelay(RESPAWN_ONE_DAY); /// @todo look if this can be done by database + also add this for the wingcommanders
+        creature->SetRespawnDelay(RESPAWN_ONE_DAY); // TODO: look if this can be done by database + also add this for the wingcommanders
 
     if ((isStatic && cinfoid >= 10 && cinfoid <= 14) || (!isStatic && ((cinfoid >= AV_NPC_A_GRAVEDEFENSE0 && cinfoid <= AV_NPC_A_GRAVEDEFENSE3) ||
         (cinfoid >= AV_NPC_H_GRAVEDEFENSE0 && cinfoid <= AV_NPC_H_GRAVEDEFENSE3))))
@@ -312,7 +314,7 @@ Creature* BattlegroundAV::AddAVCreature(uint16 cinfoid, uint16 type)
         creature->GetMotionMaster()->Initialize();
         creature->setDeathState(JUST_DIED);
         creature->Respawn();
-        /// @todo find a way to add a motionmaster without killing the creature (i
+        //TODO: find a way to add a motionmaster without killing the creature (i
         //just copied this code from a gm-command
     }
 
@@ -382,11 +384,11 @@ void BattlegroundAV::PostUpdateImpl(uint32 diff)
                 else
                 {
                     CastSpellOnTeam(AV_BUFF_H_CAPTAIN, HORDE);
-                    Creature* creature = GetBGCreature(AV_CPLACE_MAX + 59); /// @todo make the captains a dynamic creature
+                    Creature* creature = GetBGCreature(AV_CPLACE_MAX + 59); //TODO: make the captains a dynamic creature
                     if (creature)
                         YellToAll(creature, LANG_BG_AV_H_CAPTAIN_BUFF, LANG_ORCISH);
                 }
-                m_CaptainBuffTimer[i] = 120000 + urand(0, 4)* 60000; //as far as i could see, the buff is randomly so i make 2minutes (thats the duration of the buff itself) + 0-4minutes @todo get the right times
+                m_CaptainBuffTimer[i] = 120000 + urand(0, 4)* 60000; //as far as i could see, the buff is randomly so i make 2minutes (thats the duration of the buff itself) + 0-4minutes TODO get the right times
             }
         }
         //add points from mine owning, and look if he neutral team wanrts to reclaim the mine
@@ -428,7 +430,7 @@ void BattlegroundAV::StartingEventCloseDoors()
 
 void BattlegroundAV::StartingEventOpenDoors()
 {
-    TC_LOG_DEBUG("bg.battleground", "BG_AV: start spawning mine stuff");
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV: start spawning mine stuff");
     for (uint16 i= BG_AV_OBJECT_MINE_SUPPLY_N_MIN; i <= BG_AV_OBJECT_MINE_SUPPLY_N_MAX; i++)
         SpawnBGObject(i, RESPAWN_IMMEDIATELY);
     for (uint16 i= BG_AV_OBJECT_MINE_SUPPLY_S_MIN; i <= BG_AV_OBJECT_MINE_SUPPLY_S_MAX; i++)
@@ -443,7 +445,7 @@ void BattlegroundAV::StartingEventOpenDoors()
     DoorOpen(BG_AV_OBJECT_DOOR_A);
 
     // Achievement: The Alterac Blitz
-    StartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, BG_AV_EVENT_START_BATTLE);
+    StartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, AV_EVENT_START_BATTLE);
 }
 
 void BattlegroundAV::AddPlayer(Player* player)
@@ -452,8 +454,10 @@ void BattlegroundAV::AddPlayer(Player* player)
     //create score and add it to map, default values are set in constructor
     BattlegroundAVScore* sc = new BattlegroundAVScore;
     PlayerScores[player->GetGUID()] = sc;
+    sc->BgTeam = player->GetBGTeam();
+    sc->TalentTree = player->GetPrimaryTalentTree(player->GetActiveSpec());
     if (m_MaxLevel == 0)
-        m_MaxLevel=(player->getLevel()%10 == 0)? player->getLevel() : (player->getLevel()-(player->getLevel()%10))+10; /// @todo just look at the code \^_^/ --but queue-info should provide this information..
+        m_MaxLevel=(player->getLevel()%10 == 0)? player->getLevel() : (player->getLevel()-(player->getLevel()%10))+10; //TODO: just look at the code \^_^/ --but queue-info should provide this information..
 }
 
 void BattlegroundAV::EndBattleground(uint32 winner)
@@ -492,7 +496,7 @@ void BattlegroundAV::EndBattleground(uint32 winner)
             RewardHonorToTeam(GetBonusHonor(kills[i]), i == 0 ? ALLIANCE : HORDE);
     }
 
-    /// @todo add enterevademode for all attacking creatures
+    //TODO add enterevademode for all attacking creatures
     Battleground::EndBattleground(winner);
 }
 
@@ -500,10 +504,10 @@ void BattlegroundAV::RemovePlayer(Player* player, uint64 /*guid*/, uint32 /*team
 {
    if (!player)
     {
-        TC_LOG_ERROR("bg.battleground", "bg_AV no player at remove");
+        sLog->outError(LOG_FILTER_BATTLEGROUND, "bg_AV no player at remove");
         return;
     }
-    /// @todo search more buffs
+    //TODO search more buffs
     player->RemoveAurasDueToSpell(AV_BUFF_ARMOR);
     player->RemoveAurasDueToSpell(AV_BUFF_A_CAPTAIN);
     player->RemoveAurasDueToSpell(AV_BUFF_H_CAPTAIN);
@@ -585,7 +589,7 @@ void BattlegroundAV::UpdatePlayerScore(Player* Source, uint32 type, uint32 value
 void BattlegroundAV::EventPlayerDestroyedPoint(BG_AV_Nodes node)
 {
     uint32 object = GetObjectThroughNode(node);
-    TC_LOG_DEBUG("bg.battleground", "bg_av: player destroyed point node %i object %i", node, object);
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "bg_av: player destroyed point node %i object %i", node, object);
 
     //despawn banner
     SpawnBGObject(object, RESPAWN_ONE_DAY);
@@ -600,7 +604,7 @@ void BattlegroundAV::EventPlayerDestroyedPoint(BG_AV_Nodes node)
         if (BgCreatures[AV_CPLACE_A_MARSHAL_SOUTH + tmp])
             DelCreature(AV_CPLACE_A_MARSHAL_SOUTH + tmp);
         else
-            TC_LOG_ERROR("bg.battleground", "BG_AV: playerdestroyedpoint: marshal %i doesn't exist", AV_CPLACE_A_MARSHAL_SOUTH + tmp);
+            sLog->outError(LOG_FILTER_BATTLEGROUND, "BG_AV: playerdestroyedpoint: marshal %i doesn't exist", AV_CPLACE_A_MARSHAL_SOUTH + tmp);
         //spawn destroyed aura
         for (uint8 i=0; i <= 9; i++)
             SpawnBGObject(BG_AV_OBJECT_BURN_DUNBALDAR_SOUTH + i + (tmp * 10), RESPAWN_IMMEDIATELY);
@@ -660,18 +664,18 @@ void BattlegroundAV::ChangeMineOwner(uint8 mine, uint32 team, bool initial)
 
     if (!initial)
     {
-        TC_LOG_DEBUG("bg.battleground", "bg_av depopulating mine %i (0=north, 1=south)", mine);
+        sLog->outDebug(LOG_FILTER_BATTLEGROUND, "bg_av depopulating mine %i (0=north, 1=south)", mine);
         if (mine == AV_SOUTH_MINE)
             for (uint16 i=AV_CPLACE_MINE_S_S_MIN; i <= AV_CPLACE_MINE_S_S_MAX; i++)
                 if (BgCreatures[i])
-                    DelCreature(i); /// @todo just set the respawntime to 999999
+                    DelCreature(i); //TODO just set the respawntime to 999999
         for (uint16 i=((mine == AV_NORTH_MINE)?AV_CPLACE_MINE_N_1_MIN:AV_CPLACE_MINE_S_1_MIN); i <= ((mine == AV_NORTH_MINE)?AV_CPLACE_MINE_N_3:AV_CPLACE_MINE_S_3); i++)
             if (BgCreatures[i])
-                DelCreature(i); /// @todo here also
+                DelCreature(i); //TODO here also
     }
     SendMineWorldStates(mine);
 
-    TC_LOG_DEBUG("bg.battleground", "bg_av populating mine %i (0=north, 1=south)", mine);
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "bg_av populating mine %i (0=north, 1=south)", mine);
     uint16 miner;
     //also neutral team exists.. after a big time, the neutral team tries to conquer the mine
     if (mine == AV_NORTH_MINE)
@@ -693,7 +697,7 @@ void BattlegroundAV::ChangeMineOwner(uint8 mine, uint32 team, bool initial)
         else
             miner = AV_NPC_S_MINE_N_1;
        //vermin
-        TC_LOG_DEBUG("bg.battleground", "spawning vermin");
+        sLog->outDebug(LOG_FILTER_BATTLEGROUND, "spawning vermin");
         if (team == ALLIANCE)
             cinfo = AV_NPC_S_MINE_A_3;
         else if (team == HORDE)
@@ -731,7 +735,7 @@ void BattlegroundAV::ChangeMineOwner(uint8 mine, uint32 team, bool initial)
     return;
 }
 
-bool BattlegroundAV::CanActivateGO(int32 GOId, uint32 team) const
+bool BattlegroundAV::PlayerCanDoMineQuest(int32 GOId, uint32 team)
 {
     if (GOId == BG_AV_OBJECTID_MINE_N)
          return (m_Mine_Owner[AV_NORTH_MINE] == team);
@@ -764,7 +768,7 @@ void BattlegroundAV::PopulateNode(BG_AV_Nodes node)
         if (BgCreatures[node])
             DelCreature(node);
         if (!AddSpiritGuide(node, BG_AV_CreaturePos[node][0], BG_AV_CreaturePos[node][1], BG_AV_CreaturePos[node][2], BG_AV_CreaturePos[node][3], owner))
-            TC_LOG_ERROR("bg.battleground", "AV: couldn't spawn spiritguide at node %i", node);
+            sLog->outError(LOG_FILTER_BATTLEGROUND, "AV: couldn't spawn spiritguide at node %i", node);
     }
     for (uint8 i=0; i<4; i++)
         AddAVCreature(creatureid, c_place+i);
@@ -814,7 +818,7 @@ void BattlegroundAV::DePopulateNode(BG_AV_Nodes node)
 
 BG_AV_Nodes BattlegroundAV::GetNodeThroughObject(uint32 object)
 {
-    TC_LOG_DEBUG("bg.battleground", "bg_AV getnodethroughobject %i", object);
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "bg_AV getnodethroughobject %i", object);
     if (object <= BG_AV_OBJECT_FLAG_A_STONEHEART_BUNKER)
         return BG_AV_Nodes(object);
     if (object <= BG_AV_OBJECT_FLAG_C_A_FROSTWOLF_HUT)
@@ -829,14 +833,14 @@ BG_AV_Nodes BattlegroundAV::GetNodeThroughObject(uint32 object)
         return BG_AV_Nodes(object - 29);
     if (object == BG_AV_OBJECT_FLAG_N_SNOWFALL_GRAVE)
         return BG_AV_NODES_SNOWFALL_GRAVE;
-    TC_LOG_ERROR("bg.battleground", "BattlegroundAV: ERROR! GetPlace got a wrong object :(");
+    sLog->outError(LOG_FILTER_BATTLEGROUND, "BattlegroundAV: ERROR! GetPlace got a wrong object :(");
     ASSERT(false);
     return BG_AV_Nodes(0);
 }
 
 uint32 BattlegroundAV::GetObjectThroughNode(BG_AV_Nodes node)
 { //this function is the counterpart to GetNodeThroughObject()
-    TC_LOG_DEBUG("bg.battleground", "bg_AV GetObjectThroughNode %i", node);
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "bg_AV GetObjectThroughNode %i", node);
     if (m_Nodes[node].Owner == ALLIANCE)
     {
         if (m_Nodes[node].State == POINT_ASSAULTED)
@@ -867,7 +871,7 @@ uint32 BattlegroundAV::GetObjectThroughNode(BG_AV_Nodes node)
     }
     else if (m_Nodes[node].Owner == AV_NEUTRAL_TEAM)
         return BG_AV_OBJECT_FLAG_N_SNOWFALL_GRAVE;
-    TC_LOG_ERROR("bg.battleground", "BattlegroundAV: Error! GetPlaceNode couldn't resolve node %i", node);
+    sLog->outError(LOG_FILTER_BATTLEGROUND, "BattlegroundAV: Error! GetPlaceNode couldn't resolve node %i", node);
     ASSERT(false);
     return 0;
 }
@@ -879,7 +883,7 @@ void BattlegroundAV::EventPlayerClickedOnFlag(Player* source, GameObject* target
     if (GetStatus() != STATUS_IN_PROGRESS)
         return;
     int32 object = GetObjectType(target_obj->GetGUID());
-    TC_LOG_DEBUG("bg.battleground", "BG_AV using gameobject %i with type %i", target_obj->GetEntry(), object);
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV using gameobject %i with type %i", target_obj->GetEntry(), object);
     if (object < 0)
         return;
     switch (target_obj->GetEntry())
@@ -918,10 +922,10 @@ void BattlegroundAV::EventPlayerDefendsPoint(Player* player, uint32 object)
         EventPlayerAssaultsPoint(player, object);
         return;
     }
-    TC_LOG_DEBUG("bg.battleground", "player defends point object: %i node: %i", object, node);
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "player defends point object: %i node: %i", object, node);
     if (m_Nodes[node].PrevOwner != team)
     {
-        TC_LOG_ERROR("bg.battleground", "BG_AV: player defends point which doesn't belong to his team %i", node);
+        sLog->outError(LOG_FILTER_BATTLEGROUND, "BG_AV: player defends point which doesn't belong to his team %i", node);
         return;
     }
 
@@ -981,7 +985,7 @@ void BattlegroundAV::EventPlayerAssaultsPoint(Player* player, uint32 object)
     BG_AV_Nodes node = GetNodeThroughObject(object);
     uint32 owner = m_Nodes[node].Owner; //maybe name it prevowner
     uint32 team  = player->GetTeam();
-    TC_LOG_DEBUG("bg.battleground", "bg_av: player assaults point object %i node %i", object, node);
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "bg_av: player assaults point object %i node %i", object, node);
     if (owner == team || team == m_Nodes[node].TotalOwner)
         return; //surely a gm used this object
 
@@ -1047,8 +1051,25 @@ void BattlegroundAV::EventPlayerAssaultsPoint(Player* player, uint32 object)
             //spawning/despawning of aura
             SpawnBGObject(BG_AV_OBJECT_AURA_N_FIRSTAID_STATION+3*node, RESPAWN_IMMEDIATELY); //neutral aura spawn
             SpawnBGObject(BG_AV_OBJECT_AURA_A_FIRSTAID_STATION+GetTeamIndexByTeamId(owner)+3*node, RESPAWN_ONE_DAY); //teeamaura despawn
+            // Those who are waiting to resurrect at this object are taken to the closest own object's graveyard
+            std::vector<uint64> ghost_list = m_ReviveQueue[BgCreatures[node]];
+            if (!ghost_list.empty())
+            {
+                Player* waitingPlayer;  // player waiting at graveyard for resurrection
+                WorldSafeLocsEntry const* closestGrave = NULL;
+                for (std::vector<uint64>::iterator itr = ghost_list.begin(); itr != ghost_list.end(); ++itr)
+                {
+                    waitingPlayer = ObjectAccessor::FindPlayer(*ghost_list.begin());
+                    if (!waitingPlayer)
+                        continue;
 
-            RelocateDeadPlayers(BgCreatures[node]);
+                    if (!closestGrave)
+                        closestGrave = GetClosestGraveYard(waitingPlayer);
+                    else
+                        waitingPlayer->TeleportTo(GetMapId(), closestGrave->x, closestGrave->y, closestGrave->z, player->GetOrientation());
+                }
+                m_ReviveQueue[BgCreatures[node]].clear();
+            }
         }
         DePopulateNode(node);
     }
@@ -1069,7 +1090,7 @@ void BattlegroundAV::EventPlayerAssaultsPoint(Player* player, uint32 object)
     PlaySoundToAll((team == ALLIANCE)?AV_SOUND_ALLIANCE_ASSAULTS:AV_SOUND_HORDE_ASSAULTS);
 }
 
-void BattlegroundAV::FillInitialWorldStates(WorldStateBuilder& builder)
+void BattlegroundAV::FillInitialWorldStates(WorldPacket& data)
 {
     bool stateok;
     //graveyards
@@ -1078,39 +1099,32 @@ void BattlegroundAV::FillInitialWorldStates(WorldStateBuilder& builder)
         for (uint8 j =1; j <= 3; j+=2)
         {//j=1=assaulted j=3=controled
             stateok = (m_Nodes[i].State == j);
-            builder.AppendState(BG_AV_NodeWorldStates[i][GetWorldStateType(j, ALLIANCE)], (m_Nodes[i].Owner == ALLIANCE && stateok) ? 1 : 0);
-            builder.AppendState(BG_AV_NodeWorldStates[i][GetWorldStateType(j, HORDE)], (m_Nodes[i].Owner == HORDE && stateok) ? 1 : 0);
+            data << uint32(BG_AV_NodeWorldStates[i][GetWorldStateType(j, ALLIANCE)]) << uint32((m_Nodes[i].Owner == ALLIANCE && stateok)?1:0);
+            data << uint32(BG_AV_NodeWorldStates[i][GetWorldStateType(j, HORDE)]) << uint32((m_Nodes[i].Owner == HORDE && stateok)?1:0);
         }
     }
 
     //towers
     for (uint8 i = BG_AV_NODES_DUNBALDAR_SOUTH; i < BG_AV_NODES_MAX; ++i)
-    {
         for (uint8 j =1; j <= 3; j+=2)
         {//j=1=assaulted j=3=controled //i dont have j=2=destroyed cause destroyed is the same like enemy-team controll
             stateok = (m_Nodes[i].State == j || (m_Nodes[i].State == POINT_DESTROYED && j == 3));
-            builder.AppendState(BG_AV_NodeWorldStates[i][GetWorldStateType(j, ALLIANCE)], m_Nodes[i].Owner == ALLIANCE && stateok ? 1 : 0);
-            builder.AppendState(BG_AV_NodeWorldStates[i][GetWorldStateType(j, HORDE)], m_Nodes[i].Owner == HORDE && stateok ? 1 : 0);
+            data << uint32(BG_AV_NodeWorldStates[i][GetWorldStateType(j, ALLIANCE)]) << uint32((m_Nodes[i].Owner == ALLIANCE && stateok)?1:0);
+            data << uint32(BG_AV_NodeWorldStates[i][GetWorldStateType(j, HORDE)]) << uint32((m_Nodes[i].Owner == HORDE && stateok)?1:0);
         }
-    }
-
     if (m_Nodes[BG_AV_NODES_SNOWFALL_GRAVE].Owner == AV_NEUTRAL_TEAM) //cause neutral teams aren't handled generic
-        builder.AppendState(AV_SNOWFALL_N, 1);
-
-    builder.AppendState(AV_Alliance_Score, m_Team_Scores[0]);
-    builder.AppendState(AV_Horde_Score, m_Team_Scores[1]);
-
-    if (GetStatus() == STATUS_IN_PROGRESS)
-    { //only if game started the teamscores are displayed
-        builder.AppendState(AV_SHOW_A_SCORE, 1);
-        builder.AppendState(AV_SHOW_H_SCORE, 1);
+        data << uint32(AV_SNOWFALL_N) << uint32(1);
+    data << uint32(AV_Alliance_Score)  << uint32(m_Team_Scores[0]);
+    data << uint32(AV_Horde_Score) << uint32(m_Team_Scores[1]);
+    if (GetStatus() == STATUS_IN_PROGRESS){ //only if game started the teamscores are displayed
+        data << uint32(AV_SHOW_A_SCORE) << uint32(1);
+        data << uint32(AV_SHOW_H_SCORE) << uint32(1);
     }
     else
     {
-        builder.AppendState(AV_SHOW_A_SCORE, 0);
-        builder.AppendState(AV_SHOW_H_SCORE, 0);
+        data << uint32(AV_SHOW_A_SCORE) << uint32(0);
+        data << uint32(AV_SHOW_H_SCORE) << uint32(0);
     }
-
     SendMineWorldStates(AV_NORTH_MINE);
     SendMineWorldStates(AV_SOUTH_MINE);
 }
@@ -1134,7 +1148,7 @@ uint8 BattlegroundAV::GetWorldStateType(uint8 state, uint16 team) //this is used
         if (state == POINT_ASSAULTED)
             return 3;
     }
-    TC_LOG_ERROR("bg.battleground", "BG_AV: should update a strange worldstate state:%i team:%i", state, team);
+    sLog->outError(LOG_FILTER_BATTLEGROUND, "BG_AV: should update a strange worldstate state:%i team:%i", state, team);
     return 5; //this will crash the game, but i want to know if something is wrong here
 }
 
@@ -1217,7 +1231,7 @@ bool BattlegroundAV::SetupBattleground()
                       BG_AV_DoorPositons[1][0], BG_AV_DoorPositons[1][1], BG_AV_DoorPositons[1][2], BG_AV_DoorPositons[1][3],
                       0, 0, std::sin(BG_AV_DoorPositons[1][3]/2), std::cos(BG_AV_DoorPositons[1][3]/2), RESPAWN_IMMEDIATELY))
     {
-        TC_LOG_ERROR("sql.sql", "BatteGroundAV: Failed to spawn some object Battleground not created!1");
+        sLog->outError(LOG_FILTER_SQL, "BatteGroundAV: Failed to spawn some object Battleground not created!1");
         return false;
     }
 
@@ -1249,7 +1263,7 @@ bool BattlegroundAV::SetupBattleground()
                               BG_AV_ObjectPos[i][0], BG_AV_ObjectPos[i][1], BG_AV_ObjectPos[i][2], BG_AV_ObjectPos[i][3],
                               0, 0, std::sin(BG_AV_ObjectPos[i][3]/2), std::cos(BG_AV_ObjectPos[i][3]/2), RESPAWN_ONE_DAY))
             {
-                TC_LOG_ERROR("bg.battleground", "BatteGroundAV: Failed to spawn some object Battleground not created!2");
+                sLog->outError(LOG_FILTER_BATTLEGROUND, "BatteGroundAV: Failed to spawn some object Battleground not created!2");
                 return false;
             }
         }
@@ -1276,7 +1290,7 @@ bool BattlegroundAV::SetupBattleground()
                                   BG_AV_ObjectPos[i+8][0], BG_AV_ObjectPos[i+8][1], BG_AV_ObjectPos[i+8][2], BG_AV_ObjectPos[i+8][3],
                                   0, 0, std::sin(BG_AV_ObjectPos[i+8][3]/2), std::cos(BG_AV_ObjectPos[i+8][3]/2), RESPAWN_ONE_DAY))
                 {
-                    TC_LOG_ERROR("bg.battleground", "BatteGroundAV: Failed to spawn some object Battleground not created!3");
+                    sLog->outError(LOG_FILTER_BATTLEGROUND, "BatteGroundAV: Failed to spawn some object Battleground not created!3");
                     return false;
                 }
             }
@@ -1301,7 +1315,7 @@ bool BattlegroundAV::SetupBattleground()
                                   BG_AV_ObjectPos[i+8][0], BG_AV_ObjectPos[i+8][1], BG_AV_ObjectPos[i+8][2], BG_AV_ObjectPos[i+8][3],
                                   0, 0, std::sin(BG_AV_ObjectPos[i+8][3]/2), std::cos(BG_AV_ObjectPos[i+8][3]/2), RESPAWN_ONE_DAY))
                 {
-                    TC_LOG_ERROR("bg.battleground", "BatteGroundAV: Failed to spawn some object Battleground not created!4");
+                    sLog->outError(LOG_FILTER_BATTLEGROUND, "BatteGroundAV: Failed to spawn some object Battleground not created!4");
                     return false;
                 }
             }
@@ -1319,7 +1333,7 @@ bool BattlegroundAV::SetupBattleground()
                                std::cos(BG_AV_ObjectPos[AV_OPLACE_BURN_DUNBALDAR_SOUTH+((i-BG_AV_NODES_DUNBALDAR_SOUTH)*10)+j][3]/2),
                                RESPAWN_ONE_DAY))
                 {
-                    TC_LOG_ERROR("bg.battleground", "BatteGroundAV: Failed to spawn some object Battleground not created!5.%i", i);
+                    sLog->outError(LOG_FILTER_BATTLEGROUND, "BatteGroundAV: Failed to spawn some object Battleground not created!5.%i", i);
                     return false;
                 }
             }
@@ -1343,7 +1357,7 @@ bool BattlegroundAV::SetupBattleground()
                                std::cos(BG_AV_ObjectPos[AV_OPLACE_BURN_BUILDING_A+(i*10)+j][3]/2),
                                RESPAWN_ONE_DAY))
                 {
-                    TC_LOG_ERROR("bg.battleground", "BatteGroundAV: Failed to spawn some object Battleground not created!6.%i", i);
+                    sLog->outError(LOG_FILTER_BATTLEGROUND, "BatteGroundAV: Failed to spawn some object Battleground not created!6.%i", i);
                     return false;
                 }
             }
@@ -1361,7 +1375,7 @@ bool BattlegroundAV::SetupBattleground()
                                std::cos(BG_AV_ObjectPos[AV_OPLACE_BURN_BUILDING_A+(i*10)+j][3]/2),
                                RESPAWN_ONE_DAY))
                 {
-                    TC_LOG_ERROR("bg.battleground", "BatteGroundAV: Failed to spawn some object Battleground not created!7.%i", i);
+                    sLog->outError(LOG_FILTER_BATTLEGROUND, "BatteGroundAV: Failed to spawn some object Battleground not created!7.%i", i);
                     return false;
                 }
             }
@@ -1381,7 +1395,7 @@ bool BattlegroundAV::SetupBattleground()
                        std::cos(BG_AV_ObjectPos[AV_OPLACE_MINE_SUPPLY_N_MIN+i][3]/2),
                        RESPAWN_ONE_DAY))
         {
-            TC_LOG_ERROR("bg.battleground", "BatteGroundAV: Failed to spawn some mine supplies Battleground not created!7.5.%i", i);
+            sLog->outError(LOG_FILTER_BATTLEGROUND, "BatteGroundAV: Failed to spawn some mine supplies Battleground not created!7.5.%i", i);
             return false;
         }
     }
@@ -1399,7 +1413,7 @@ bool BattlegroundAV::SetupBattleground()
                        std::cos(BG_AV_ObjectPos[AV_OPLACE_MINE_SUPPLY_S_MIN+i][3]/2),
                        RESPAWN_ONE_DAY))
         {
-            TC_LOG_ERROR("bg.battleground", "BatteGroundAV: Failed to spawn some mine supplies Battleground not created!7.6.%i", i);
+            sLog->outError(LOG_FILTER_BATTLEGROUND, "BatteGroundAV: Failed to spawn some mine supplies Battleground not created!7.6.%i", i);
             return false;
         }
     }
@@ -1416,7 +1430,7 @@ bool BattlegroundAV::SetupBattleground()
                    std::cos(BG_AV_ObjectPos[BG_AV_NODES_SNOWFALL_GRAVE][3]/2),
                    RESPAWN_ONE_DAY))
     {
-        TC_LOG_ERROR("bg.battleground", "BatteGroundAV: Failed to spawn some object Battleground not created!8");
+        sLog->outError(LOG_FILTER_BATTLEGROUND, "BatteGroundAV: Failed to spawn some object Battleground not created!8");
         return false;
     }
     for (uint8 i = 0; i < 4; i++)
@@ -1434,13 +1448,13 @@ bool BattlegroundAV::SetupBattleground()
                           BG_AV_ObjectPos[AV_OPLACE_SNOW_1+i][0], BG_AV_ObjectPos[AV_OPLACE_SNOW_1+i][1], BG_AV_ObjectPos[AV_OPLACE_SNOW_1+i][2], BG_AV_ObjectPos[AV_OPLACE_SNOW_1+i][3],
                           0, 0, std::sin(BG_AV_ObjectPos[AV_OPLACE_SNOW_1+i][3]/2), std::cos(BG_AV_ObjectPos[AV_OPLACE_SNOW_1+i][3]/2), RESPAWN_ONE_DAY))
         {
-            TC_LOG_ERROR("bg.battleground", "BatteGroundAV: Failed to spawn some object Battleground not created!9.%i", i);
+            sLog->outError(LOG_FILTER_BATTLEGROUND, "BatteGroundAV: Failed to spawn some object Battleground not created!9.%i", i);
             return false;
         }
     }
 
     uint16 i;
-    TC_LOG_DEBUG("bg.battleground", "Alterac Valley: entering state STATUS_WAIT_JOIN ...");
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "Alterac Valley: entering state STATUS_WAIT_JOIN ...");
     // Initial Nodes
     for (i = 0; i < BG_AV_OBJECT_MAX; i++)
         SpawnBGObject(i, RESPAWN_ONE_DAY);
@@ -1480,22 +1494,22 @@ bool BattlegroundAV::SetupBattleground()
     SpawnBGObject(BG_AV_OBJECT_AURA_N_SNOWFALL_GRAVE, RESPAWN_IMMEDIATELY);
 
     //creatures
-    TC_LOG_DEBUG("bg.battleground", "BG_AV start poputlating nodes");
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV start poputlating nodes");
     for (BG_AV_Nodes i = BG_AV_NODES_FIRSTAID_STATION; i < BG_AV_NODES_MAX; ++i)
     {
         if (m_Nodes[i].Owner)
             PopulateNode(i);
     }
     //all creatures which don't get despawned through the script are static
-    TC_LOG_DEBUG("bg.battleground", "BG_AV: start spawning static creatures");
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV: start spawning static creatures");
     for (i = 0; i < AV_STATICCPLACE_MAX; i++)
         AddAVCreature(0, i + AV_CPLACE_MAX);
     //mainspiritguides:
-    TC_LOG_DEBUG("bg.battleground", "BG_AV: start spawning spiritguides creatures");
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV: start spawning spiritguides creatures");
     AddSpiritGuide(7, BG_AV_CreaturePos[7][0], BG_AV_CreaturePos[7][1], BG_AV_CreaturePos[7][2], BG_AV_CreaturePos[7][3], ALLIANCE);
     AddSpiritGuide(8, BG_AV_CreaturePos[8][0], BG_AV_CreaturePos[8][1], BG_AV_CreaturePos[8][2], BG_AV_CreaturePos[8][3], HORDE);
     //spawn the marshals (those who get deleted, if a tower gets destroyed)
-    TC_LOG_DEBUG("bg.battleground", "BG_AV: start spawning marshal creatures");
+    sLog->outDebug(LOG_FILTER_BATTLEGROUND, "BG_AV: start spawning marshal creatures");
     for (i = AV_NPC_A_MARSHAL_SOUTH; i <= AV_NPC_H_MARSHAL_WTOWER; i++)
         AddAVCreature(i, AV_CPLACE_A_MARSHAL_SOUTH + (i - AV_NPC_A_MARSHAL_SOUTH));
     AddAVCreature(AV_NPC_HERALD, AV_CPLACE_HERALD);
@@ -1522,7 +1536,7 @@ char const* BattlegroundAV::GetNodeName(BG_AV_Nodes node)
         case BG_AV_NODES_FROSTWOLF_WTOWER:  return GetTrinityString(LANG_BG_AV_NODE_TOWER_FROST_W);
         case BG_AV_NODES_FROSTWOLF_HUT:     return GetTrinityString(LANG_BG_AV_NODE_GRAVE_FROST_HUT);
         default:
-            TC_LOG_ERROR("bg.battleground", "tried to get name for node %u", node);
+            sLog->outError(LOG_FILTER_BATTLEGROUND, "tried to get name for node %u", node);
             break;
     }
 
@@ -1533,22 +1547,22 @@ void BattlegroundAV::AssaultNode(BG_AV_Nodes node, uint16 team)
 {
     if (m_Nodes[node].TotalOwner == team)
     {
-        TC_LOG_FATAL("bg.battleground", "Assaulting team is TotalOwner of node");
+        sLog->outFatal(LOG_FILTER_BATTLEGROUND, "Assaulting team is TotalOwner of node");
         ASSERT(false);
     }
     if (m_Nodes[node].Owner == team)
     {
-        TC_LOG_FATAL("bg.battleground", "Assaulting team is owner of node");
+        sLog->outFatal(LOG_FILTER_BATTLEGROUND, "Assaulting team is owner of node");
         ASSERT(false);
     }
     if (m_Nodes[node].State == POINT_DESTROYED)
     {
-        TC_LOG_FATAL("bg.battleground", "Destroyed node is being assaulted");
+        sLog->outFatal(LOG_FILTER_BATTLEGROUND, "Destroyed node is being assaulted");
         ASSERT(false);
     }
     if (m_Nodes[node].State == POINT_ASSAULTED && m_Nodes[node].TotalOwner) //only assault an assaulted node if no totalowner exists
     {
-        TC_LOG_FATAL("bg.battleground", "Assault on an not assaulted node with total owner");
+        sLog->outFatal(LOG_FILTER_BATTLEGROUND, "Assault on an not assaulted node with total owner");
         ASSERT(false);
     }
     //the timer gets another time, if the previous owner was 0 == Neutral
@@ -1605,7 +1619,7 @@ void BattlegroundAV::ResetBGSubclass()
         m_Team_Scores[i]=BG_AV_SCORE_INITIAL_POINTS;
         m_IsInformedNearVictory[i]=false;
         m_CaptainAlive[i] = true;
-        m_CaptainBuffTimer[i] = 120000 + urand(0, 4)* 60; //as far as i could see, the buff is randomly so i make 2minutes (thats the duration of the buff itself) + 0-4minutes @todo get the right times
+        m_CaptainBuffTimer[i] = 120000 + urand(0, 4)* 60; //as far as i could see, the buff is randomly so i make 2minutes (thats the duration of the buff itself) + 0-4minutes TODO get the right times
         m_Mine_Owner[i] = AV_NEUTRAL_TEAM;
         m_Mine_PrevOwner[i] = m_Mine_Owner[i];
     }
@@ -1626,67 +1640,63 @@ void BattlegroundAV::ResetBGSubclass()
             DelCreature(i);
 }
 
-bool BattlegroundAV::CheckAchievementCriteriaMeet(uint32 criteriaId, Player const* source, Unit const* target, uint32 miscValue)
+bool BattlegroundAV::IsBothMinesControlledByTeam(uint32 team) const
 {
-    uint32 team = source->GetTeam();
-    switch (criteriaId)
+    for (uint8 mine = 0; mine < 2; mine++)
+        if (m_Mine_Owner[mine] != team)
+            return false;
+
+    return true;
+}
+
+bool BattlegroundAV::IsAllTowersControlledAndCaptainAlive(uint32 team) const
+{
+    if (team == ALLIANCE)
     {
-        case BG_CRITERIA_CHECK_EVERYTHING_COUNTS:
-            for (uint8 mine = 0; mine < 2; mine++)
-                if (m_Mine_Owner[mine] != team)
-                    return false;
-
-            return true;
-        case BG_CRITERIA_CHECK_AV_PERFECTION:
+        for (BG_AV_Nodes i = BG_AV_NODES_DUNBALDAR_SOUTH; i <= BG_AV_NODES_STONEHEART_BUNKER; ++i) // alliance towers controlled
         {
-            if (team == ALLIANCE)
+            if (m_Nodes[i].State == POINT_CONTROLED)
             {
-                for (BG_AV_Nodes i = BG_AV_NODES_DUNBALDAR_SOUTH; i <= BG_AV_NODES_STONEHEART_BUNKER; ++i) // alliance towers controlled
-                {
-                    if (m_Nodes[i].State == POINT_CONTROLED)
-                    {
-                        if (m_Nodes[i].Owner != ALLIANCE)
-                            return false;
-                    }
-                    else
-                        return false;
-                }
-
-                for (BG_AV_Nodes i = BG_AV_NODES_ICEBLOOD_TOWER; i <= BG_AV_NODES_FROSTWOLF_WTOWER; ++i) // horde towers destroyed
-                    if (m_Nodes[i].State != POINT_DESTROYED)
-                        return false;
-
-                if (!m_CaptainAlive[0])
+                if (m_Nodes[i].Owner != ALLIANCE)
                     return false;
-
-                return true;
             }
-            else if (team == HORDE)
-            {
-                for (BG_AV_Nodes i = BG_AV_NODES_ICEBLOOD_TOWER; i <= BG_AV_NODES_FROSTWOLF_WTOWER; ++i) // horde towers controlled
-                {
-                    if (m_Nodes[i].State == POINT_CONTROLED)
-                    {
-                        if (m_Nodes[i].Owner != HORDE)
-                            return false;
-                    }
-                    else
-                        return false;
-                }
-
-                for (BG_AV_Nodes i = BG_AV_NODES_DUNBALDAR_SOUTH; i <= BG_AV_NODES_STONEHEART_BUNKER; ++i) // alliance towers destroyed
-                    if (m_Nodes[i].State != POINT_DESTROYED)
-                        return false;
-
-                if (!m_CaptainAlive[1])
-                    return false;
-
-                return true;
-            }
+            else
+                return false;
         }
+
+        for (BG_AV_Nodes i = BG_AV_NODES_ICEBLOOD_TOWER; i <= BG_AV_NODES_FROSTWOLF_WTOWER; ++i) // horde towers destroyed
+            if (m_Nodes[i].State != POINT_DESTROYED)
+                return false;
+
+        if (!m_CaptainAlive[0])
+            return false;
+
+        return true;
+    }
+    else if (team == HORDE)
+    {
+        for (BG_AV_Nodes i = BG_AV_NODES_ICEBLOOD_TOWER; i <= BG_AV_NODES_FROSTWOLF_WTOWER; ++i) // horde towers controlled
+        {
+            if (m_Nodes[i].State == POINT_CONTROLED)
+            {
+                if (m_Nodes[i].Owner != HORDE)
+                    return false;
+            }
+            else
+                return false;
+        }
+
+        for (BG_AV_Nodes i = BG_AV_NODES_DUNBALDAR_SOUTH; i <= BG_AV_NODES_STONEHEART_BUNKER; ++i) // alliance towers destroyed
+            if (m_Nodes[i].State != POINT_DESTROYED)
+                return false;
+
+        if (!m_CaptainAlive[1])
+            return false;
+
+        return true;
     }
 
-    return Battleground::CheckAchievementCriteriaMeet(criteriaId, source, target, miscValue);
+    return false;
 }
 
 uint32 BattlegroundAV::GetPrematureWinner()

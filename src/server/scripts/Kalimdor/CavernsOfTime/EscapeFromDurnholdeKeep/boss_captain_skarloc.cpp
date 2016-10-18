@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -53,9 +52,9 @@ class boss_captain_skarloc : public CreatureScript
 public:
     boss_captain_skarloc() : CreatureScript("boss_captain_skarloc") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_captain_skarlocAI(creature);
+        return new boss_captain_skarlocAI (creature);
     }
 
     struct boss_captain_skarlocAI : public ScriptedAI
@@ -74,7 +73,7 @@ public:
         uint32 DevotionAura_Timer;
         uint32 Consecration_Timer;
 
-        void Reset() override
+        void Reset()
         {
             Holy_Light_Timer = urand(20000, 30000);
             Cleanse_Timer = 10000;
@@ -84,19 +83,19 @@ public:
             Consecration_Timer = 8000;
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             //This is not correct. Should taunt Thrall before engage in combat
             Talk(SAY_TAUNT1);
             Talk(SAY_TAUNT2);
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_SLAY);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Talk(SAY_DEATH);
 
@@ -104,7 +103,7 @@ public:
                 instance->SetData(TYPE_THRALL_PART1, DONE);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             //Return since we have no target
             if (!UpdateVictim())

@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -29,7 +29,9 @@ enum BattlegroundDSObjectTypes
     BG_DS_OBJECT_WATER_2        = 3,
     BG_DS_OBJECT_BUFF_1         = 4,
     BG_DS_OBJECT_BUFF_2         = 5,
-    BG_DS_OBJECT_MAX            = 6
+    BG_DS_OBJECT_READYMARKER_1  = 6,
+    BG_DS_OBJECT_READYMARKER_2  = 7,
+    BG_DS_OBJECT_MAX            = 8
 };
 
 enum BattlegroundDSObjects
@@ -39,7 +41,8 @@ enum BattlegroundDSObjects
     BG_DS_OBJECT_TYPE_WATER_1   = 194395, // Collision
     BG_DS_OBJECT_TYPE_WATER_2   = 191877,
     BG_DS_OBJECT_TYPE_BUFF_1    = 184663,
-    BG_DS_OBJECT_TYPE_BUFF_2    = 184664
+    BG_DS_OBJECT_TYPE_BUFF_2    = 184664,
+    BG_DS_OBJECT_READYMARKER    = 940000
 };
 
 enum BattlegroundDSCreatureTypes
@@ -94,8 +97,9 @@ class BattlegroundDS : public Battleground
         void HandleAreaTrigger(Player* Source, uint32 Trigger);
         bool SetupBattleground();
         void Reset();
-        void FillInitialWorldStates(WorldStateBuilder& builder);
+        void FillInitialWorldStates(WorldPacket &d);
         void HandleKillPlayer(Player* player, Player* killer);
+        bool HandlePlayerUnderMap(Player* player);
     private:
         uint32 _waterfallTimer;
         uint8 _waterfallStatus;
@@ -105,15 +109,15 @@ class BattlegroundDS : public Battleground
 
         void PostUpdateImpl(uint32 diff);
     protected:
-        uint32 getWaterFallStatus() { return _waterfallStatus; }
-        void setWaterFallStatus(uint8 status) { _waterfallStatus = status; }
-        uint32 getWaterFallTimer() { return _waterfallTimer; }
-        void setWaterFallTimer(uint32 timer) { _waterfallTimer = timer; }
-        uint32 getWaterFallKnockbackTimer() { return _waterfallKnockbackTimer; }
-        void setWaterFallKnockbackTimer(uint32 timer) { _waterfallKnockbackTimer = timer; }
-        uint8 getPipeKnockBackCount() { return _pipeKnockBackCount; }
-        void setPipeKnockBackCount(uint8 count) { _pipeKnockBackCount = count; }
-        uint32 getPipeKnockBackTimer() { return _pipeKnockBackTimer; }
-        void setPipeKnockBackTimer(uint32 timer) { _pipeKnockBackTimer = timer; }
+        uint32 getWaterFallStatus() { return _waterfallStatus; };
+        void setWaterFallStatus(uint8 status) { _waterfallStatus = status; };
+        uint32 getWaterFallTimer() { return _waterfallTimer; };
+        void setWaterFallTimer(uint32 timer) { _waterfallTimer = timer; };
+        uint32 getWaterFallKnockbackTimer() { return _waterfallKnockbackTimer; };
+        void setWaterFallKnockbackTimer(uint32 timer) { _waterfallKnockbackTimer = timer; };
+        uint8 getPipeKnockBackCount() { return _pipeKnockBackCount; };
+        void setPipeKnockBackCount(uint8 count) { _pipeKnockBackCount = count; };
+        uint32 getPipeKnockBackTimer() { return _pipeKnockBackTimer; };
+        void setPipeKnockBackTimer(uint32 timer) { _pipeKnockBackTimer = timer; };
 };
 #endif

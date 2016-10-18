@@ -1,21 +1,18 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2014 WoWSource 4.3.4
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Do Not Share The SourceCode
+ * and read our WoWSource Terms
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
+/* ScriptData
+SDName: LFG
+SD%Complete: 100%
+SDComment: Fully Working
+SDCategory: LFG
+EndScriptData
+*/
 
 #include "ScriptMgr.h"
 #include "Chat.h"
@@ -43,22 +40,22 @@ class lfg_commandscript : public CommandScript
 public:
     lfg_commandscript() : CommandScript("lfg_commandscript") { }
 
-    ChatCommand* GetCommands() const
+    ChatCommand* GetCommands() const 
     {
         static ChatCommand lfgCommandTable[] =
         {
-            {  "player", rbac::RBAC_PERM_COMMAND_LFG_PLAYER,  false, &HandleLfgPlayerInfoCommand, "", NULL },
-            {   "group", rbac::RBAC_PERM_COMMAND_LFG_GROUP,   false, &HandleLfgGroupInfoCommand,  "", NULL },
-            {   "queue", rbac::RBAC_PERM_COMMAND_LFG_QUEUE,   false, &HandleLfgQueueInfoCommand,  "", NULL },
-            {   "clean", rbac::RBAC_PERM_COMMAND_LFG_CLEAN,   false, &HandleLfgCleanCommand,      "", NULL },
-            { "options", rbac::RBAC_PERM_COMMAND_LFG_OPTIONS, false, &HandleLfgOptionsCommand,    "", NULL },
-            {      NULL, 0, false,                       NULL, "", NULL }
+            {  "player", SEC_GAMEMASTER,     false, &HandleLfgPlayerInfoCommand, "", NULL },
+            {   "group", SEC_GAMEMASTER,     false, &HandleLfgGroupInfoCommand,  "", NULL },
+            {   "queue", SEC_GAMEMASTER,     false, &HandleLfgQueueInfoCommand,  "", NULL },
+            {   "clean", SEC_ADMINISTRATOR,  false, &HandleLfgCleanCommand,      "", NULL },
+            { "options", SEC_ADMINISTRATOR,  false, &HandleLfgOptionsCommand,    "", NULL },
+            {      NULL, SEC_PLAYER,         false,                        NULL, "", NULL }
         };
 
         static ChatCommand commandTable[] =
         {
-            { "lfg", rbac::RBAC_PERM_COMMAND_LFG, false, NULL, "", lfgCommandTable },
-            {  NULL,                     0, false, NULL, "", NULL }
+            { "lfg", SEC_GAMEMASTER,        false, NULL, "", lfgCommandTable },
+            {  NULL, SEC_PLAYER,            false, NULL, "", NULL }
         };
         return commandTable;
     }
@@ -94,7 +91,7 @@ public:
             state.c_str(), sLFGMgr->GetDungeon(guid));
 
         for (GroupReference* itr = grp->GetFirstMember(); itr != NULL; itr = itr->next())
-            GetPlayerInfo(handler, itr->GetSource());
+            GetPlayerInfo(handler, itr->getSource());
 
         return true;
     }

@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -90,12 +88,12 @@ class npc_blastmaster_emi_shortfuse : public CreatureScript
 public:
     npc_blastmaster_emi_shortfuse() : CreatureScript("npc_blastmaster_emi_shortfuse") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_blastmaster_emi_shortfuseAI(creature);
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         if (action == GOSSIP_ACTION_INFO_DEF+1)
@@ -111,7 +109,7 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         InstanceScript* instance = creature->GetInstanceScript();
 
@@ -140,7 +138,7 @@ public:
         std::list<uint64> SummonList;
         std::list<uint64> GoSummonList;
 
-        void Reset() override
+        void Reset()
         {
             if (!HasEscortState(STATE_ESCORT_ESCORTING))
             {
@@ -234,7 +232,7 @@ public:
                 {
                     if (Creature* summon = Unit::GetCreature(*me, *itr))
                     {
-                        if (summon->IsAlive())
+                        if (summon->isAlive())
                             summon->DisappearAndDie();
                         else
                             summon->RemoveCorpse();
@@ -251,12 +249,12 @@ public:
 
             for (Map::PlayerList::const_iterator i = PlList.begin(); i != PlList.end(); ++i)
             {
-                if (Player* player = i->GetSource())
+                if (Player* player = i->getSource())
                 {
-                    if (player->IsGameMaster())
+                    if (player->isGameMaster())
                         continue;
 
-                    if (player->IsAlive())
+                    if (player->isAlive())
                     {
                         temp->SetInCombatWith(player);
                         player->SetInCombatWith(temp);
@@ -266,7 +264,7 @@ public:
             }
         }
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId)
         {
             //just in case
             if (GetPlayerForEscort())
@@ -310,7 +308,7 @@ public:
             }
         }
 
-        void SetData(uint32 uiI, uint32 uiValue) override
+        void SetData(uint32 uiI, uint32 uiValue)
         {
             switch (uiI)
             {
@@ -357,7 +355,7 @@ public:
                     if (GameObject* go = me->SummonGameObject(183410, -533.140f, -105.322f, -156.016f, 0, 0, 0, 0, 0, 1000))
                     {
                         GoSummonList.push_back(go->GetGUID());
-                        go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE); //We can't use it!
+                        go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE); //We can't use it!
                     }
                     Summon(3);
                     break;
@@ -372,7 +370,7 @@ public:
                     if (GameObject* go = me->SummonGameObject(183410, -542.199f, -96.854f, -155.790f, 0, 0, 0, 0, 0, 1000))
                     {
                         GoSummonList.push_back(go->GetGUID());
-                        go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                        go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
                     }
                     break;
                 case 5:
@@ -386,7 +384,7 @@ public:
                     if (GameObject* go = me->SummonGameObject(183410, -507.820f, -103.333f, -151.353f, 0, 0, 0, 0, 0, 1000))
                     {
                         GoSummonList.push_back(go->GetGUID());
-                        go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE); //We can't use it!
+                        go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE); //We can't use it!
                         Summon(5);
                     }
                     break;
@@ -394,7 +392,7 @@ public:
                     if (GameObject* go = me->SummonGameObject(183410, -511.829f, -86.249f, -151.431f, 0, 0, 0, 0, 0, 1000))
                     {
                         GoSummonList.push_back(go->GetGUID());
-                        go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE); //We can't use it!
+                        go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE); //We can't use it!
                     }
                     break;
                 case 8:
@@ -410,7 +408,7 @@ public:
             }
         }
 
-        void UpdateEscortAI(const uint32 uiDiff) override
+        void UpdateEscortAI(const uint32 uiDiff)
         {
             if (uiPhase)
             {
@@ -539,7 +537,7 @@ public:
             DoMeleeAttackIfReady();
         }
 
-        void JustSummoned(Creature* summon) override
+        void JustSummoned(Creature* summon)
         {
             SummonList.push_back(summon->GetGUID());
             AggroAllPlayers(summon);
@@ -553,7 +551,7 @@ class boss_grubbis : public CreatureScript
 public:
     boss_grubbis() : CreatureScript("boss_grubbis") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_grubbisAI(creature);
     }
@@ -567,15 +565,14 @@ public:
 
         void SetDataSummoner()
         {
-            if (!me->IsSummon())
+            if (!me->isSummon())
                 return;
 
             if (Unit* summon = me->ToTempSummon()->GetSummoner())
-                if (Creature* creature = summon->ToCreature())
-                    creature->AI()->SetData(2, 1);
+                CAST_CRE(summon)->AI()->SetData(2, 1);
         }
 
-        void UpdateAI(uint32 /*diff*/) override
+        void UpdateAI(const uint32 /*diff*/)
         {
             if (!UpdateVictim())
                 return;
@@ -583,14 +580,14 @@ public:
             DoMeleeAttackIfReady();
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
-            if (!me->IsSummon())
+            if (!me->isSummon())
                 return;
 
             if (Unit* summoner = me->ToTempSummon()->GetSummoner())
-                if (Creature* creature = summoner->ToCreature())
-                    creature->AI()->SetData(2, 2);
+                if (Creature* summonerCre = summoner->ToCreature())
+                    summonerCre->AI()->SetData(2, 2);
         }
     };
 

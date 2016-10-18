@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,7 +35,7 @@ class AT_example_areatrigger : public AreaTriggerScript
         {
         }
 
-        bool OnTrigger(Player* player, AreaTriggerEntry const* /*trigger*/) override
+        bool OnTrigger(Player* player, AreaTriggerEntry const* /*trigger*/)
         {
             player->Kill(player);
             return true;
@@ -52,7 +51,7 @@ class ItemUse_example_item : public ItemScript
         {
         }
 
-        bool OnUse(Player* /*player*/, Item* /*item*/, SpellCastTargets const& /*targets*/) override
+        bool OnUse(Player* /*player*/, Item* /*item*/, SpellCastTargets const& /*targets*/)
         {
             sScriptMgr->LoadDatabase();
             return true;
@@ -68,7 +67,7 @@ class GOHello_example_go_teleporter : public GameObjectScript
         {
         }
 
-        bool OnGossipHello(Player* player, GameObject* /*go*/) override
+        bool OnGossipHello(Player* player, GameObject* /*go*/)
         {
             player->TeleportTo(0, 1807.07f, 336.105f, 70.3975f, 0.0f);
             return false;

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -50,9 +49,9 @@ namespace VMAP
             bool iEnableHeightCalc;
 
         public:
-            IVMapManager() : iEnableLineOfSightCalc(true), iEnableHeightCalc(true) { }
+            IVMapManager() : iEnableLineOfSightCalc(true), iEnableHeightCalc(true) {}
 
-            virtual ~IVMapManager(void) { }
+            virtual ~IVMapManager(void) {}
 
             virtual int loadMap(const char* pBasePath, unsigned int pMapId, int x, int y) = 0;
 

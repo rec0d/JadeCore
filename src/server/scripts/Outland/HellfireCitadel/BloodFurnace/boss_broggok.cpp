@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,13 +27,10 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "blood_furnace.h"
 
-enum Yells
+enum eEnums
 {
-    SAY_AGGRO               = 0
-};
+    SAY_AGGRO               = 0,
 
-enum Spells
-{
     SPELL_SLIME_SPRAY       = 30913,
     SPELL_POISON_CLOUD      = 30916,
     SPELL_POISON_BOLT       = 30917,
@@ -65,7 +61,7 @@ class boss_broggok : public CreatureScript
             uint32 PoisonBolt_Timer;
             bool canAttack;
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 AcidSpray_Timer = 10000;
@@ -75,12 +71,12 @@ class boss_broggok : public CreatureScript
                 instance->SetData(TYPE_BROGGOK_EVENT, NOT_STARTED);
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 Talk(SAY_AGGRO);
             }
 
-            void JustSummoned(Creature* summoned) override
+            void JustSummoned(Creature* summoned)
             {
                 summoned->setFaction(16);
                 summoned->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
@@ -88,7 +84,7 @@ class boss_broggok : public CreatureScript
                 summoned->CastSpell(summoned, SPELL_POISON, false, 0, 0, me->GetGUID());
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -121,7 +117,7 @@ class boss_broggok : public CreatureScript
                 DoMeleeAttackIfReady();
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 if (instance)
                 {
@@ -131,7 +127,7 @@ class boss_broggok : public CreatureScript
                 }
             }
 
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 switch (action)
                 {
@@ -153,7 +149,7 @@ class boss_broggok : public CreatureScript
 
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_broggokAI(creature);
         }
@@ -162,9 +158,9 @@ class boss_broggok : public CreatureScript
 class go_broggok_lever : public GameObjectScript
 {
     public:
-        go_broggok_lever() : GameObjectScript("go_broggok_lever") { }
+        go_broggok_lever() : GameObjectScript("go_broggok_lever") {}
 
-        bool OnGossipHello(Player* /*player*/, GameObject* go) override
+        bool OnGossipHello(Player* /*player*/, GameObject* go)
         {
             if (InstanceScript* instance = go->GetInstanceScript())
                 if (instance->GetData(TYPE_BROGGOK_EVENT) != DONE && instance->GetData(TYPE_BROGGOK_EVENT) != IN_PROGRESS)

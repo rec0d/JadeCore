@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,7 +26,7 @@ EndScriptData */
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 
-enum Spells
+enum eEnums
 {
     //Dathrohan spells
     SPELL_CRUSADERSHAMMER           = 17286,                //AOE stun
@@ -42,11 +41,8 @@ enum Spells
     SPELL_MINDBLAST                 = 17287,
     SPELL_PSYCHICSCREAM             = 13704,
     SPELL_SLEEP                     = 12098,
-    SPELL_MINDCONTROL               = 15690
-};
+    SPELL_MINDCONTROL               = 15690,
 
-enum Creatures
-{
     NPC_DATHROHAN                   = 10812,
     NPC_BALNAZZAR                   = 10813,
     NPC_ZOMBIE                      = 10698                 //probably incorrect
@@ -75,14 +71,14 @@ class boss_dathrohan_balnazzar : public CreatureScript
 public:
     boss_dathrohan_balnazzar() : CreatureScript("boss_dathrohan_balnazzar") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_dathrohan_balnazzarAI(creature);
+        return new boss_dathrohan_balnazzarAI (creature);
     }
 
     struct boss_dathrohan_balnazzarAI : public ScriptedAI
     {
-        boss_dathrohan_balnazzarAI(Creature* creature) : ScriptedAI(creature) { }
+        boss_dathrohan_balnazzarAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 m_uiCrusadersHammer_Timer;
         uint32 m_uiCrusaderStrike_Timer;
@@ -94,7 +90,7 @@ public:
         uint32 m_uiMindControl_Timer;
         bool m_bTransformed;
 
-        void Reset() override
+        void Reset()
         {
             m_uiCrusadersHammer_Timer = 8000;
             m_uiCrusaderStrike_Timer = 12000;
@@ -110,7 +106,7 @@ public:
                 me->UpdateEntry(NPC_DATHROHAN);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             static uint32 uiCount = sizeof(m_aSummonPoint)/sizeof(SummonDef);
 
@@ -120,11 +116,11 @@ public:
                 TEMPSUMMON_TIMED_DESPAWN, HOUR*IN_MILLISECONDS);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
         }
 
-        void UpdateAI(uint32 uiDiff) override
+        void UpdateAI(const uint32 uiDiff)
         {
             if (!UpdateVictim())
                 return;

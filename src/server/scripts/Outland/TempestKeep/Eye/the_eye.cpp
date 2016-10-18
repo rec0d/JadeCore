@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,45 +24,45 @@ SDCategory: Tempest Keep, The Eye
 EndScriptData */
 
 /* ContentData
-npc_crystalcore_devastator
+mob_crystalcore_devastator
 EndContentData */
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "the_eye.h"
 
-enum Spells
+enum eSpells
 {
     SPELL_COUNTERCHARGE    = 35035,
     SPELL_KNOCKAWAY        = 22893,
 };
 
-class npc_crystalcore_devastator : public CreatureScript
+class mob_crystalcore_devastator : public CreatureScript
 {
     public:
 
-        npc_crystalcore_devastator()
-            : CreatureScript("npc_crystalcore_devastator")
+        mob_crystalcore_devastator()
+            : CreatureScript("mob_crystalcore_devastator")
         {
         }
-        struct npc_crystalcore_devastatorAI : public ScriptedAI
+        struct mob_crystalcore_devastatorAI : public ScriptedAI
         {
-            npc_crystalcore_devastatorAI(Creature* creature) : ScriptedAI(creature) { }
+            mob_crystalcore_devastatorAI(Creature* creature) : ScriptedAI(creature) {}
 
             uint32 Knockaway_Timer;
             uint32 Countercharge_Timer;
 
-            void Reset() override
+            void Reset()
             {
                 Countercharge_Timer = 9000;
                 Knockaway_Timer = 25000;
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -101,13 +100,13 @@ class npc_crystalcore_devastator : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return new npc_crystalcore_devastatorAI(creature);
+            return new mob_crystalcore_devastatorAI(creature);
         }
 };
 void AddSC_the_eye()
 {
-    new npc_crystalcore_devastator();
+    new mob_crystalcore_devastator();
 }
 

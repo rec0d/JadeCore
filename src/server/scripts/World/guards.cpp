@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -36,6 +35,103 @@ EndContentData */
 #include "Player.h"
 #include "SpellInfo.h"
 
+enum GuardianOfAncientKings
+
+{
+	GOAK_HOLY_ENTRY = 46499,
+	GOAK_PROTECTION_ENTRY = 46490,
+	GOAK_RETRIBUTION_ENTRY = 46506,
+};
+
+class guard_guardian_of_ancient_kings : public CreatureScript
+{
+public:
+	guard_guardian_of_ancient_kings() : CreatureScript("guard_guardian_of_ancient_kings") { }
+
+	struct guard_guardian_of_ancient_kingsAI : public GuardAI
+	{
+		guard_guardian_of_ancient_kingsAI(Creature* creature) : GuardAI(creature) {}
+
+		void InitializeAI()
+		{
+			owner = me->GetCharmerOrOwner();
+			guardianEntry = me->GetEntry();
+			isRetribution = guardianEntry == GOAK_RETRIBUTION_ENTRY;
+			me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+			me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
+
+			if (owner && !isRetribution)
+			{
+				// Holy and Protection guardian are passive
+				dummyGuard();
+			}
+		}
+
+		void UpdateAI(uint32 const diff)
+		{
+			// All operations available only for Retribution Guardian
+			if (owner && isRetribution)
+			{
+				if (!me->GetAura(86703))
+				{
+					// Cast Ancient Crusader on the guardian
+					owner->AddAura(86703, me);
+				}
+
+				Unit* ownerVictim = owner->GetVictim();
+
+				// Paladin's attacking check, also check range because state is applied when right clicking (even out of melee range)
+				if (ownerVictim && owner->HasUnitState(UNIT_STATE_MELEE_ATTACKING)
+					&& owner->IsInRange(ownerVictim, 0.0f, NOMINAL_MELEE_RANGE))
+				{
+					meVictim = me->GetVictim();
+
+					// Guardian's target switching only when paladin switch
+					if (ownerVictim != meVictim)
+					{
+						meVictim = ownerVictim;
+						me->Attack(meVictim, true);
+						me->GetMotionMaster()->MoveChase(meVictim);
+
+					}
+
+					// Required with me->Attack
+					if (me->isInCombat())
+					{
+						DoMeleeAttackIfReady();
+					}
+				}
+				else
+				{
+					dummyGuard();
+				}
+			}
+		}
+
+		void dummyGuard()
+		{
+			followdist = PET_FOLLOW_DIST * 2;
+			me->SetReactState(REACT_PASSIVE);
+			me->GetMotionMaster()->Clear(false);
+			me->GetMotionMaster()->MoveFollow(owner, followdist, me->GetFollowAngle());
+		}
+
+	private:
+		Unit* owner;
+		Unit* meVictim;
+		uint32 guardianEntry;
+		float followdist;
+		bool isRetribution;
+	};
+
+	CreatureAI* GetAI(Creature* creature) const
+	{
+		return new guard_guardian_of_ancient_kingsAI(creature);
+	}
+
+};
+
+
 enum GuardGeneric
 {
     GENERIC_CREATURE_COOLDOWN       = 5000,
@@ -55,7 +151,7 @@ public:
 
     struct guard_genericAI : public GuardAI
     {
-        guard_genericAI(Creature* creature) : GuardAI(creature) { }
+        guard_genericAI(Creature* creature) : GuardAI(creature) {}
 
         void Reset()
         {
@@ -66,12 +162,12 @@ public:
         void EnterCombat(Unit* who)
         {
             if (me->GetEntry() == NPC_CENARION_HOLD_INFANTRY)
-                Talk(SAY_GUARD_SIL_AGGRO, who);
+                Talk(SAY_GUARD_SIL_AGGRO, who->GetGUID());
             if (SpellInfo const* spell = me->reachWithSpellAttack(who))
                 DoCast(who, spell->Id);
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
              //Always decrease our global cooldown first
             if (globalCooldown > diff)
@@ -80,7 +176,7 @@ public:
                 globalCooldown = 0;
 
             //Buff timer (only buff when we are alive and not in combat
-            if (me->IsAlive() && !me->IsInCombat())
+            if (me->isAlive() && !me->isInCombat())
             {
                 if (buffTimer <= diff)
                 {
@@ -264,7 +360,7 @@ public:
 
     struct guard_shattrath_scryerAI : public GuardAI
     {
-        guard_shattrath_scryerAI(Creature* creature) : GuardAI(creature) { }
+        guard_shattrath_scryerAI(Creature* creature) : GuardAI(creature) {}
 
         void Reset()
         {
@@ -274,7 +370,7 @@ public:
             canTeleport = false;
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -329,7 +425,7 @@ public:
 
     struct guard_shattrath_aldorAI : public GuardAI
     {
-        guard_shattrath_aldorAI(Creature* creature) : GuardAI(creature) { }
+        guard_shattrath_aldorAI(Creature* creature) : GuardAI(creature) {}
 
         void Reset()
         {
@@ -339,7 +435,7 @@ public:
             canTeleport = false;
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -388,6 +484,7 @@ public:
 
 void AddSC_guards()
 {
+	new guard_guardian_of_ancient_kings();
     new guard_generic;
     new guard_shattrath_aldor;
     new guard_shattrath_scryer;

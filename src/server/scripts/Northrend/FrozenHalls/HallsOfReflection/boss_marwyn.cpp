@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -22,7 +19,7 @@
 #include "ScriptedCreature.h"
 #include "halls_of_reflection.h"
 
-enum Texts
+enum Yells
 {
     SAY_AGGRO                                     = 0,
     SAY_SLAY                                      = 1,
@@ -52,49 +49,49 @@ class boss_marwyn : public CreatureScript
 public:
     boss_marwyn() : CreatureScript("boss_marwyn") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_marwynAI(creature);
     }
 
     struct boss_marwynAI : public boss_horAI
     {
-        boss_marwynAI(Creature* creature) : boss_horAI(creature) { }
+        boss_marwynAI(Creature* creature) : boss_horAI(creature) {}
 
-        void Reset() override
+        void Reset()
         {
             boss_horAI::Reset();
 
             if (instance)
-                instance->SetBossState(DATA_MARWYN_EVENT, NOT_STARTED);
+                instance->SetData(DATA_MARWYN_EVENT, NOT_STARTED);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(SAY_AGGRO);
             if (instance)
-                instance->SetBossState(DATA_MARWYN_EVENT, IN_PROGRESS);
+                instance->SetData(DATA_MARWYN_EVENT, IN_PROGRESS);
 
-            events.ScheduleEvent(EVENT_OBLITERATE, 30000);          /// @todo Check timer
+            events.ScheduleEvent(EVENT_OBLITERATE, 30000);          // TODO Check timer
             events.ScheduleEvent(EVENT_WELL_OF_CORRUPTION, 13000);
             events.ScheduleEvent(EVENT_CORRUPTED_FLESH, 20000);
-            events.ScheduleEvent(EVENT_SHARED_SUFFERING, 20000);    /// @todo Check timer
+            events.ScheduleEvent(EVENT_SHARED_SUFFERING, 20000);    // TODO Check timer
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Talk(SAY_DEATH);
 
             if (instance)
-                instance->SetBossState(DATA_MARWYN_EVENT, DONE);
+                instance->SetData(DATA_MARWYN_EVENT, DONE);
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_SLAY);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             // Return since we have no target
             if (!UpdateVictim())

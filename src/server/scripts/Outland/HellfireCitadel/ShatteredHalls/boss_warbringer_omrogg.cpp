@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,7 +24,7 @@ SDCategory: Hellfire Citadel, Shattered Halls
 EndScriptData */
 
 /* ContentData
-npc_omrogg_heads
+mob_omrogg_heads
 boss_warbringer_omrogg
 EndContentData */
 
@@ -33,39 +32,21 @@ EndContentData */
 #include "ScriptedCreature.h"
 #include "shattered_halls.h"
 
-enum Yells
+enum eEnums
 {
     YELL_DIE_L                  = 0,
     YELL_DIE_R                  = 1,
     EMOTE_ENRAGE                = 2,
-};
 
-enum Spells
-{
     SPELL_BLAST_WAVE            = 30600,
     SPELL_FEAR                  = 30584,
     SPELL_THUNDERCLAP           = 30633,
 
     SPELL_BURNING_MAUL          = 30598,
     H_SPELL_BURNING_MAUL        = 36056,
-};
 
-enum Creatures
-{
     NPC_LEFT_HEAD               = 19523,
     NPC_RIGHT_HEAD              = 19524
-};
-
-enum SetData
-{
-    SETDATA_DATA                = 1,
-    SETDATA_YELL                = 1
-};
-
-enum Events
-{
-    // Omrogg Heads
-    EVENT_DEATH_YELL            = 1
 };
 
 struct Yell
@@ -80,7 +61,6 @@ static Yell GoCombat[]=
     {1, NPC_LEFT_HEAD},
     {2, NPC_LEFT_HEAD},
 };
-
 static Yell GoCombatDelay[]=
 {
     {0, NPC_RIGHT_HEAD},
@@ -95,7 +75,6 @@ static Yell Threat[]=
     {4, NPC_LEFT_HEAD},
     {5, NPC_LEFT_HEAD},
 };
-
 static Yell ThreatDelay1[]=
 {
     {4, NPC_RIGHT_HEAD},
@@ -103,7 +82,6 @@ static Yell ThreatDelay1[]=
     {5, NPC_RIGHT_HEAD},
     {6, NPC_RIGHT_HEAD},
 };
-
 static Yell ThreatDelay2[]=
 {
     {7, NPC_LEFT_HEAD},
@@ -124,34 +102,104 @@ static Yell KillingDelay[]=
     {11, NPC_LEFT_HEAD},
 };
 
-// ########################################################
-// Warbringer_Omrogg
-// ########################################################
+class mob_omrogg_heads : public CreatureScript
+{
+    public:
+
+        mob_omrogg_heads()
+            : CreatureScript("mob_omrogg_heads")
+        {
+        }
+
+        struct mob_omrogg_headsAI : public ScriptedAI
+        {
+            mob_omrogg_headsAI(Creature* creature) : ScriptedAI(creature) {}
+
+            bool DeathYell;
+            uint32 Death_Timer;
+
+            void Reset()
+            {
+                Death_Timer = 4000;
+                DeathYell = false;
+            }
+            void EnterCombat(Unit* /*who*/) {}
+
+            void DoDeathYell()
+            {
+                DeathYell = true;
+            }
+
+            void UpdateAI(const uint32 diff)
+            {
+                if (!DeathYell)
+                    return;
+
+                if (Death_Timer <= diff)
+                {
+                    Talk(YELL_DIE_R);
+                    Death_Timer = false;
+                    me->setDeathState(JUST_DIED);
+                } else Death_Timer -= diff;
+            }
+        };
+
+        CreatureAI* GetAI(Creature* creature) const
+        {
+            return new mob_omrogg_headsAI(creature);
+        }
+};
 
 class boss_warbringer_omrogg : public CreatureScript
 {
     public:
-        boss_warbringer_omrogg() : CreatureScript("boss_warbringer_omrogg") { }
 
-        struct boss_warbringer_omroggAI : public BossAI
+        boss_warbringer_omrogg()
+            : CreatureScript("boss_warbringer_omrogg")
         {
-            boss_warbringer_omroggAI(Creature* creature) : BossAI(creature, DATA_OMROGG)
+        }
+
+        struct boss_warbringer_omroggAI : public ScriptedAI
+        {
+            boss_warbringer_omroggAI(Creature* creature) : ScriptedAI(creature)
             {
                 LeftHeadGUID  = 0;
                 RightHeadGUID = 0;
+                instance = creature->GetInstanceScript();
             }
 
-            void Reset() override
+            InstanceScript* instance;
+
+            uint64 LeftHeadGUID;
+            uint64 RightHeadGUID;
+            int iaggro;
+            int ithreat;
+            int ikilling;
+
+            bool AggroYell;
+            bool ThreatYell;
+            bool ThreatYell2;
+            bool KillingYell;
+
+            uint32 Delay_Timer;
+            uint32 BlastWave_Timer;
+            uint32 BlastCount;
+            uint32 Fear_Timer;
+            uint32 BurningMaul_Timer;
+            uint32 ThunderClap_Timer;
+            uint32 ResetThreat_Timer;
+
+            void Reset()
             {
-                if (Unit* LeftHead  = Unit::GetUnit(*me, LeftHeadGUID))
+                if (Unit* pLeftHead  = Unit::GetUnit(*me, LeftHeadGUID))
                 {
-                    LeftHead->setDeathState(JUST_DIED);
+                    pLeftHead->setDeathState(JUST_DIED);
                     LeftHeadGUID = 0;
                 }
 
-                if (Unit* RightHead  = Unit::GetUnit(*me, RightHeadGUID))
+                if (Unit* pRightHead  = Unit::GetUnit(*me, RightHeadGUID))
                 {
-                    RightHead->setDeathState(JUST_DIED);
+                    pRightHead->setDeathState(JUST_DIED);
                     RightHeadGUID = 0;
                 }
 
@@ -169,20 +217,20 @@ class boss_warbringer_omrogg : public CreatureScript
                 ResetThreat_Timer = 30000;
 
                 if (instance)
-                    instance->SetData(DATA_OMROGG, NOT_STARTED);   //End boss can use this later. O'mrogg must be defeated(DONE) or he will come to aid.
+                    instance->SetData(TYPE_OMROGG, NOT_STARTED);   //End boss can use this later. O'mrogg must be defeated(DONE) or he will come to aid.
             }
 
             void DoYellForThreat()
             {
-                Creature* LeftHead  = Creature::GetCreature(*me, LeftHeadGUID);
-                Creature* RightHead = Unit::GetCreature(*me, RightHeadGUID);
+                Creature* pLeftHead  = Creature::GetCreature(*me, LeftHeadGUID);
+                Creature* pRightHead = Unit::GetCreature(*me, RightHeadGUID);
 
-                if (!LeftHead || !RightHead)
+                if (!pLeftHead || !pRightHead)
                     return;
 
                 ithreat = rand()%4;
 
-                Creature* source = (LeftHead->GetEntry() == Threat[ithreat].creature ? LeftHead : RightHead);
+                Creature* source = (pLeftHead->GetEntry() == Threat[ithreat].creature ? pLeftHead : pRightHead);
 
                 source->AI()->Talk(Threat[ithreat].id);
 
@@ -190,26 +238,26 @@ class boss_warbringer_omrogg : public CreatureScript
                 ThreatYell = true;
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 me->SummonCreature(NPC_LEFT_HEAD, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_DEAD_DESPAWN, 0);
                 me->SummonCreature(NPC_RIGHT_HEAD, 0.0f, 0.0f, 0.0f, 0.0f, TEMPSUMMON_DEAD_DESPAWN, 0);
 
-                if (Creature* LeftHead = Creature::GetCreature(*me, LeftHeadGUID))
+                if (Creature* pLeftHead = Creature::GetCreature(*me, LeftHeadGUID))
                 {
                     iaggro = rand()%3;
 
-                    LeftHead->AI()->Talk(GoCombat[iaggro].id);
+                    pLeftHead->AI()->Talk(GoCombat[iaggro].id);
 
                     Delay_Timer = 3500;
                     AggroYell = true;
                 }
 
                 if (instance)
-                    instance->SetBossState(DATA_OMROGG, IN_PROGRESS);
+                    instance->SetData(TYPE_OMROGG, IN_PROGRESS);
             }
 
-            void JustSummoned(Creature* summoned) override
+            void JustSummoned(Creature* summoned)
             {
                 if (summoned->GetEntry() == NPC_LEFT_HEAD)
                     LeftHeadGUID = summoned->GetGUID();
@@ -222,17 +270,17 @@ class boss_warbringer_omrogg : public CreatureScript
                 summoned->SetVisible(false);
             }
 
-            void KilledUnit(Unit* /*victim*/) override
+            void KilledUnit(Unit* /*victim*/)
             {
-                Creature* LeftHead  = Creature::GetCreature(*me, LeftHeadGUID);
-                Creature* RightHead = Creature::GetCreature(*me, RightHeadGUID);
+                Creature* pLeftHead  = Creature::GetCreature(*me, LeftHeadGUID);
+                Creature* pRightHead = Creature::GetCreature(*me, RightHeadGUID);
 
-                if (!LeftHead || !RightHead)
+                if (!pLeftHead || !pRightHead)
                     return;
 
                 ikilling = rand()%2;
 
-                Creature* source = (LeftHead->GetEntry() == Killing[ikilling].creature ? LeftHead : RightHead);
+                Creature* source = (pLeftHead->GetEntry() == Killing[ikilling].creature ? pLeftHead : pRightHead);
 
                 switch (ikilling)
                 {
@@ -248,43 +296,43 @@ class boss_warbringer_omrogg : public CreatureScript
                 }
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
-                Creature* LeftHead  = Creature::GetCreature(*me, LeftHeadGUID);
-                Creature* RightHead = Creature::GetCreature(*me, RightHeadGUID);
+                Creature* pLeftHead  = Creature::GetCreature(*me, LeftHeadGUID);
+                Creature* pRightHead = Creature::GetCreature(*me, RightHeadGUID);
 
-                if (!LeftHead || !RightHead)
+                if (!pLeftHead || !pRightHead)
                     return;
 
-                LeftHead->AI()->Talk(YELL_DIE_L);
+                pLeftHead->AI()->Talk(YELL_DIE_L);
 
-                RightHead->AI()->SetData(SETDATA_DATA, SETDATA_YELL);
+                CAST_AI(mob_omrogg_heads::mob_omrogg_headsAI, CAST_CRE(pRightHead)->AI())->DoDeathYell();
 
                 if (instance)
-                    instance->SetBossState(DATA_OMROGG, DONE);
+                    instance->SetData(TYPE_OMROGG, DONE);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (Delay_Timer <= diff)
                 {
                     Delay_Timer = 3500;
 
-                    Creature* LeftHead  = Creature::GetCreature(*me, LeftHeadGUID);
-                    Creature* RightHead = Creature::GetCreature(*me, RightHeadGUID);
+                    Creature* pLeftHead  = Creature::GetCreature(*me, LeftHeadGUID);
+                    Creature* pRightHead = Creature::GetCreature(*me, RightHeadGUID);
 
-                    if (!LeftHead || !RightHead)
+                    if (!pLeftHead || !pRightHead)
                         return;
 
                     if (AggroYell)
                     {
-                        RightHead->AI()->Talk(GoCombatDelay[iaggro].id);
+                        pRightHead->AI()->Talk(GoCombatDelay[iaggro].id);
                         AggroYell = false;
                     }
 
                     if (ThreatYell2)
                     {
-                        Creature* source = (LeftHead->GetEntry() == ThreatDelay2[ithreat].creature ? LeftHead : RightHead);
+                        Creature* source = (pLeftHead->GetEntry() == ThreatDelay2[ithreat].creature ? pLeftHead : pRightHead);
 
                         source->AI()->Talk(ThreatDelay2[ithreat].id);
                         ThreatYell2 = false;
@@ -292,7 +340,7 @@ class boss_warbringer_omrogg : public CreatureScript
 
                     if (ThreatYell)
                     {
-                        Creature* source = (LeftHead->GetEntry() == ThreatDelay1[ithreat].creature ? LeftHead : RightHead);
+                        Creature* source = (pLeftHead->GetEntry() == ThreatDelay1[ithreat].creature ? pLeftHead : pRightHead);
 
                         source->AI()->Talk(ThreatDelay1[ithreat].id);
                         ThreatYell = false;
@@ -301,7 +349,7 @@ class boss_warbringer_omrogg : public CreatureScript
 
                     if (KillingYell)
                     {
-                        Creature* source = (LeftHead->GetEntry() == KillingDelay[ikilling].creature ? LeftHead : RightHead);
+                        Creature* source = (pLeftHead->GetEntry() == KillingDelay[ikilling].creature ? pLeftHead : pRightHead);
 
                         source->AI()->Talk(KillingDelay[ikilling].id);
                         KillingYell = false;
@@ -365,86 +413,16 @@ class boss_warbringer_omrogg : public CreatureScript
 
                 DoMeleeAttackIfReady();
             }
-
-            private:
-                uint64 LeftHeadGUID;
-                uint64 RightHeadGUID;
-                int iaggro;
-                int ithreat;
-                int ikilling;
-
-                bool AggroYell;
-                bool ThreatYell;
-                bool ThreatYell2;
-                bool KillingYell;
-
-                uint32 Delay_Timer;
-                uint32 BlastWave_Timer;
-                uint32 BlastCount;
-                uint32 Fear_Timer;
-                uint32 BurningMaul_Timer;
-                uint32 ThunderClap_Timer;
-                uint32 ResetThreat_Timer;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return new boss_warbringer_omroggAI(creature);
+            return new boss_warbringer_omroggAI (creature);
         }
 };
-
-// ########################################################
-// Omrogg Heads
-// ########################################################
-
-class npc_omrogg_heads : public CreatureScript
-{
-    public:
-        npc_omrogg_heads() : CreatureScript("npc_omrogg_heads") { }
-
-        struct npc_omrogg_headsAI : public ScriptedAI
-        {
-            npc_omrogg_headsAI(Creature* creature) : ScriptedAI(creature)
-            {
-                instance = creature->GetInstanceScript();
-            }
-
-            void Reset() override { }
-
-            void EnterCombat(Unit* /*who*/) override { }
-
-            void SetData(uint32 data, uint32 value)
-            {
-                if (data == SETDATA_DATA && value == SETDATA_YELL)
-                {
-                    events.ScheduleEvent(EVENT_DEATH_YELL, 4000);
-                }
-            }
-
-            void UpdateAI(uint32 diff) override
-            {
-                events.Update(diff);
-
-                if (events.ExecuteEvent() == EVENT_DEATH_YELL)
-                {
-                    Talk(YELL_DIE_R);
-                    me->setDeathState(JUST_DIED);
-                }
-            }
-
-            private:
-                InstanceScript* instance;
-                EventMap events;
-        };
-
-        CreatureAI* GetAI(Creature* creature) const override
-        {
-            return new npc_omrogg_headsAI(creature);
-        }
-};
-
 void AddSC_boss_warbringer_omrogg()
 {
     new boss_warbringer_omrogg();
-    new npc_omrogg_heads();
+    new mob_omrogg_heads();
 }
+

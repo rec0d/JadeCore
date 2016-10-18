@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -73,34 +72,31 @@ EndScriptData */
 #define ADD_9Z 125.001015f
 #define ADD_9O 0.592007f
 
-enum Spells
-{
-    SPELL_KNOCKAWAY                 = 10101,
-    SPELL_PUMMEL                    = 15615,
-    SPELL_SHOOT                     = 16496
-    //SPELL_SUMMONCRIMSONRIFLEMAN     = 17279
-};
+#define SPELL_KNOCKAWAY    10101
+#define SPELL_PUMMEL    15615
+#define SPELL_SHOOT    16496
+//#define SPELL_SUMMONCRIMSONRIFLEMAN    17279
 
 class boss_cannon_master_willey : public CreatureScript
 {
 public:
     boss_cannon_master_willey() : CreatureScript("boss_cannon_master_willey") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_cannon_master_willeyAI(creature);
+        return new boss_cannon_master_willeyAI (creature);
     }
 
     struct boss_cannon_master_willeyAI : public ScriptedAI
     {
-        boss_cannon_master_willeyAI(Creature* creature) : ScriptedAI(creature) { }
+        boss_cannon_master_willeyAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 KnockAway_Timer;
         uint32 Pummel_Timer;
         uint32 Shoot_Timer;
         uint32 SummonRifleman_Timer;
 
-        void Reset() override
+        void Reset()
         {
             Shoot_Timer = 1000;
             Pummel_Timer = 7000;
@@ -108,7 +104,7 @@ public:
             SummonRifleman_Timer = 15000;
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             me->SummonCreature(11054, ADD_1X, ADD_1Y, ADD_1Z, ADD_1O, TEMPSUMMON_TIMED_DESPAWN, 240000);
             me->SummonCreature(11054, ADD_2X, ADD_2Y, ADD_2Z, ADD_2O, TEMPSUMMON_TIMED_DESPAWN, 240000);
@@ -119,11 +115,11 @@ public:
             me->SummonCreature(11054, ADD_9X, ADD_9Y, ADD_9Z, ADD_9O, TEMPSUMMON_TIMED_DESPAWN, 240000);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             //Return since we have no target
             if (!UpdateVictim())

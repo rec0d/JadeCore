@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -70,7 +69,7 @@ class boss_netherspite : public CreatureScript
 public:
     boss_netherspite() : CreatureScript("boss_netherspite") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_netherspiteAI(creature);
     }
@@ -128,7 +127,7 @@ public:
             return sqrt((xa-xb)*(xa-xb) + (ya-yb)*(ya-yb));
         }
 
-        void Reset() override
+        void Reset()
         {
             Berserk = false;
             NetherInfusionTimer = 540000;
@@ -185,8 +184,8 @@ public:
                         // get the best suitable target
                         for (Map::PlayerList::const_iterator i = players.begin(); i != players.end(); ++i)
                         {
-                            Player* p = i->GetSource();
-                            if (p && p->IsAlive() // alive
+                            Player* p = i->getSource();
+                            if (p && p->isAlive() // alive
                                 && (!target || target->GetDistance2d(portal)>p->GetDistance2d(portal)) // closer than current best
                                 && !p->HasAura(PlayerDebuff[j], 0) // not exhausted
                                 && !p->HasAura(PlayerBuff[(j+1)%3], 0) // not on another beam
@@ -258,19 +257,19 @@ public:
                 Door->SetGoState(open ? GO_STATE_ACTIVE : GO_STATE_READY);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             HandleDoors(false);
             SwitchToPortalPhase();
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             HandleDoors(true);
             DestroyPortals();
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;

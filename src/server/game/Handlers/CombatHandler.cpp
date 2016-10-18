@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -30,13 +30,10 @@
 
 void WorldSession::HandleAttackSwingOpcode(WorldPacket& recvData)
 {
-    ObjectGuid guid;
+    uint64 guid;
+    recvData >> guid;
 
-    recvData.ReadGuidMask(guid, 6, 5, 7, 0, 3, 1, 4, 2);
-
-    recvData.ReadGuidBytes(guid, 6, 7, 1, 3, 2, 0, 4, 5);
-
-    TC_LOG_DEBUG("network", "WORLD: Recvd CMSG_ATTACK_SWING Message guidlow:%u guidhigh:%u", GUID_LOPART(guid), GUID_HIPART(guid));
+    sLog->outDebug(LOG_FILTER_NETWORKIO, "WORLD: Recvd CMSG_ATTACKSWING Message guidlow:%u guidhigh:%u", GUID_LOPART(guid), GUID_HIPART(guid));
 
     Unit* pEnemy = ObjectAccessor::GetUnit(*_player, guid);
 
@@ -54,7 +51,7 @@ void WorldSession::HandleAttackSwingOpcode(WorldPacket& recvData)
         return;
     }
 
-    //! Client explicitly checks the following before sending CMSG_ATTACK_SWING packet,
+    //! Client explicitly checks the following before sending CMSG_ATTACKSWING packet,
     //! so we'll place the same check here. Note that it might be possible to reuse this snippet
     //! in other places as well.
     if (Vehicle* vehicle = _player->GetVehicle())
@@ -79,23 +76,17 @@ void WorldSession::HandleAttackStopOpcode(WorldPacket & /*recvData*/)
 void WorldSession::HandleSetSheathedOpcode(WorldPacket& recvData)
 {
     uint32 sheathed;
-    bool hasData = false;
-
     recvData >> sheathed;
-    hasData = recvData.ReadBit();
 
-    //TC_LOG_DEBUG("network", "WORLD: Recvd CMSG_SET_SHEATHED Message guidlow:%u value1:%u", GetPlayer()->GetGUIDLow(), sheathed);
+    //sLog->outDebug(LOG_FILTER_PACKETIO, "WORLD: Recvd CMSG_SETSHEATHED Message guidlow:%u value1:%u", GetPlayer()->GetGUIDLow(), sheathed);
 
-    if (hasData)
+    if (sheathed >= MAX_SHEATH_STATE)
     {
-        if (sheathed >= MAX_SHEATH_STATE)
-        {
-            TC_LOG_ERROR("network", "Unknown sheath state %u ??", sheathed);
-            return;
-        }
-
-        GetPlayer()->SetSheath(SheathState(sheathed));
+        sLog->outError(LOG_FILTER_NETWORKIO, "Unknown sheath state %u ??", sheathed);
+        return;
     }
+
+    GetPlayer()->SetSheath(SheathState(sheathed));
 }
 
 void WorldSession::SendAttackStop(Unit const* enemy)

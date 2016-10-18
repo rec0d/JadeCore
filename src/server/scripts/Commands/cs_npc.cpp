@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -35,18 +33,15 @@ EndScriptData */
 #include "Player.h"
 #include "Pet.h"
 
-template<typename E, typename T = char const*>
-struct EnumName
+struct NpcFlagText
 {
-    E Value;
-    T Name;
+    uint32 flag;
+    int32 text;
 };
 
-#define CREATE_NAMED_ENUM(VALUE) { VALUE, STRINGIZE(VALUE) }
+#define NPCFLAG_COUNT   24
 
-#define NPCFLAG_COUNT   27
-
-EnumName<NPCFlags, int64> const npcFlagTexts[NPCFLAG_COUNT] =
+const NpcFlagText npcFlagTexts[NPCFLAG_COUNT] =
 {
     { UNIT_NPC_FLAG_AUCTIONEER,         LANG_NPCINFO_AUCTIONEER         },
     { UNIT_NPC_FLAG_BANKER,             LANG_NPCINFO_BANKER             },
@@ -58,7 +53,6 @@ EnumName<NPCFlags, int64> const npcFlagTexts[NPCFLAG_COUNT] =
     { UNIT_NPC_FLAG_PETITIONER,         LANG_NPCINFO_PETITIONER         },
     { UNIT_NPC_FLAG_PLAYER_VEHICLE,     LANG_NPCINFO_PLAYER_VEHICLE     },
     { UNIT_NPC_FLAG_QUESTGIVER,         LANG_NPCINFO_QUESTGIVER         },
-    { UNIT_NPC_FLAG_REFORGER,           LANG_NPCINFO_REFORGER           },
     { UNIT_NPC_FLAG_REPAIR,             LANG_NPCINFO_REPAIR             },
     { UNIT_NPC_FLAG_SPELLCLICK,         LANG_NPCINFO_SPELLCLICK         },
     { UNIT_NPC_FLAG_SPIRITGUIDE,        LANG_NPCINFO_SPIRITGUIDE        },
@@ -68,90 +62,100 @@ EnumName<NPCFlags, int64> const npcFlagTexts[NPCFLAG_COUNT] =
     { UNIT_NPC_FLAG_TRAINER,            LANG_NPCINFO_TRAINER            },
     { UNIT_NPC_FLAG_TRAINER_CLASS,      LANG_NPCINFO_TRAINER_CLASS      },
     { UNIT_NPC_FLAG_TRAINER_PROFESSION, LANG_NPCINFO_TRAINER_PROFESSION },
-    { UNIT_NPC_FLAG_TRANSMOGRIFIER,     LANG_NPCINFO_TRANSMOGRIFIER     },
-    { UNIT_NPC_FLAG_VAULTKEEPER,        LANG_NPCINFO_VAULTKEEPER        },
     { UNIT_NPC_FLAG_VENDOR,             LANG_NPCINFO_VENDOR             },
     { UNIT_NPC_FLAG_VENDOR_AMMO,        LANG_NPCINFO_VENDOR_AMMO        },
     { UNIT_NPC_FLAG_VENDOR_FOOD,        LANG_NPCINFO_VENDOR_FOOD        },
     { UNIT_NPC_FLAG_VENDOR_POISON,      LANG_NPCINFO_VENDOR_POISON      },
-    { UNIT_NPC_FLAG_VENDOR_REAGENT,     LANG_NPCINFO_VENDOR_REAGENT     },
-    //{ UNIT_NPC_FLAG_UNK_BPET,           0                               },
-    //{ UNIT_NPC_FLAG_BLACKMARKET,        0                               },
+    { UNIT_NPC_FLAG_VENDOR_REAGENT,     LANG_NPCINFO_VENDOR_REAGENT     }
 };
 
-EnumName<Mechanics> const mechanicImmunes[MAX_MECHANIC] =
+    struct MechanicImmune
 {
-    CREATE_NAMED_ENUM(MECHANIC_NONE),
-    CREATE_NAMED_ENUM(MECHANIC_CHARM),
-    CREATE_NAMED_ENUM(MECHANIC_DISORIENTED),
-    CREATE_NAMED_ENUM(MECHANIC_DISARM),
-    CREATE_NAMED_ENUM(MECHANIC_DISTRACT),
-    CREATE_NAMED_ENUM(MECHANIC_FEAR),
-    CREATE_NAMED_ENUM(MECHANIC_GRIP),
-    CREATE_NAMED_ENUM(MECHANIC_ROOT),
-    CREATE_NAMED_ENUM(MECHANIC_SLOW_ATTACK),
-    CREATE_NAMED_ENUM(MECHANIC_SILENCE),
-    CREATE_NAMED_ENUM(MECHANIC_SLEEP),
-    CREATE_NAMED_ENUM(MECHANIC_SNARE),
-    CREATE_NAMED_ENUM(MECHANIC_STUN),
-    CREATE_NAMED_ENUM(MECHANIC_FREEZE),
-    CREATE_NAMED_ENUM(MECHANIC_KNOCKOUT),
-    CREATE_NAMED_ENUM(MECHANIC_BLEED),
-    CREATE_NAMED_ENUM(MECHANIC_BANDAGE),
-    CREATE_NAMED_ENUM(MECHANIC_POLYMORPH),
-    CREATE_NAMED_ENUM(MECHANIC_BANISH),
-    CREATE_NAMED_ENUM(MECHANIC_SHIELD),
-    CREATE_NAMED_ENUM(MECHANIC_SHACKLE),
-    CREATE_NAMED_ENUM(MECHANIC_MOUNT),
-    CREATE_NAMED_ENUM(MECHANIC_INFECTED),
-    CREATE_NAMED_ENUM(MECHANIC_TURN),
-    CREATE_NAMED_ENUM(MECHANIC_HORROR),
-    CREATE_NAMED_ENUM(MECHANIC_INVULNERABILITY),
-    CREATE_NAMED_ENUM(MECHANIC_INTERRUPT),
-    CREATE_NAMED_ENUM(MECHANIC_DAZE),
-    CREATE_NAMED_ENUM(MECHANIC_DISCOVERY),
-    CREATE_NAMED_ENUM(MECHANIC_IMMUNE_SHIELD),
-    CREATE_NAMED_ENUM(MECHANIC_SAPPED),
-    CREATE_NAMED_ENUM(MECHANIC_ENRAGED),
-    CREATE_NAMED_ENUM(MECHANIC_WOUNDED)
+    uint32 flag;
+    char const* text;
 };
 
-EnumName<UnitFlags> const unitFlags[MAX_UNIT_FLAGS] =
+#define MAX_UNIT_FLAGS   33
+
+MechanicImmune const mechanicImmunes[MAX_MECHANIC] =
 {
-    CREATE_NAMED_ENUM(UNIT_FLAG_SERVER_CONTROLLED),
-    CREATE_NAMED_ENUM(UNIT_FLAG_NON_ATTACKABLE),
-    CREATE_NAMED_ENUM(UNIT_FLAG_DISABLE_MOVE),
-    CREATE_NAMED_ENUM(UNIT_FLAG_PVP_ATTACKABLE),
-    CREATE_NAMED_ENUM(UNIT_FLAG_RENAME),
-    CREATE_NAMED_ENUM(UNIT_FLAG_PREPARATION),
-    CREATE_NAMED_ENUM(UNIT_FLAG_UNK_6),
-    CREATE_NAMED_ENUM(UNIT_FLAG_NOT_ATTACKABLE_1),
-    CREATE_NAMED_ENUM(UNIT_FLAG_IMMUNE_TO_PC),
-    CREATE_NAMED_ENUM(UNIT_FLAG_IMMUNE_TO_NPC),
-    CREATE_NAMED_ENUM(UNIT_FLAG_LOOTING),
-    CREATE_NAMED_ENUM(UNIT_FLAG_PET_IN_COMBAT),
-    CREATE_NAMED_ENUM(UNIT_FLAG_PVP),
-    CREATE_NAMED_ENUM(UNIT_FLAG_SILENCED),
-    CREATE_NAMED_ENUM(UNIT_FLAG_UNK_14),
-    CREATE_NAMED_ENUM(UNIT_FLAG_UNK_15),
-    CREATE_NAMED_ENUM(UNIT_FLAG_ON_TAXI),
-    CREATE_NAMED_ENUM(UNIT_FLAG_PACIFIED),
-    CREATE_NAMED_ENUM(UNIT_FLAG_STUNNED),
-    CREATE_NAMED_ENUM(UNIT_FLAG_IN_COMBAT),
-    CREATE_NAMED_ENUM(UNIT_FLAG_TAXI_FLIGHT),
-    CREATE_NAMED_ENUM(UNIT_FLAG_DISARMED),
-    CREATE_NAMED_ENUM(UNIT_FLAG_CONFUSED),
-    CREATE_NAMED_ENUM(UNIT_FLAG_FLEEING),
-    CREATE_NAMED_ENUM(UNIT_FLAG_PLAYER_CONTROLLED),
-    CREATE_NAMED_ENUM(UNIT_FLAG_NOT_SELECTABLE),
-    CREATE_NAMED_ENUM(UNIT_FLAG_SKINNABLE),
-    CREATE_NAMED_ENUM(UNIT_FLAG_MOUNT),
-    CREATE_NAMED_ENUM(UNIT_FLAG_UNK_28),
-    CREATE_NAMED_ENUM(UNIT_FLAG_PREVENT_EMOTES),
-    CREATE_NAMED_ENUM(UNIT_FLAG_SHEATHE),
-    CREATE_NAMED_ENUM(UNIT_FLAG_UNK_31)
+    { MECHANIC_NONE            , "MECHANIC_NONE"            },
+    { MECHANIC_CHARM           , "MECHANIC_CHARM"           },
+    { MECHANIC_DISORIENTED     , "MECHANIC_DISORIENTED"     },
+    { MECHANIC_DISARM          , "MECHANIC_DISARM"          },
+    { MECHANIC_DISTRACT        , "MECHANIC_DISTRACT"        },
+    { MECHANIC_FEAR            , "MECHANIC_FEAR"            },
+    { MECHANIC_GRIP            , "MECHANIC_GRIP"            },
+    { MECHANIC_ROOT            , "MECHANIC_ROOT"            },
+    { MECHANIC_SLOW_ATTACK     , "MECHANIC_SLOW_ATTACK"     },
+    { MECHANIC_SILENCE         , "MECHANIC_SILENCE"         },
+    { MECHANIC_SLEEP           , "MECHANIC_SLEEP"           },
+    { MECHANIC_SNARE           , "MECHANIC_SNARE"           },
+    { MECHANIC_STUN            , "MECHANIC_STUN"            },
+    { MECHANIC_FREEZE          , "MECHANIC_FREEZE"          },
+    { MECHANIC_KNOCKOUT        , "MECHANIC_KNOCKOUT"        },
+    { MECHANIC_BLEED           , "MECHANIC_BLEED"           },
+    { MECHANIC_BANDAGE         , "MECHANIC_BANDAGE"         },
+    { MECHANIC_POLYMORPH       , "MECHANIC_POLYMORPH"       },
+    { MECHANIC_BANISH          , "MECHANIC_BANISH"          },
+    { MECHANIC_SHIELD          , "MECHANIC_SHIELD"          },
+    { MECHANIC_SHACKLE         , "MECHANIC_SHACKLE"         },
+    { MECHANIC_MOUNT           , "MECHANIC_MOUNT"           },
+    { MECHANIC_INFECTED        , "MECHANIC_INFECTED"        },
+    { MECHANIC_TURN            , "MECHANIC_TURN"            },
+    { MECHANIC_HORROR          , "MECHANIC_HORROR"          },
+    { MECHANIC_INVULNERABILITY , "MECHANIC_INVULNERABILITY" },
+    { MECHANIC_INTERRUPT       , "MECHANIC_INTERRUPT"       },
+    { MECHANIC_DAZE            , "MECHANIC_DAZE"            },
+    { MECHANIC_DISCOVERY       , "MECHANIC_DISCOVERY"       },
+    { MECHANIC_IMMUNE_SHIELD   , "MECHANIC_IMMUNE_SHIELD"   },
+    { MECHANIC_SAPPED          , "MECHANIC_SAPPED"          },
+    { MECHANIC_ENRAGED         , "MECHANIC_ENRAGED"         },
+    { MECHANIC_WOUNDED         , "MECHANIC_WOUNDED"         }
 };
 
+
+    struct UnitFlag
+{
+    uint32 flag;
+    char const* text;
+};
+
+UnitFlag const unitFlags[MAX_UNIT_FLAGS] =
+{
+    { UNIT_FLAG_SERVER_CONTROLLED   , "UNIT_FLAG_SERVER_CONTROLLED"     },
+    { UNIT_FLAG_NON_ATTACKABLE      , "UNIT_FLAG_NON_ATTACKABLE"        },
+    { UNIT_FLAG_DISABLE_MOVE        , "UNIT_FLAG_DISABLE_MOVE"          },
+    { UNIT_FLAG_PVP_ATTACKABLE      , "UNIT_FLAG_PVP_ATTACKABLE"        },
+    { UNIT_FLAG_RENAME              , "UNIT_FLAG_RENAME"                },
+    { UNIT_FLAG_PREPARATION         , "UNIT_FLAG_PREPARATION"           },
+    { UNIT_FLAG_UNK_6               , "UNIT_FLAG_UNK_6"                 },
+    { UNIT_FLAG_NOT_ATTACKABLE_1    , "UNIT_FLAG_NOT_ATTACKABLE_1"      },
+    { UNIT_FLAG_IMMUNE_TO_PC        , "UNIT_FLAG_IMMUNE_TO_PC"          },
+    { UNIT_FLAG_IMMUNE_TO_NPC       , "UNIT_FLAG_IMMUNE_TO_NPC"         },
+    { UNIT_FLAG_LOOTING             , "UNIT_FLAG_LOOTING"               },
+    { UNIT_FLAG_PET_IN_COMBAT       , "UNIT_FLAG_PET_IN_COMBAT"         },
+    { UNIT_FLAG_PVP                 , "UNIT_FLAG_PVP"                   },
+    { UNIT_FLAG_SILENCED            , "UNIT_FLAG_SILENCED"              },
+    { UNIT_FLAG_UNK_14              , "UNIT_FLAG_UNK_14"                },
+    { UNIT_FLAG_UNK_15              , "UNIT_FLAG_UNK_15"                },
+    { UNIT_FLAG_UNK_16              , "UNIT_FLAG_UNK_16"                },
+    { UNIT_FLAG_PACIFIED            , "UNIT_FLAG_PACIFIED"              },
+    { UNIT_FLAG_STUNNED             , "UNIT_FLAG_STUNNED"               },
+    { UNIT_FLAG_IN_COMBAT           , "UNIT_FLAG_IN_COMBAT"             },
+    { UNIT_FLAG_TAXI_FLIGHT         , "UNIT_FLAG_TAXI_FLIGHT"           },
+    { UNIT_FLAG_DISARMED            , "UNIT_FLAG_DISARMED"              },
+    { UNIT_FLAG_CONFUSED            , "UNIT_FLAG_CONFUSED"              },
+    { UNIT_FLAG_FLEEING             , "UNIT_FLAG_FLEEING"               },
+    { UNIT_FLAG_PLAYER_CONTROLLED   , "UNIT_FLAG_PLAYER_CONTROLLED"     },
+    { UNIT_FLAG_NOT_SELECTABLE      , "UNIT_FLAG_NOT_SELECTABLE"        },
+    { UNIT_FLAG_SKINNABLE           , "UNIT_FLAG_SKINNABLE"             },
+    { UNIT_FLAG_MOUNT               , "UNIT_FLAG_MOUNT"                 },
+    { UNIT_FLAG_UNK_28              , "UNIT_FLAG_UNK_28"                },
+    { UNIT_FLAG_UNK_29              , "UNIT_FLAG_UNK_29"                },
+    { UNIT_FLAG_SHEATHE             , "UNIT_FLAG_SHEATHE"               },
+    { UNIT_FLAG_UNK_31              , "UNIT_FLAG_UNK_31"                }
+};
 class npc_commandscript : public CommandScript
 {
 public:
@@ -161,65 +165,71 @@ public:
     {
         static ChatCommand npcAddCommandTable[] =
         {
-            { "formation", rbac::RBAC_PERM_COMMAND_NPC_ADD_FORMATION, false, &HandleNpcAddFormationCommand,      "", NULL },
-            { "item",      rbac::RBAC_PERM_COMMAND_NPC_ADD_ITEM,      false, &HandleNpcAddVendorItemCommand,     "", NULL },
-            { "move",      rbac::RBAC_PERM_COMMAND_NPC_ADD_MOVE,      false, &HandleNpcAddMoveCommand,           "", NULL },
-            { "temp",      rbac::RBAC_PERM_COMMAND_NPC_ADD_TEMP,      false, &HandleNpcAddTempSpawnCommand,      "", NULL },
-            //{ "weapon",    rbac::RBAC_PERM_COMMAND_NPC_ADD_WEAPON,    false, &HandleNpcAddWeaponCommand,         "", NULL },
-            { "",          rbac::RBAC_PERM_COMMAND_NPC_ADD,           false, &HandleNpcAddCommand,               "", NULL },
-            { NULL,        0,                                   false, NULL,                               "", NULL }
+            { "formation",      SEC_MODERATOR,      false, &HandleNpcAddFormationCommand,      "", NULL },
+            { "item",           SEC_GAMEMASTER,     false, &HandleNpcAddVendorItemCommand,     "", NULL },
+            { "move",           SEC_GAMEMASTER,     false, &HandleNpcAddMoveCommand,           "", NULL },
+            { "temp",           SEC_GAMEMASTER,     false, &HandleNpcAddTempSpawnCommand,      "", NULL },
+            //{ TODO: fix or remove this command
+            { "weapon",         SEC_ADMINISTRATOR,  false, &HandleNpcAddWeaponCommand,         "", NULL },
+            //}
+            { "",               SEC_GAMEMASTER,     false, &HandleNpcAddCommand,               "", NULL },
+            { NULL,             SEC_PLAYER,         false, NULL,                               "", NULL }
         };
         static ChatCommand npcDeleteCommandTable[] =
         {
-            { "item", rbac::RBAC_PERM_COMMAND_NPC_DELETE_ITEM, false, &HandleNpcDeleteVendorItemCommand,  "", NULL },
-            { "",     rbac::RBAC_PERM_COMMAND_NPC_DELETE,      false, &HandleNpcDeleteCommand,            "", NULL },
-            { NULL,   0,                                 false, NULL,                               "", NULL }
+            { "item",           SEC_GAMEMASTER,     false, &HandleNpcDeleteVendorItemCommand,  "", NULL },
+            { "all",            SEC_GAMEMASTER,     false, &HandleNpcDeleteAllCommand,         "", NULL },
+            { "",               SEC_GAMEMASTER,     false, &HandleNpcDeleteCommand,            "", NULL },
+            { NULL,             SEC_PLAYER,         false, NULL,                               "", NULL }
         };
         static ChatCommand npcFollowCommandTable[] =
         {
-            { "stop", rbac::RBAC_PERM_COMMAND_NPC_FOLLOW_STOP, false, &HandleNpcUnFollowCommand,          "", NULL },
-            { "",     rbac::RBAC_PERM_COMMAND_NPC_FOLLOW,      false, &HandleNpcFollowCommand,            "", NULL },
-            { NULL,   0,                                 false, NULL,                               "", NULL }
+            { "stop",           SEC_GAMEMASTER,     false, &HandleNpcUnFollowCommand,          "", NULL },
+            { "",               SEC_GAMEMASTER,     false, &HandleNpcFollowCommand,            "", NULL },
+            { NULL,             SEC_PLAYER,         false, NULL,                               "", NULL }
         };
         static ChatCommand npcSetCommandTable[] =
         {
-            { "allowmove",  rbac::RBAC_PERM_COMMAND_NPC_SET_ALLOWMOVE, false, &HandleNpcSetAllowMovementCommand, "", NULL },
-            { "entry",      rbac::RBAC_PERM_COMMAND_NPC_SET_ENTRY,     false, &HandleNpcSetEntryCommand,         "", NULL },
-            { "factionid",  rbac::RBAC_PERM_COMMAND_NPC_SET_FACTIONID, false, &HandleNpcSetFactionIdCommand,     "", NULL },
-            { "flag",       rbac::RBAC_PERM_COMMAND_NPC_SET_FLAG,      false, &HandleNpcSetFlagCommand,          "", NULL },
-            { "level",      rbac::RBAC_PERM_COMMAND_NPC_SET_LEVEL,     false, &HandleNpcSetLevelCommand,         "", NULL },
-            { "link",       rbac::RBAC_PERM_COMMAND_NPC_SET_LINK,      false, &HandleNpcSetLinkCommand,          "", NULL },
-            { "model",      rbac::RBAC_PERM_COMMAND_NPC_SET_MODEL,     false, &HandleNpcSetModelCommand,         "", NULL },
-            { "movetype",   rbac::RBAC_PERM_COMMAND_NPC_SET_MOVETYPE,  false, &HandleNpcSetMoveTypeCommand,      "", NULL },
-            { "phase",      rbac::RBAC_PERM_COMMAND_NPC_SET_PHASE,     false, &HandleNpcSetPhaseCommand,         "", NULL },
-            { "spawndist",  rbac::RBAC_PERM_COMMAND_NPC_SET_SPAWNDIST, false, &HandleNpcSetSpawnDistCommand,     "", NULL },
-            { "spawntime",  rbac::RBAC_PERM_COMMAND_NPC_SET_SPAWNTIME, false, &HandleNpcSetSpawnTimeCommand,     "", NULL },
-            { "data",       rbac::RBAC_PERM_COMMAND_NPC_SET_DATA,      false, &HandleNpcSetDataCommand,          "", NULL },
-            //{ "name",       rbac::RBAC_PERM_COMMAND_NPC_SET_NAME,    false, &HandleNpcSetNameCommand,          "", NULL },
-            //{ "subname",    rbac::RBAC_PERM_COMMAND_NPC_SET_SUBNAME, false, &HandleNpcSetSubNameCommand,       "", NULL },
-            { NULL,         0,                                   false, NULL,                              "", NULL }
+            { "allowmove",      SEC_ADMINISTRATOR,  false, &HandleNpcSetAllowMovementCommand,  "", NULL },
+            { "entry",          SEC_ADMINISTRATOR,  false, &HandleNpcSetEntryCommand,          "", NULL },
+            { "factionid",      SEC_GAMEMASTER,     false, &HandleNpcSetFactionIdCommand,      "", NULL },
+            { "flag",           SEC_GAMEMASTER,     false, &HandleNpcSetFlagCommand,           "", NULL },
+            { "level",          SEC_GAMEMASTER,     false, &HandleNpcSetLevelCommand,          "", NULL },
+            { "link",           SEC_GAMEMASTER,     false, &HandleNpcSetLinkCommand,           "", NULL },
+            { "model",          SEC_GAMEMASTER,     false, &HandleNpcSetModelCommand,          "", NULL },
+            { "movetype",       SEC_GAMEMASTER,     false, &HandleNpcSetMoveTypeCommand,       "", NULL },
+            { "phase",          SEC_GAMEMASTER,     false, &HandleNpcSetPhaseCommand,          "", NULL },
+            { "spawndist",      SEC_GAMEMASTER,     false, &HandleNpcSetSpawnDistCommand,      "", NULL },
+            { "spawntime",      SEC_GAMEMASTER,     false, &HandleNpcSetSpawnTimeCommand,      "", NULL },
+            { "data",           SEC_ADMINISTRATOR,  false, &HandleNpcSetDataCommand,           "", NULL },
+            { "currency",        SEC_ADMINISTRATOR,  false, &HandleNpcSetCurrencyCommand,       "", NULL },
+            //{ TODO: fix or remove these commands
+            { "name",           SEC_GAMEMASTER,     false, &HandleNpcSetNameCommand,           "", NULL },
+            { "subname",        SEC_GAMEMASTER,     false, &HandleNpcSetSubNameCommand,        "", NULL },
+            //}
+            { NULL,             SEC_PLAYER,         false, NULL,                               "", NULL }
         };
         static ChatCommand npcCommandTable[] =
         {
-            { "info",      rbac::RBAC_PERM_COMMAND_NPC_INFO,      false, &HandleNpcInfoCommand,              "", NULL },
-            { "near",      rbac::RBAC_PERM_COMMAND_NPC_NEAR,      false, &HandleNpcNearCommand,              "", NULL },
-            { "move",      rbac::RBAC_PERM_COMMAND_NPC_MOVE,      false, &HandleNpcMoveCommand,              "", NULL },
-            { "playemote", rbac::RBAC_PERM_COMMAND_NPC_PLAYEMOTE, false, &HandleNpcPlayEmoteCommand,         "", NULL },
-            { "say",       rbac::RBAC_PERM_COMMAND_NPC_SAY,       false, &HandleNpcSayCommand,               "", NULL },
-            { "textemote", rbac::RBAC_PERM_COMMAND_NPC_TEXTEMOTE, false, &HandleNpcTextEmoteCommand,         "", NULL },
-            { "whisper",   rbac::RBAC_PERM_COMMAND_NPC_WHISPER,   false, &HandleNpcWhisperCommand,           "", NULL },
-            { "yell",      rbac::RBAC_PERM_COMMAND_NPC_YELL,      false, &HandleNpcYellCommand,              "", NULL },
-            { "tame",      rbac::RBAC_PERM_COMMAND_NPC_TAME,      false, &HandleNpcTameCommand,              "", NULL },
-            { "add",       rbac::RBAC_PERM_COMMAND_NPC_ADD,       false, NULL,                 "", npcAddCommandTable },
-            { "delete",    rbac::RBAC_PERM_COMMAND_NPC_DELETE,    false, NULL,              "", npcDeleteCommandTable },
-            { "follow",    rbac::RBAC_PERM_COMMAND_NPC_FOLLOW,    false, NULL,              "", npcFollowCommandTable },
-            { "set",       rbac::RBAC_PERM_COMMAND_NPC_SET,       false, NULL,                 "", npcSetCommandTable },
-            { NULL,        0,                               false, NULL,                               "", NULL }
+            { "info",           SEC_ADMINISTRATOR,  false, &HandleNpcInfoCommand,              "", NULL },
+            { "near",           SEC_GAMEMASTER,     false, &HandleNpcNearCommand,              "", NULL },
+            { "move",           SEC_GAMEMASTER,     false, &HandleNpcMoveCommand,              "", NULL },
+            { "playemote",      SEC_ADMINISTRATOR,  false, &HandleNpcPlayEmoteCommand,         "", NULL },
+            { "say",            SEC_MODERATOR,      false, &HandleNpcSayCommand,               "", NULL },
+            { "textemote",      SEC_MODERATOR,      false, &HandleNpcTextEmoteCommand,         "", NULL },
+            { "whisper",        SEC_MODERATOR,      false, &HandleNpcWhisperCommand,           "", NULL },
+            { "yell",           SEC_MODERATOR,      false, &HandleNpcYellCommand,              "", NULL },
+            { "tame",           SEC_GAMEMASTER,     false, &HandleNpcTameCommand,              "", NULL },
+            { "add",            SEC_GAMEMASTER,     false, NULL,                 "", npcAddCommandTable },
+            { "delete",         SEC_GAMEMASTER,     false, NULL,              "", npcDeleteCommandTable },
+            { "follow",         SEC_GAMEMASTER,     false, NULL,              "", npcFollowCommandTable },
+            { "set",            SEC_GAMEMASTER,     false, NULL,                 "", npcSetCommandTable },
+            { NULL,             SEC_PLAYER,         false, NULL,                               "", NULL }
         };
         static ChatCommand commandTable[] =
         {
-            { "npc", rbac::RBAC_PERM_COMMAND_NPC, false, NULL, "", npcCommandTable },
-            { NULL,  0,                     false, NULL, "", NULL }
+            { "npc",            SEC_MODERATOR,      false, NULL,                    "", npcCommandTable },
+            { NULL,             SEC_PLAYER,         false, NULL,                               "", NULL }
         };
         return commandTable;
     }
@@ -236,15 +246,10 @@ public:
 
         char* team = strtok(NULL, " ");
         int32 teamval = 0;
-        if (team)
-            teamval = atoi(team);
-
-        if (teamval < 0)
-            teamval = 0;
+        if (team) { teamval = atoi(team); }
+        if (teamval < 0) { teamval = 0; }
 
         uint32 id  = atoi(charID);
-        if (!sObjectMgr->GetCreatureTemplate(id))
-            return false;
 
         Player* chr = handler->GetSession()->GetPlayer();
         float x = chr->GetPositionX();
@@ -253,22 +258,24 @@ public:
         float o = chr->GetOrientation();
         Map* map = chr->GetMap();
 
-        if (Transport* trans = chr->GetTransport())
+        if (chr->GetTransport())
         {
-            uint32 guid = sObjectMgr->GenerateLowGuid(HIGHGUID_UNIT);
-            CreatureData& data = sObjectMgr->NewOrExistCreatureData(guid);
-            data.id = id;
-            data.phaseMask = chr->GetPhaseMgr().GetPhaseMaskForSpawn();
-            data.posX = chr->GetTransOffsetX();
-            data.posY = chr->GetTransOffsetY();
-            data.posZ = chr->GetTransOffsetZ();
-            data.orientation = chr->GetTransOffsetO();
+            uint32 tguid = chr->GetTransport()->AddNPCPassenger(0, id, chr->GetTransOffsetX(), chr->GetTransOffsetY(), chr->GetTransOffsetZ(), chr->GetTransOffsetO());
+            if (tguid > 0)
+            {
+                PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_INS_CREATURE_TRANSPORT);
 
-            Creature* creature = trans->CreateNPCPassenger(guid, &data);
+                stmt->setInt32(0, int32(tguid));
+                stmt->setInt32(1, int32(id));
+                stmt->setInt32(2, int32(chr->GetTransport()->GetEntry()));
+                stmt->setFloat(3, chr->GetTransOffsetX());
+                stmt->setFloat(4, chr->GetTransOffsetY());
+                stmt->setFloat(5, chr->GetTransOffsetZ());
+                stmt->setFloat(6, chr->GetTransOffsetO());
 
-            creature->SaveToDB(trans->GetGOInfo()->moTransport.mapID, 1 << map->GetSpawnMode(), chr->GetPhaseMgr().GetPhaseMaskForSpawn());
+                WorldDatabase.Execute(stmt);
+            }
 
-            sObjectMgr->AddCreatureToGrid(guid, &data);
             return true;
         }
 
@@ -336,8 +343,7 @@ public:
             return false;
         }
 
-        char* addMulti = strtok(NULL, " ");
-        uint32 vendor_entry = addMulti ? handler->GetSession()->GetCurrentVendor() : vendor ? vendor->GetEntry() : 0;
+        uint32 vendor_entry = vendor ? vendor->GetEntry() : 0;
 
         if (!sObjectMgr->IsVendorItemValid(vendor_entry, itemId, maxcount, incrtime, extendedcost, type, handler->GetSession()->GetPlayer()))
         {
@@ -345,15 +351,7 @@ public:
             return false;
         }
 
-        uint16 slot = 0;
-        QueryResult result = WorldDatabase.PQuery("SELECT MAX(slot) FROM npc_vendor where `entry`= '%u'", vendor_entry);
-        if (result)
-        {
-            Field* fields = result->Fetch();
-            slot = fields[0].GetUInt16() + 1;
-        }
-
-        sObjectMgr->AddVendorItem(vendor_entry, slot, itemId, maxcount, incrtime, extendedcost, type);
+        sObjectMgr->AddVendorItem(vendor_entry, itemId, maxcount, incrtime, extendedcost, type);
 
         ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemId);
 
@@ -413,7 +411,7 @@ public:
         {
             creature->SetDefaultMovementType(WAYPOINT_MOTION_TYPE);
             creature->GetMotionMaster()->Initialize();
-            if (creature->IsAlive())                            // dead creature will reset movement generator at respawn
+            if (creature->isAlive())                            // dead creature will reset movement generator at respawn
             {
                 creature->setDeathState(JUST_DIED);
                 creature->Respawn(true);
@@ -487,12 +485,12 @@ public:
             return false;
         }
 
-        if (creature->IsPet())
+        if (creature->isPet())
         {
             if (((Pet*)creature)->getPetType() == HUNTER_PET)
             {
-                creature->SetUInt32Value(UNIT_FIELD_PET_NEXT_LEVEL_EXPERIENCE, sObjectMgr->GetXPForLevel(lvl)/4);
-                creature->SetUInt32Value(UNIT_FIELD_PET_EXPERIENCE, 0);
+                creature->SetUInt32Value(UNIT_FIELD_PETNEXTLEVELEXP, sObjectMgr->GetXPForLevel(lvl)/4);
+                creature->SetUInt32Value(UNIT_FIELD_PETEXPERIENCE, 0);
             }
             ((Pet*)creature)->GivePetLevel(lvl);
         }
@@ -528,7 +526,7 @@ public:
         else
             unit = handler->getSelectedCreature();
 
-        if (!unit || unit->IsPet() || unit->IsTotem())
+        if (!unit || unit->isPet() || unit->isTotem())
         {
             handler->SendSysMessage(LANG_SELECT_CREATURE);
             handler->SetSentErrorMessage(true);
@@ -536,10 +534,38 @@ public:
         }
 
         // Delete the creature
+        sLog->outDebug(LOG_FILTER_SQL_DEV,"DELETE FROM creature WHERE guid = '%u';", unit->GetGUID());
         unit->CombatStop();
         unit->DeleteFromDB();
         unit->AddObjectToRemoveList();
 
+        handler->SendSysMessage(LANG_COMMAND_DELCREATMESSAGE);
+
+        return true;
+    }
+
+    static bool HandleNpcDeleteAllCommand(ChatHandler* handler, char const* args)
+    {
+        Creature* unit = NULL;
+
+        if (*args)
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+        else
+            unit = handler->getSelectedCreature();
+
+        if (!unit || unit->isPet() || unit->isTotem())
+        {
+            handler->SendSysMessage(LANG_SELECT_CREATURE);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        // Generate the sql output
+        sLog->outDebug(LOG_FILTER_SQL_DEV,"DELETE FROM creature WHERE id = '%u' AND map = '%u';", unit->GetEntry(), unit->GetMapId());
         handler->SendSysMessage(LANG_COMMAND_DELCREATMESSAGE);
 
         return true;
@@ -570,8 +596,7 @@ public:
 
         const uint8 type = 1; // FIXME: make type (1 item, 2 currency) an argument
 
-        char* addMulti = strtok(NULL, " ");
-        if (!sObjectMgr->RemoveVendorItem(addMulti ? handler->GetSession()->GetCurrentVendor() : vendor->GetEntry(), itemId, type))
+        if (!sObjectMgr->RemoveVendorItem(vendor->GetEntry(), itemId, type))
         {
             handler->PSendSysMessage(LANG_ITEM_NOT_IN_LIST, itemId);
             handler->SetSentErrorMessage(true);
@@ -637,7 +662,7 @@ public:
         if (!*args)
             return false;
 
-        uint64 npcFlags = (uint64) atoi((char*)args);
+        uint32 npcFlags = (uint32) atoi((char*)args);
 
         Creature* creature = handler->getSelectedCreature();
 
@@ -648,11 +673,11 @@ public:
             return false;
         }
 
-        creature->SetUInt64Value(UNIT_FIELD_NPC_FLAGS, npcFlags);
+        creature->SetUInt32Value(UNIT_NPC_FLAGS, npcFlags);
 
         PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_UPD_CREATURE_NPCFLAG);
 
-        stmt->setUInt64(0, npcFlags);
+        stmt->setUInt32(0, npcFlags);
         stmt->setUInt32(1, creature->GetEntry());
 
         WorldDatabase.Execute(stmt);
@@ -725,15 +750,14 @@ public:
             handler->SetSentErrorMessage(true);
             return false;
         }
-
         CreatureTemplate const* cInfo = target->GetCreatureTemplate();
-
         uint32 faction = target->getFaction();
-        uint64 npcflags = target->GetUInt64Value(UNIT_FIELD_NPC_FLAGS);
+        uint32 npcflags = target->GetUInt32Value(UNIT_NPC_FLAGS);
         uint32 mechanicImmuneMask = cInfo->MechanicImmuneMask;
         uint32 displayid = target->GetDisplayId();
         uint32 nativeid = target->GetNativeDisplayId();
         uint32 Entry = target->GetEntry();
+        
 
         int64 curRespawnDelay = target->GetRespawnTimeEx()-time(NULL);
         if (curRespawnDelay < 0)
@@ -745,30 +769,28 @@ public:
         handler->PSendSysMessage(LANG_NPCINFO_LEVEL, target->getLevel());
         handler->PSendSysMessage(LANG_NPCINFO_EQUIPMENT, target->GetCurrentEquipmentId(), target->GetOriginalEquipmentId());
         handler->PSendSysMessage(LANG_NPCINFO_HEALTH, target->GetCreateHealth(), target->GetMaxHealth(), target->GetHealth());
-
-        handler->PSendSysMessage(LANG_NPCINFO_UNIT_FIELD_FLAGS, target->GetUInt32Value(UNIT_FIELD_FLAGS));
+        handler->PSendSysMessage(LANG_NPCINFO_FLAGS, target->GetUInt32Value(UNIT_FIELD_FLAGS), target->GetUInt32Value(UNIT_DYNAMIC_FLAGS), target->getFaction());
         for (uint8 i = 0; i < MAX_UNIT_FLAGS; ++i)
-            if (target->GetUInt32Value(UNIT_FIELD_FLAGS) & unitFlags[i].Value)
-                handler->PSendSysMessage("%s (0x%X)", unitFlags[i].Name, unitFlags[i].Value);
+            if (target->GetUInt32Value(UNIT_FIELD_FLAGS) & unitFlags[i].flag)
+                handler->PSendSysMessage(unitFlags[i].text, unitFlags[i].flag);
 
-        handler->PSendSysMessage(LANG_NPCINFO_FLAGS2, target->GetUInt32Value(UNIT_FIELD_FLAGS2), target->GetUInt32Value(OBJECT_FIELD_DYNAMIC_FLAGS), target->getFaction());
-
+        handler->PSendSysMessage(LANG_NPCINFO_FLAGS, target->GetUInt32Value(UNIT_FIELD_FLAGS_2), target->GetUInt32Value(UNIT_DYNAMIC_FLAGS), target->getFaction());
         handler->PSendSysMessage(LANG_COMMAND_RAWPAWNTIMES, defRespawnDelayStr.c_str(), curRespawnDelayStr.c_str());
         handler->PSendSysMessage(LANG_NPCINFO_LOOT,  cInfo->lootid, cInfo->pickpocketLootId, cInfo->SkinLootId);
         handler->PSendSysMessage(LANG_NPCINFO_DUNGEON_ID, target->GetInstanceId());
         handler->PSendSysMessage(LANG_NPCINFO_PHASEMASK, target->GetPhaseMask());
         handler->PSendSysMessage(LANG_NPCINFO_ARMOR, target->GetArmor());
-        handler->PSendSysMessage(LANG_NPCINFO_POSITION, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ());
+        handler->PSendSysMessage(LANG_NPCINFO_POSITION, float(target->GetPositionX()), float(target->GetPositionY()), float(target->GetPositionZ()));
         handler->PSendSysMessage(LANG_NPCINFO_AIINFO, target->GetAIName().c_str(), target->GetScriptName().c_str());
 
         for (uint8 i = 0; i < NPCFLAG_COUNT; i++)
-            if (npcflags & npcFlagTexts[i].Value)
-                handler->PSendSysMessage(npcFlagTexts[i].Name);
+            if (npcflags & npcFlagTexts[i].flag)
+                handler->PSendSysMessage(npcFlagTexts[i].text, npcFlagTexts[i].flag);
 
         handler->PSendSysMessage(LANG_NPCINFO_MECHANIC_IMMUNE, mechanicImmuneMask);
         for (uint8 i = 0; i < MAX_MECHANIC; ++i)
-            if ((mechanicImmuneMask << 1) & mechanicImmunes[i].Value)
-                handler->PSendSysMessage("%s (0x%X)", mechanicImmunes[i].Name, mechanicImmunes[i].Value);
+            if ((mechanicImmuneMask << 1) & mechanicImmunes[i].flag)
+                handler->PSendSysMessage(mechanicImmunes[i].text, mechanicImmunes[i].flag);
 
         return true;
     }
@@ -886,7 +908,7 @@ public:
             }
             creature->SetPosition(x, y, z, o);
             creature->GetMotionMaster()->Initialize();
-            if (creature->IsAlive())                            // dead creature will reset movement generator at respawn
+            if (creature->isAlive())                            // dead creature will reset movement generator at respawn
             {
                 creature->setDeathState(JUST_DIED);
                 creature->Respawn();
@@ -920,7 +942,18 @@ public:
             return false;
         }
 
-        target->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, emote);
+        if (target->GetTransport() && target->GetGUIDTransport())
+        {
+            PreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WORLD_UPD_CREATURE_TRANSPORT_EMOTE);
+
+            stmt->setInt32(0, int32(emote));
+            stmt->setInt32(1, target->GetTransport()->GetEntry());
+            stmt->setInt32(2, target->GetGUIDTransport());
+
+            WorldDatabase.Execute(stmt);
+        }
+
+        target->SetUInt32Value(UNIT_NPC_EMOTESTATE, emote);
 
         return true;
     }
@@ -935,7 +968,7 @@ public:
 
         Creature* creature = handler->getSelectedCreature();
 
-        if (!creature || creature->IsPet())
+        if (!creature || creature->isPet())
         {
             handler->SendSysMessage(LANG_SELECT_CREATURE);
             handler->SetSentErrorMessage(true);
@@ -988,7 +1021,7 @@ public:
 
         if (dontdel_str)
         {
-            //TC_LOG_ERROR("misc", "DEBUG: All 3 params are set");
+            //sLog->outError(LOG_FILTER_GENERAL, "DEBUG: All 3 params are set");
 
             // All 3 params are set
             // GUID
@@ -996,7 +1029,7 @@ public:
             // doNotDEL
             if (stricmp(dontdel_str, "NODEL") == 0)
             {
-                //TC_LOG_ERROR("misc", "DEBUG: doNotDelete = true;");
+                //sLog->outError(LOG_FILTER_GENERAL, "DEBUG: doNotDelete = true;");
                 doNotDelete = true;
             }
         }
@@ -1005,10 +1038,10 @@ public:
             // Only 2 params - but maybe NODEL is set
             if (type_str)
             {
-                TC_LOG_ERROR("misc", "DEBUG: Only 2 params ");
+                sLog->outError(LOG_FILTER_GENERAL, "DEBUG: Only 2 params ");
                 if (stricmp(type_str, "NODEL") == 0)
                 {
-                    //TC_LOG_ERROR("misc", "DEBUG: type_str, NODEL ");
+                    //sLog->outError(LOG_FILTER_GENERAL, "DEBUG: type_str, NODEL ");
                     doNotDelete = true;
                     type_str = NULL;
                 }
@@ -1019,7 +1052,7 @@ public:
         {
             type_str = guid_str;
             creature = handler->getSelectedCreature();
-            if (!creature || creature->IsPet())
+            if (!creature || creature->isPet())
                 return false;
             lowguid = creature->GetDBTableGUIDLow();
         }
@@ -1077,7 +1110,7 @@ public:
 
             creature->SetDefaultMovementType(move_type);
             creature->GetMotionMaster()->Initialize();
-            if (creature->IsAlive())                            // dead creature will reset movement generator at respawn
+            if (creature->isAlive())                            // dead creature will reset movement generator at respawn
             {
                 creature->setDeathState(JUST_DIED);
                 creature->Respawn();
@@ -1121,7 +1154,7 @@ public:
 
         creature->SetPhaseMask(phasemask, true);
 
-        if (!creature->IsPet())
+        if (!creature->isPet())
             creature->SaveToDB();
 
         return true;
@@ -1155,7 +1188,7 @@ public:
         creature->SetRespawnRadius((float)option);
         creature->SetDefaultMovementType(mtype);
         creature->GetMotionMaster()->Initialize();
-        if (creature->IsAlive())                                // dead creature will reset movement generator at respawn
+        if (creature->isAlive())                                // dead creature will reset movement generator at respawn
         {
             creature->setDeathState(JUST_DIED);
             creature->Respawn();
@@ -1227,7 +1260,7 @@ public:
             return false;
         }
 
-        creature->MonsterSay(args, LANG_UNIVERSAL, NULL);
+        creature->MonsterSay(args, LANG_UNIVERSAL, 0);
 
         // make some emotes
         char lastchar = args[strlen(args) - 1];
@@ -1307,18 +1340,22 @@ public:
         char* receiver_str = strtok((char*)args, " ");
         char* text = strtok(NULL, "");
 
-        Creature* creature = handler->getSelectedCreature();
-        if (!creature || !receiver_str || !text)
-            return false;
+        uint64 guid = handler->GetSession()->GetPlayer()->GetSelection();
+        Creature* creature = handler->GetSession()->GetPlayer()->GetMap()->GetCreature(guid);
 
-        uint64 receiver_guid = atol(receiver_str);
+        if (!creature || !receiver_str || !text)
+        {
+            return false;
+        }
+
+        uint64 receiver_guid= atol(receiver_str);
 
         // check online security
-        Player* receiver = ObjectAccessor::FindPlayer(receiver_guid);
-        if (handler->HasLowerSecurity(receiver, 0))
+        if (handler->HasLowerSecurity(ObjectAccessor::FindPlayer(receiver_guid), 0))
             return false;
 
-        creature->MonsterWhisper(text, receiver);
+        creature->MonsterWhisper(text, receiver_guid);
+
         return true;
     }
 
@@ -1335,7 +1372,7 @@ public:
             return false;
         }
 
-        creature->MonsterYell(args, LANG_UNIVERSAL, NULL);
+        creature->MonsterYell(args, LANG_UNIVERSAL, 0);
 
         // make an emote
         creature->HandleEmoteCommand(EMOTE_ONESHOT_SHOUT);
@@ -1348,8 +1385,7 @@ public:
     {
         if (!*args)
             return false;
-
-        char* charID = handler->extractKeyFromLink((char*)args, "Hcreature_entry");
+        char* charID = strtok((char*)args, " ");
         if (!charID)
             return false;
 
@@ -1357,9 +1393,6 @@ public:
 
         uint32 id = atoi(charID);
         if (!id)
-            return false;
-
-        if (!sObjectMgr->GetCreatureTemplate(id))
             return false;
 
         chr->SummonCreature(id, *chr, TEMPSUMMON_CORPSE_DESPAWN, 120);
@@ -1370,8 +1403,8 @@ public:
     //npc tame handling
     static bool HandleNpcTameCommand(ChatHandler* handler, char const* /*args*/)
     {
-        Creature* creatureTarget = handler->getSelectedCreature();
-        if (!creatureTarget || creatureTarget->IsPet())
+        /*Creature* creatureTarget = handler->getSelectedCreature();
+        if (!creatureTarget || creatureTarget->isPet())
         {
             handler->PSendSysMessage (LANG_SELECT_CREATURE);
             handler->SetSentErrorMessage (true);
@@ -1389,7 +1422,7 @@ public:
 
         CreatureTemplate const* cInfo = creatureTarget->GetCreatureTemplate();
 
-        if (!cInfo->IsTameable (player->CanTameExoticPets()))
+        if (!cInfo->isTameable (player->CanTameExoticPets()))
         {
             handler->PSendSysMessage (LANG_CREATURE_NON_TAMEABLE, cInfo->Entry);
             handler->SetSentErrorMessage (true);
@@ -1426,12 +1459,13 @@ public:
         pet->SetUInt32Value(UNIT_FIELD_LEVEL, level);
 
         // caster have pet now
-        player->SetMinion(pet, true);
+        player->SetMinion(pet, true, PET_SLOT_ACTUAL_PET_SLOT);
 
-        pet->SavePetToDB(PET_SAVE_AS_CURRENT);
+        pet->SavePet(PET_SLOT_ACTUAL_PET_SLOT);
         player->PetSpellInitialize();
 
-        return true;
+        return true;*/
+        return false;
     }
 
     static bool HandleNpcAddFormationCommand(ChatHandler* handler, char const* args)
@@ -1520,7 +1554,7 @@ public:
         return true;
     }
 
-    /// @todo NpcCommands that need to be fixed :
+    //TODO: NpcCommands that need to be fixed :
     static bool HandleNpcAddWeaponCommand(ChatHandler* /*handler*/, char const* /*args*/)
     {
         /*if (!*args)
@@ -1628,7 +1662,7 @@ public:
 
         creature->SetName(args);
         uint32 idname = sObjectMgr->AddCreatureTemplate(creature->GetName());
-        creature->SetUInt32Value(OBJECT_FIELD_ENTRY_ID, idname);
+        creature->SetUInt32Value(OBJECT_FIELD_ENTRY, idname);
 
         creature->SaveToDB();
         */
@@ -1673,11 +1707,36 @@ public:
             return true;
         }
 
-        uint32 idname = sObjectMgr->AddCreatureSubName(creature->GetName(), args, creature->GetUInt32Value(UNIT_FIELD_DISPLAY_ID));
-        creature->SetUInt32Value(OBJECT_FIELD_ENTRY_ID, idname);
+        uint32 idname = sObjectMgr->AddCreatureSubName(creature->GetName(), args, creature->GetUInt32Value(UNIT_FIELD_DISPLAYID));
+        creature->SetUInt32Value(OBJECT_FIELD_ENTRY, idname);
 
         creature->SaveToDB();
         */
+        return true;
+    }
+
+    static bool HandleNpcSetCurrencyCommand(ChatHandler* handler, char const* args)
+    {
+        uint32 currencyId = atoi(strtok((char*) args, " "));
+        uint32 currencyCount = atoi(strtok(NULL, ""));
+
+        if (!currencyId || !currencyCount)
+            return false;
+
+        Creature* target = handler->getSelectedCreature();
+
+        if (!target)
+        {
+            handler->PSendSysMessage("You have to select a creature!");
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        target->SetCurrencyLoot(currencyId, currencyCount);
+
+        // Todo: make prepared statement
+        WorldDatabase.PExecute("UPDATE creature_template SET currencyId = %u, currencyCount = %u WHERE entry = %u", currencyId, currencyCount, target->GetEntry());
+        handler->PSendSysMessage("currency was set");
         return true;
     }
 };

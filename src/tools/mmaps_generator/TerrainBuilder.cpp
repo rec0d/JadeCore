@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -83,7 +82,7 @@ struct map_liquidHeader
 namespace MMAP
 {
 
-    char const* MAP_VERSION_MAGIC = "v1.3";  // Changed from 1.4 to 1.3
+    char const* MAP_VERSION_MAGIC = "v1.3";
 
     TerrainBuilder::TerrainBuilder(bool skipLiquid) : m_skipLiquid (skipLiquid){ }
     TerrainBuilder::~TerrainBuilder() { }
@@ -261,7 +260,8 @@ namespace MMAP
                 meshData.solidVerts.append(coord[1]);
             }
 
-            int indices[3], loopStart = 0, loopEnd = 0, loopInc = 0;
+            int indices[] = { 0, 0, 0 };
+            int loopStart = 0, loopEnd = 0, loopInc = 0;
             getLoopVars(portion, loopStart, loopEnd, loopInc);
             for (int i = loopStart; i < loopEnd; i+=loopInc)
                 for (int j = TOP; j <= BOTTOM; j+=1)
@@ -341,7 +341,8 @@ namespace MMAP
 
                 delete [] liquid_map;
 
-                int indices[3], loopStart = 0, loopEnd = 0, loopInc = 0, triInc = BOTTOM-TOP;
+                int indices[] = { 0, 0, 0 };
+                int loopStart = 0, loopEnd = 0, loopInc = 0, triInc = BOTTOM-TOP;
                 getLoopVars(portion, loopStart, loopEnd, loopInc);
 
                 // generate triangles
@@ -905,7 +906,7 @@ namespace MMAP
             float p0[3], p1[3];
             uint32 mid, tx, ty;
             float size;
-            if (sscanf(buf, "%d %d,%d (%f %f %f) (%f %f %f) %f", &mid, &tx, &ty,
+            if (sscanf(buf, "%u %u,%u (%f %f %f) (%f %f %f) %f", &mid, &tx, &ty,
                 &p0[0], &p0[1], &p0[2], &p1[0], &p1[1], &p1[2], &size) != 10)
                 continue;
 

@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -41,17 +39,17 @@ public:
     {
         static ChatCommand teleCommandTable[] =
         {
-            { "add",   rbac::RBAC_PERM_COMMAND_TELE_ADD,   false, &HandleTeleAddCommand,   "", NULL },
-            { "del",   rbac::RBAC_PERM_COMMAND_TELE_DEL,    true, &HandleTeleDelCommand,   "", NULL },
-            { "name",  rbac::RBAC_PERM_COMMAND_TELE_NAME,   true, &HandleTeleNameCommand,  "", NULL },
-            { "group", rbac::RBAC_PERM_COMMAND_TELE_GROUP, false, &HandleTeleGroupCommand, "", NULL },
-            { "",      rbac::RBAC_PERM_COMMAND_TELE,       false, &HandleTeleCommand,      "", NULL },
-            { NULL,    0,                            false, NULL,                    "", NULL }
+            { "add",            SEC_ADMINISTRATOR,  false, &HandleTeleAddCommand,             "", NULL },
+            { "del",            SEC_ADMINISTRATOR,  true,  &HandleTeleDelCommand,             "", NULL },
+            { "name",           SEC_MODERATOR,      true,  &HandleTeleNameCommand,            "", NULL },
+            { "group",          SEC_MODERATOR,      false, &HandleTeleGroupCommand,           "", NULL },
+            { "",               SEC_MODERATOR,      false, &HandleTeleCommand,                "", NULL },
+            { NULL,             0,                  false, NULL,                              "", NULL }
         };
         static ChatCommand commandTable[] =
         {
-            { "tele", rbac::RBAC_PERM_COMMAND_TELE, false, NULL, "", teleCommandTable },
-            { NULL,   0,                      false, NULL, "", NULL }
+            { "tele",           SEC_MODERATOR,      false, NULL,                   "", teleCommandTable },
+            { NULL,             0,                  false, NULL,                               "", NULL }
         };
         return commandTable;
     }
@@ -67,7 +65,7 @@ public:
 
         std::string name = args;
 
-        if (sObjectMgr->GetGameTeleExactName(name))
+        if (sObjectMgr->GetGameTele(name))
         {
             handler->SendSysMessage(LANG_COMMAND_TP_ALREADYEXIST);
             handler->SetSentErrorMessage(true);
@@ -185,7 +183,7 @@ public:
                 ChatHandler(target->GetSession()).PSendSysMessage(LANG_TELEPORTED_TO_BY, handler->GetNameLink().c_str());
 
             // stop flight if need
-            if (target->IsInFlight())
+            if (target->isInFlight())
             {
                 target->GetMotionMaster()->MovementExpired();
                 target->CleanupAfterTaxiFlight();
@@ -259,7 +257,7 @@ public:
 
         for (GroupReference* itr = grp->GetFirstMember(); itr != NULL; itr = itr->next())
         {
-            Player* player = itr->GetSource();
+            Player* player = itr->getSource();
 
             if (!player || !player->GetSession())
                 continue;
@@ -281,7 +279,7 @@ public:
                 ChatHandler(player->GetSession()).PSendSysMessage(LANG_TELEPORTED_TO_BY, nameLink.c_str());
 
             // stop flight if need
-            if (player->IsInFlight())
+            if (player->isInFlight())
             {
                 player->GetMotionMaster()->MovementExpired();
                 player->CleanupAfterTaxiFlight();
@@ -313,7 +311,7 @@ public:
             return false;
         }
 
-        if (me->IsInCombat())
+        if (me->isInCombat())
         {
             handler->SendSysMessage(LANG_YOU_IN_COMBAT);
             handler->SetSentErrorMessage(true);
@@ -329,7 +327,7 @@ public:
         }
 
         // stop flight if need
-        if (me->IsInFlight())
+        if (me->isInFlight())
         {
             me->GetMotionMaster()->MovementExpired();
             me->CleanupAfterTaxiFlight();

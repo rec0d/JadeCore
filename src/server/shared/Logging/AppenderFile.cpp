@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -41,7 +40,7 @@ AppenderFile::~AppenderFile()
 
 void AppenderFile::_write(LogMessage const& message)
 {
-    bool exceedMaxSize = maxFileSize > 0 && (fileSize.value() + message.Size()) > maxFileSize;
+    bool exceedMaxSize = maxFileSize > 0 && (fileSize + message.Size()) > maxFileSize;
 
     if (dynamicName)
     {
@@ -49,7 +48,7 @@ void AppenderFile::_write(LogMessage const& message)
         snprintf(namebuf, TRINITY_PATH_MAX, filename.c_str(), message.param1.c_str());
         logfile = OpenFile(namebuf, mode, backup || exceedMaxSize);
     }
-    else if (exceedMaxSize)
+	else if (exceedMaxSize)
         logfile = OpenFile(filename, "w", true);
 
     if (!logfile)
@@ -57,7 +56,7 @@ void AppenderFile::_write(LogMessage const& message)
 
     fprintf(logfile, "%s%s", message.prefix.c_str(), message.text.c_str());
     fflush(logfile);
-    fileSize += uint64(message.Size());
+    fileSize += message.Size();
 
     if (dynamicName)
         CloseFile();

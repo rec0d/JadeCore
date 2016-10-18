@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -62,7 +59,7 @@ enum Yells
     SAY_SYLVANAS_INTRO_6                        = 5,
 };
 
-enum Misc
+enum eSylvanas
 {
     GOSSIP_SPEECHINTRO                           = 13525,
     ACTION_INTRO,
@@ -84,7 +81,7 @@ public:
         npc_sylvanas_fosAI(Creature* creature) : ScriptedAI(creature)
         {
             instance = me->GetInstanceScript();
-            me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+            me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
         }
 
         InstanceScript* instance;
@@ -92,27 +89,27 @@ public:
         EventMap events;
         Phase phase;
 
-        void Reset() override
+        void Reset()
         {
             events.Reset();
             phase = PHASE_NORMAL;
         }
 
-        void DoAction(int32 actionId) override
+        void DoAction(const int32 actionId)
         {
             switch (actionId)
             {
                 case ACTION_INTRO:
                 {
                     phase = PHASE_INTRO;
-                    me->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                    me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                     events.Reset();
                     events.ScheduleEvent(EVENT_INTRO_1, 1000);
                 }
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (phase == PHASE_INTRO)
             {
@@ -164,7 +161,7 @@ public:
         }
     };
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (creature->IsQuestGiver())
             player->PrepareQuestMenu(creature->GetGUID());
@@ -178,7 +175,7 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         switch (action)
@@ -194,7 +191,7 @@ public:
         return true;
     }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_sylvanas_fosAI(creature);
     }
@@ -210,7 +207,7 @@ public:
         npc_jaina_fosAI(Creature* creature) : ScriptedAI(creature)
         {
             instance = me->GetInstanceScript();
-            me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+            me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
         }
 
         InstanceScript* instance;
@@ -218,27 +215,27 @@ public:
         EventMap events;
         Phase phase;
 
-        void Reset() override
+        void Reset()
         {
             events.Reset();
             phase = PHASE_NORMAL;
         }
 
-        void DoAction(int32 actionId) override
+        void DoAction(const int32 actionId)
         {
             switch (actionId)
             {
                 case ACTION_INTRO:
                 {
                     phase = PHASE_INTRO;
-                    me->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                    me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                     events.Reset();
                     events.ScheduleEvent(EVENT_INTRO_1, 1000);
                 }
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (phase == PHASE_INTRO)
             {
@@ -301,7 +298,7 @@ public:
         }
     };
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (creature->IsQuestGiver())
             player->PrepareQuestMenu(creature->GetGUID());
@@ -315,7 +312,7 @@ public:
         return true;
     }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         switch (action)
@@ -331,7 +328,7 @@ public:
         return true;
     }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_jaina_fosAI(creature);
     }

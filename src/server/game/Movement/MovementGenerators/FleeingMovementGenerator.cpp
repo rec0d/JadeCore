@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -26,16 +26,13 @@
 #include "MoveSpline.h"
 #include "Player.h"
 
-#define MIN_QUIET_DISTANCE 8.0f
-#define MAX_QUIET_DISTANCE 15.0f
+#define MIN_QUIET_DISTANCE 28.0f
+#define MAX_QUIET_DISTANCE 43.0f
 
 template<class T>
 void FleeingMovementGenerator<T>::_setTargetLocation(T* owner)
 {
     if (!owner)
-        return;
-
-    if (i_inPlace)
         return;
 
     if (owner->HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED))
@@ -111,7 +108,7 @@ void FleeingMovementGenerator<T>::DoInitialize(T* owner)
         return;
 
     owner->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_FLEEING);
-    owner->AddUnitState(UNIT_STATE_FLEEING);
+    owner->AddUnitState(UNIT_STATE_FLEEING | UNIT_STATE_FLEEING_MOVE);
     _setTargetLocation(owner);
 }
 
@@ -141,7 +138,7 @@ void FleeingMovementGenerator<T>::DoReset(T* owner)
 template<class T>
 bool FleeingMovementGenerator<T>::DoUpdate(T* owner, uint32 time_diff)
 {
-    if (!owner || !owner->IsAlive())
+    if (!owner || !owner->isAlive())
         return false;
 
     if (owner->HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED))
@@ -174,7 +171,7 @@ void TimedFleeingMovementGenerator::Finalize(Unit* owner)
     owner->ClearUnitState(UNIT_STATE_FLEEING|UNIT_STATE_FLEEING_MOVE);
     if (Unit* victim = owner->GetVictim())
     {
-        if (owner->IsAlive())
+        if (owner->isAlive())
         {
             owner->AttackStop();
             owner->ToCreature()->AI()->AttackStart(victim);
@@ -184,7 +181,7 @@ void TimedFleeingMovementGenerator::Finalize(Unit* owner)
 
 bool TimedFleeingMovementGenerator::Update(Unit* owner, uint32 time_diff)
 {
-    if (!owner->IsAlive())
+    if (!owner->isAlive())
         return false;
 
     if (owner->HasUnitState(UNIT_STATE_ROOT | UNIT_STATE_STUNNED))

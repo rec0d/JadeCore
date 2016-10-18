@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -60,19 +58,16 @@ enum CombatPhase
     RHINO
 };
 
-enum Misc
-{
-    DATA_SHARE_THE_LOVE                         = 1
-};
+#define DATA_SHARE_THE_LOVE                       1
 
 class boss_gal_darah : public CreatureScript
 {
 public:
     boss_gal_darah() : CreatureScript("boss_gal_darah") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_gal_darahAI(creature);
+        return new boss_gal_darahAI (creature);
     }
 
     struct boss_gal_darahAI : public ScriptedAI
@@ -100,7 +95,7 @@ public:
 
         InstanceScript* instance;
 
-        void Reset() override
+        void Reset()
         {
             uiStampedeTimer = 10*IN_MILLISECONDS;
             uiWhirlingSlashTimer = 21*IN_MILLISECONDS;
@@ -124,7 +119,7 @@ public:
                 instance->SetData(DATA_GAL_DARAH_EVENT, NOT_STARTED);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             Talk(SAY_AGGRO);
 
@@ -132,7 +127,7 @@ public:
                 instance->SetData(DATA_GAL_DARAH_EVENT, IN_PROGRESS);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -259,7 +254,7 @@ public:
             impaledList.push_back(guid);
         }
 
-        uint32 GetData(uint32 type) const override
+        uint32 GetData(uint32 type) const
         {
             if (type == DATA_SHARE_THE_LOVE)
                 return shareTheLove;
@@ -267,7 +262,7 @@ public:
             return 0;
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             Talk(SAY_DEATH);
 
@@ -275,9 +270,9 @@ public:
                 instance->SetData(DATA_GAL_DARAH_EVENT, DONE);
         }
 
-        void KilledUnit(Unit* victim) override
+        void KilledUnit(Unit* victim)
         {
-            if (victim->GetTypeId() != TYPEID_PLAYER)
+            if (victim == me)
                 return;
 
             Talk(SAY_SLAY);
@@ -293,7 +288,7 @@ class achievement_share_the_love : public AchievementCriteriaScript
         {
         }
 
-        bool OnCheck(Player* /*player*/, Unit* target) override
+        bool OnCheck(Player* /*player*/, Unit* target)
         {
             if (!target)
                 return false;

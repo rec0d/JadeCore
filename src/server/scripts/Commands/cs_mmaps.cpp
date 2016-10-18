@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -47,18 +45,18 @@ public:
     {
         static ChatCommand mmapCommandTable[] =
         {
-            { "loadedtiles", rbac::RBAC_PERM_COMMAND_MMAP_LOADEDTILES, false, &HandleMmapLoadedTilesCommand, "", NULL },
-            { "loc",         rbac::RBAC_PERM_COMMAND_MMAP_LOC,         false, &HandleMmapLocCommand,         "", NULL },
-            { "path",        rbac::RBAC_PERM_COMMAND_MMAP_PATH,        false, &HandleMmapPathCommand,        "", NULL },
-            { "stats",       rbac::RBAC_PERM_COMMAND_MMAP_STATS,       false, &HandleMmapStatsCommand,       "", NULL },
-            { "testarea",    rbac::RBAC_PERM_COMMAND_MMAP_TESTAREA,    false, &HandleMmapTestArea,           "", NULL },
-            { NULL,          0,                                  false, NULL,                          "", NULL }
+            { "path",           SEC_ADMINISTRATOR,     false, &HandleMmapPathCommand,            "", NULL },
+            { "loc",            SEC_ADMINISTRATOR,     false, &HandleMmapLocCommand,             "", NULL },
+            { "loadedtiles",    SEC_ADMINISTRATOR,     false, &HandleMmapLoadedTilesCommand,     "", NULL },
+            { "stats",          SEC_ADMINISTRATOR,     false, &HandleMmapStatsCommand,           "", NULL },
+            { "testarea",       SEC_ADMINISTRATOR,     false, &HandleMmapTestArea,               "", NULL },
+            { NULL,             0,                     false, NULL,                              "", NULL }
         };
 
         static ChatCommand commandTable[] =
         {
-            { "mmap", rbac::RBAC_PERM_COMMAND_MMAP, true, NULL, "", mmapCommandTable  },
-            { NULL,   0,                     false, NULL, "", NULL }
+            { "mmap",           SEC_ADMINISTRATOR,     true,  NULL,                 "", mmapCommandTable  },
+            { NULL,             0,                     false, NULL,                              "", NULL }
         };
         return commandTable;
     }
@@ -97,20 +95,20 @@ public:
         path.SetUseStraightPath(useStraightPath);
         bool result = path.CalculatePath(x, y, z);
 
-        Movement::PointsArray const& pointPath = path.GetPath();
+        PointsArray pointPath = path.GetPath();
         handler->PSendSysMessage("%s's path to %s:", target->GetName().c_str(), player->GetName().c_str());
         handler->PSendSysMessage("Building: %s", useStraightPath ? "StraightPath" : "SmoothPath");
-        handler->PSendSysMessage("Result: %s - Length: " SIZEFMTD " - Type: %u", (result ? "true" : "false"), pointPath.size(), path.GetPathType());
+        handler->PSendSysMessage("Result: %s - Length: "SIZEFMTD" - Type: %u", (result ? "true" : "false"), pointPath.size(), path.GetPathType());
 
-        G3D::Vector3 const &start = path.GetStartPosition();
-        G3D::Vector3 const &end = path.GetEndPosition();
-        G3D::Vector3 const &actualEnd = path.GetActualEndPosition();
+        Vector3 start = path.GetStartPosition();
+        Vector3 end = path.GetEndPosition();
+        Vector3 actualEnd = path.GetActualEndPosition();
 
         handler->PSendSysMessage("StartPosition     (%.3f, %.3f, %.3f)", start.x, start.y, start.z);
         handler->PSendSysMessage("EndPosition       (%.3f, %.3f, %.3f)", end.x, end.y, end.z);
         handler->PSendSysMessage("ActualEndPosition (%.3f, %.3f, %.3f)", actualEnd.x, actualEnd.y, actualEnd.z);
 
-        if (!player->IsGameMaster())
+        if (!player->isGameMaster())
             handler->PSendSysMessage("Enable GM mode to see the path points.");
 
         for (uint32 i = 0; i < pointPath.size(); ++i)
@@ -130,7 +128,7 @@ public:
         int32 gy = 32 - player->GetPositionY() / SIZE_OF_GRIDS;
 
         handler->PSendSysMessage("%03u%02i%02i.mmtile", player->GetMapId(), gy, gx);
-        handler->PSendSysMessage("gridloc [%i, %i]", gx, gy);
+        handler->PSendSysMessage("gridloc [%i,%i]", gx, gy);
 
         // calculate navmesh tile location
         dtNavMesh const* navmesh = MMAP::MMapFactory::createOrGetMMapManager()->GetNavMesh(handler->GetSession()->GetPlayer()->GetMapId());
@@ -150,33 +148,33 @@ public:
         int32 tilex = int32((y - min[0]) / SIZE_OF_GRIDS);
         int32 tiley = int32((x - min[2]) / SIZE_OF_GRIDS);
 
-        handler->PSendSysMessage("Calc   [%02i, %02i]", tilex, tiley);
+        handler->PSendSysMessage("Calc   [%02i,%02i]", tilex, tiley);
 
         // navmesh poly -> navmesh tile location
         dtQueryFilter filter = dtQueryFilter();
         dtPolyRef polyRef = INVALID_POLYREF;
-        if (dtStatusFailed(navmeshquery->findNearestPoly(location, extents, &filter, &polyRef, NULL)))
+        if (dtStatusFailed(navmeshquery->findNearestPoly(location, extents, &filter, &polyRef, NULL))) 
         {
             handler->PSendSysMessage("Dt     [??,??] (invalid poly, probably no tile loaded)");
             return true;
         }
 
         if (polyRef == INVALID_POLYREF)
-            handler->PSendSysMessage("Dt     [??, ??] (invalid poly, probably no tile loaded)");
+            handler->PSendSysMessage("Dt     [??,??] (invalid poly, probably no tile loaded)");
         else
         {
             dtMeshTile const* tile;
             dtPoly const* poly;
-            if (dtStatusSucceed(navmesh->getTileAndPolyByRef(polyRef, &tile, &poly)))
+            if (dtStatusSucceed(navmesh->getTileAndPolyByRef(polyRef, &tile, &poly))) 
             {
                 if (tile)
                 {
-                    handler->PSendSysMessage("Dt     [%02i,%02i]", tile->header->x, tile->header->y);
-                    return false;
+                    handler->PSendSysMessage("Dt     [%02i,%02i]", tile->header->x, tile->header->y); 
+                    return false; 
                 }
             }
 
-            handler->PSendSysMessage("Dt     [??,??] (no tile loaded)");
+            handler->PSendSysMessage("Dt     [??,??] (no tile loaded)"); 
         }
 
         return true;
@@ -201,7 +199,7 @@ public:
             if (!tile || !tile->header)
                 continue;
 
-            handler->PSendSysMessage("[%02i, %02i]", tile->header->x, tile->header->y);
+            handler->PSendSysMessage("[%02i,%02i]", tile->header->x, tile->header->y);
         }
 
         return true;
@@ -275,7 +273,7 @@ public:
 
         if (!creatureList.empty())
         {
-            handler->PSendSysMessage("Found " SIZEFMTD " Creatures.", creatureList.size());
+            handler->PSendSysMessage("Found "SIZEFMTD" Creatures.", creatureList.size());
 
             uint32 paths = 0;
             uint32 uStartTime = getMSTime();

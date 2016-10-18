@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -74,7 +73,7 @@ public:
     {
         boss_darkweaver_sythAI(Creature* creature) : BossAI(creature, DATA_DARKWEAVER_SYTH) { }
 
-        void Reset() override
+        void Reset() 
         {
             _Reset();
             summon90 = false;
@@ -82,7 +81,7 @@ public:
             summon10 = false;
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/) 
         {
             _EnterCombat();
             events.ScheduleEvent(EVENT_FLAME_SHOCK, 2000);
@@ -94,19 +93,19 @@ public:
             Talk(SAY_AGGRO);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/) 
         {
             _JustDied();
             Talk(SAY_DEATH);
         }
 
-        void KilledUnit(Unit* who) override
+        void KilledUnit(Unit* who) 
         {
             if (who->GetTypeId() == TYPEID_PLAYER)
                 Talk(SAY_SLAY);
         }
 
-        void JustSummoned(Creature* summoned) override
+        void JustSummoned(Creature* summoned) 
         {
             if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
                 summoned->AI()->AttackStart(target);
@@ -125,7 +124,7 @@ public:
             DoCast(me, SPELL_SUMMON_SYTH_SHADOW, true);   //right
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(uint32 const diff) 
         {
             if (!UpdateVictim())
                 return;
@@ -193,37 +192,37 @@ public:
             bool summon10;
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const 
     {
         return GetSethekkHallsAI<boss_darkweaver_sythAI>(creature);
     }
 };
 
 /* ELEMENTALS */
-class npc_syth_fire : public CreatureScript
+class mob_syth_fire : public CreatureScript
 {
 public:
-    npc_syth_fire() : CreatureScript("npc_syth_fire") { }
+    mob_syth_fire() : CreatureScript("mob_syth_fire") { }
 
-    struct npc_syth_fireAI : public ScriptedAI
+    struct mob_syth_fireAI : public ScriptedAI
     {
-        npc_syth_fireAI(Creature* creature) : ScriptedAI(creature)
+        mob_syth_fireAI(Creature* creature) : ScriptedAI(creature)
         {
         }
 
         uint32 flameshock_timer;
         uint32 flamebuffet_timer;
 
-        void Reset() override
+        void Reset() 
         {
             me->ApplySpellImmune(0, IMMUNITY_SCHOOL, SPELL_SCHOOL_MASK_FIRE, true);
             flameshock_timer = 2500;
             flamebuffet_timer = 5000;
         }
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/)  {}
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(uint32 const diff) 
         {
             if (!UpdateVictim())
                 return;
@@ -248,41 +247,41 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const 
     {
-        return new npc_syth_fireAI(creature);
+        return new mob_syth_fireAI(creature);
     }
 };
 
-class npc_syth_arcane : public CreatureScript
+class mob_syth_arcane : public CreatureScript
 {
 public:
-    npc_syth_arcane() : CreatureScript("npc_syth_arcane") { }
+    mob_syth_arcane() : CreatureScript("mob_syth_arcane") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const 
     {
-        return new npc_syth_arcaneAI(creature);
+        return new mob_syth_arcaneAI(creature);
     }
 
-    struct npc_syth_arcaneAI : public ScriptedAI
+    struct mob_syth_arcaneAI : public ScriptedAI
     {
-        npc_syth_arcaneAI(Creature* creature) : ScriptedAI(creature)
+        mob_syth_arcaneAI(Creature* creature) : ScriptedAI(creature)
         {
         }
 
         uint32 arcaneshock_timer;
         uint32 arcanebuffet_timer;
 
-        void Reset() override
+        void Reset() 
         {
             me->ApplySpellImmune(0, IMMUNITY_SCHOOL, SPELL_SCHOOL_MASK_ARCANE, true);
             arcaneshock_timer = 2500;
             arcanebuffet_timer = 5000;
         }
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/)  {}
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(uint32 const diff) 
         {
             if (!UpdateVictim())
                 return;
@@ -308,35 +307,35 @@ public:
     };
 };
 
-class npc_syth_frost : public CreatureScript
+class mob_syth_frost : public CreatureScript
 {
 public:
-    npc_syth_frost() : CreatureScript("npc_syth_frost") { }
+    mob_syth_frost() : CreatureScript("mob_syth_frost") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const 
     {
-        return new npc_syth_frostAI(creature);
+        return new mob_syth_frostAI(creature);
     }
 
-    struct npc_syth_frostAI : public ScriptedAI
+    struct mob_syth_frostAI : public ScriptedAI
     {
-        npc_syth_frostAI(Creature* creature) : ScriptedAI(creature)
+        mob_syth_frostAI(Creature* creature) : ScriptedAI(creature)
         {
         }
 
         uint32 frostshock_timer;
         uint32 frostbuffet_timer;
 
-        void Reset() override
+        void Reset() 
         {
             me->ApplySpellImmune(0, IMMUNITY_SCHOOL, SPELL_SCHOOL_MASK_FROST, true);
             frostshock_timer = 2500;
             frostbuffet_timer = 5000;
         }
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/)  {}
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(uint32 const diff) 
         {
             if (!UpdateVictim())
                 return;
@@ -363,35 +362,35 @@ public:
 
 };
 
-class npc_syth_shadow : public CreatureScript
+class mob_syth_shadow : public CreatureScript
 {
 public:
-    npc_syth_shadow() : CreatureScript("npc_syth_shadow") { }
+    mob_syth_shadow() : CreatureScript("mob_syth_shadow") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const 
     {
-        return new npc_syth_shadowAI(creature);
+        return new mob_syth_shadowAI(creature);
     }
 
-    struct npc_syth_shadowAI : public ScriptedAI
+    struct mob_syth_shadowAI : public ScriptedAI
     {
-        npc_syth_shadowAI(Creature* creature) : ScriptedAI(creature)
+        mob_syth_shadowAI(Creature* creature) : ScriptedAI(creature)
         {
         }
 
         uint32 shadowshock_timer;
         uint32 shadowbuffet_timer;
 
-        void Reset() override
+        void Reset() 
         {
             me->ApplySpellImmune(0, IMMUNITY_SCHOOL, SPELL_SCHOOL_MASK_SHADOW, true);
             shadowshock_timer = 2500;
             shadowbuffet_timer = 5000;
         }
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/)  {}
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(uint32 const diff) 
         {
             if (!UpdateVictim())
                 return;
@@ -421,8 +420,8 @@ public:
 void AddSC_boss_darkweaver_syth()
 {
     new boss_darkweaver_syth();
-    new npc_syth_fire();
-    new npc_syth_arcane();
-    new npc_syth_frost();
-    new npc_syth_shadow();
+    new mob_syth_fire();
+    new mob_syth_arcane();
+    new mob_syth_frost();
+    new mob_syth_shadow();
 }

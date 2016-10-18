@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,42 +41,45 @@ public:
     {
         static ChatCommand modifyspeedCommandTable[] =
         {
-            { "all",      rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_ALL,      false, &HandleModifyASpeedCommand, "", NULL },
-            { "backwalk", rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_BACKWALK, false, &HandleModifyBWalkCommand,  "", NULL },
-            { "fly",      rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_FLY,      false, &HandleModifyFlyCommand,    "", NULL },
-            { "walk",     rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_WALK,     false, &HandleModifySpeedCommand,  "", NULL },
-            { "swim",     rbac::RBAC_PERM_COMMAND_MODIFY_SPEED_SWIM,     false, &HandleModifySwimCommand,   "", NULL },
-            { "",         rbac::RBAC_PERM_COMMAND_MODIFY_SPEED,          false, &HandleModifyASpeedCommand, "", NULL },
-            { NULL,       0,                                       false, NULL,                       "", NULL }
+            { "fly",            SEC_MODERATOR,      false, &HandleModifyFlyCommand,           "", NULL },
+            { "all",            SEC_MODERATOR,      false, &HandleModifyASpeedCommand,        "", NULL },
+            { "walk",           SEC_MODERATOR,      false, &HandleModifySpeedCommand,         "", NULL },
+            { "backwalk",       SEC_MODERATOR,      false, &HandleModifyBWalkCommand,         "", NULL },
+            { "swim",           SEC_MODERATOR,      false, &HandleModifySwimCommand,          "", NULL },
+            { "",               SEC_MODERATOR,      false, &HandleModifyASpeedCommand,        "", NULL },
+            { NULL,             0,                  false, NULL,                              "", NULL }
         };
         static ChatCommand modifyCommandTable[] =
         {
-            { "bit",          rbac::RBAC_PERM_COMMAND_MODIFY_BIT,          false, &HandleModifyBitCommand,           "", NULL },
-            { "drunk",        rbac::RBAC_PERM_COMMAND_MODIFY_DRUNK,        false, &HandleModifyDrunkCommand,         "", NULL },
-            { "energy",       rbac::RBAC_PERM_COMMAND_MODIFY_ENERGY,       false, &HandleModifyEnergyCommand,        "", NULL },
-            { "faction",      rbac::RBAC_PERM_COMMAND_MODIFY_FACTION,      false, &HandleModifyFactionCommand,       "", NULL },
-            { "gender",       rbac::RBAC_PERM_COMMAND_MODIFY_GENDER,       false, &HandleModifyGenderCommand,        "", NULL },
-            { "currency",     rbac::RBAC_PERM_COMMAND_MODIFY_HONOR,        false, &HandleModifyCurrencyCommand,      "", NULL },
-            { "hp",           rbac::RBAC_PERM_COMMAND_MODIFY_HP,           false, &HandleModifyHPCommand,            "", NULL },
-            { "mana",         rbac::RBAC_PERM_COMMAND_MODIFY_MANA,         false, &HandleModifyManaCommand,          "", NULL },
-            { "money",        rbac::RBAC_PERM_COMMAND_MODIFY_MONEY,        false, &HandleModifyMoneyCommand,         "", NULL },
-            { "mount",        rbac::RBAC_PERM_COMMAND_MODIFY_MOUNT,        false, &HandleModifyMountCommand,         "", NULL },
-            { "phase",        rbac::RBAC_PERM_COMMAND_MODIFY_PHASE,        false, &HandleModifyPhaseCommand,         "", NULL },
-            { "rage",         rbac::RBAC_PERM_COMMAND_MODIFY_RAGE,         false, &HandleModifyRageCommand,          "", NULL },
-            { "reputation",   rbac::RBAC_PERM_COMMAND_MODIFY_REPUTATION,   false, &HandleModifyRepCommand,           "", NULL },
-            { "runicpower",   rbac::RBAC_PERM_COMMAND_MODIFY_RUNICPOWER,   false, &HandleModifyRunicPowerCommand,    "", NULL },
-            { "scale",        rbac::RBAC_PERM_COMMAND_MODIFY_SCALE,        false, &HandleModifyScaleCommand,         "", NULL },
-            { "speed",        rbac::RBAC_PERM_COMMAND_MODIFY_SPEED,        false, NULL,           "", modifyspeedCommandTable },
-            { "spell",        rbac::RBAC_PERM_COMMAND_MODIFY_SPELL,        false, &HandleModifySpellCommand,         "", NULL },
-            { "standstate",   rbac::RBAC_PERM_COMMAND_MODIFY_STANDSTATE,   false, &HandleModifyStandStateCommand,    "", NULL },
-            { NULL,           0,                                     false, NULL,                              "", NULL }
+            { "hp",             SEC_MODERATOR,      false, &HandleModifyHPCommand,            "", NULL },
+            { "mana",           SEC_MODERATOR,      false, &HandleModifyManaCommand,          "", NULL },
+            { "rage",           SEC_MODERATOR,      false, &HandleModifyRageCommand,          "", NULL },
+            { "runicpower",     SEC_MODERATOR,      false, &HandleModifyRunicPowerCommand,    "", NULL },
+            { "energy",         SEC_MODERATOR,      false, &HandleModifyEnergyCommand,        "", NULL },
+            { "focus",          SEC_MODERATOR,      false, &HandleModifyFocusCommand,         "", NULL },
+            { "money",          SEC_MODERATOR,      false, &HandleModifyMoneyCommand,         "", NULL },
+            { "scale",          SEC_MODERATOR,      false, &HandleModifyScaleCommand,         "", NULL },
+            { "bit",            SEC_MODERATOR,      false, &HandleModifyBitCommand,           "", NULL },
+            { "faction",        SEC_MODERATOR,      false, &HandleModifyFactionCommand,       "", NULL },
+            { "spell",          SEC_MODERATOR,      false, &HandleModifySpellCommand,         "", NULL },
+            { "talentpoints",   SEC_MODERATOR,      false, &HandleModifyTalentCommand,        "", NULL },
+            { "mount",          SEC_MODERATOR,      false, &HandleModifyMountCommand,         "", NULL },
+            { "honor",          SEC_MODERATOR,      false, &HandleModifyHonorCommand,         "", NULL },
+            { "reputation",     SEC_GAMEMASTER,     false, &HandleModifyRepCommand,           "", NULL },
+            { "drunk",          SEC_MODERATOR,      false, &HandleModifyDrunkCommand,         "", NULL },
+            { "standstate",     SEC_GAMEMASTER,     false, &HandleModifyStandStateCommand,    "", NULL },
+            { "phase",          SEC_ADMINISTRATOR,  false, &HandleModifyPhaseCommand,         "", NULL },
+            { "gender",         SEC_GAMEMASTER,     false, &HandleModifyGenderCommand,        "", NULL },
+            { "currency",       SEC_GAMEMASTER,     false, &HandleModifyCurrencyCommand,      "", NULL },
+            { "speed",          SEC_MODERATOR,      false, NULL,           "", modifyspeedCommandTable },
+            { NULL,             0,                  false, NULL,                                           "", NULL }
         };
         static ChatCommand commandTable[] =
         {
-            { "morph",   rbac::RBAC_PERM_COMMAND_MORPH,   false, &HandleModifyMorphCommand,          "", NULL },
-            { "demorph", rbac::RBAC_PERM_COMMAND_DEMORPH, false, &HandleDeMorphCommand,              "", NULL },
-            { "modify",  rbac::RBAC_PERM_COMMAND_MODIFY,  false, NULL,                 "", modifyCommandTable },
-            { NULL,      0,                         false, NULL,                               "", NULL }
+            { "morph",          SEC_GAMEMASTER,     false, &HandleModifyMorphCommand,          "", NULL },
+            { "demorph",        SEC_GAMEMASTER,     false, &HandleDeMorphCommand,              "", NULL },
+            { "modify",         SEC_MODERATOR,      false, NULL,                 "", modifyCommandTable },
+            { NULL,             0,                  false, NULL,                               "", NULL }
         };
         return commandTable;
     }
@@ -204,10 +205,49 @@ public:
         target->SetMaxPower(POWER_ENERGY, energym);
         target->SetPower(POWER_ENERGY, energy);
 
-        TC_LOG_DEBUG("misc", handler->GetTrinityString(LANG_CURRENT_ENERGY), target->GetMaxPower(POWER_ENERGY));
+        sLog->outDebug(LOG_FILTER_GENERAL, handler->GetTrinityString(LANG_CURRENT_ENERGY), target->GetMaxPower(POWER_ENERGY));
 
         return true;
     }
+
+     //Edit Player Focus
+     static bool HandleModifyFocusCommand(ChatHandler* handler, const char* args)
+     {
+         if (!*args)
+             return false;
+
+         int32 focus = atoi((char*)args)*10;
+         int32 focusm = atoi((char*)args)*10;
+
+         if (focus <= 0 || focusm <= 0 || focusm < focus)
+         {
+             handler->SendSysMessage(LANG_BAD_VALUE);
+             handler->SetSentErrorMessage(true);
+             return false;
+         }
+
+         Player* target = handler->getSelectedPlayer();
+         if (!target)
+         {
+             handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
+             handler->SetSentErrorMessage(true);
+             return false;
+         }
+
+         if (handler->HasLowerSecurity(target, 0))
+             return false;
+
+         handler->PSendSysMessage(LANG_YOU_CHANGE_FOCUS, handler->GetNameLink(target).c_str(), focus/10, focusm/10);
+          if (handler->needReportToTarget(target))
+             ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_FOCUS_CHANGED, handler->GetNameLink().c_str(), focus/10, focusm/10);
+
+         target->SetMaxPower(POWER_FOCUS, focusm);
+         target->SetPower(POWER_FOCUS, focus);
+
+         sLog->outInfo(LOG_FILTER_GENERAL, handler->GetTrinityString(LANG_CURRENT_FOCUS), target->GetMaxPower(POWER_FOCUS));
+
+         return true;
+     }
 
     //Edit Player Rage
     static bool HandleModifyRageCommand(ChatHandler* handler, const char* args)
@@ -310,12 +350,22 @@ public:
 
         if (!pfactionid)
         {
-            uint32 factionid = target->getFaction();
-            uint32 flag      = target->GetUInt32Value(UNIT_FIELD_FLAGS);
-            uint64 npcflag   = target->GetUInt64Value(UNIT_FIELD_NPC_FLAGS);
-            uint32 dyflag    = target->GetUInt32Value(OBJECT_FIELD_DYNAMIC_FLAGS);
-            handler->PSendSysMessage(LANG_CURRENT_FACTION, target->GetGUIDLow(), factionid, flag, npcflag, dyflag);
+            if (target)
+            {
+                uint32 factionid = target->getFaction();
+                uint32 flag      = target->GetUInt32Value(UNIT_FIELD_FLAGS);
+                uint32 npcflag   = target->GetUInt32Value(UNIT_NPC_FLAGS);
+                uint32 dyflag    = target->GetUInt32Value(UNIT_DYNAMIC_FLAGS);
+                handler->PSendSysMessage(LANG_CURRENT_FACTION, target->GetGUIDLow(), factionid, flag, npcflag, dyflag);
+            }
             return true;
+        }
+
+        if (!target)
+        {
+            handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
+            handler->SetSentErrorMessage(true);
+            return false;
         }
 
         uint32 factionid = atoi(pfactionid);
@@ -329,9 +379,9 @@ public:
 
         char* pnpcflag = strtok(NULL, " ");
 
-        uint64 npcflag;
+        uint32 npcflag;
         if (!pnpcflag)
-            npcflag = target->GetUInt64Value(UNIT_FIELD_NPC_FLAGS);
+            npcflag   = target->GetUInt32Value(UNIT_NPC_FLAGS);
         else
             npcflag = atoi(pnpcflag);
 
@@ -339,7 +389,7 @@ public:
 
         uint32  dyflag;
         if (!pdyflag)
-            dyflag = target->GetUInt32Value(OBJECT_FIELD_DYNAMIC_FLAGS);
+            dyflag   = target->GetUInt32Value(UNIT_DYNAMIC_FLAGS);
         else
             dyflag = atoi(pdyflag);
 
@@ -354,8 +404,8 @@ public:
 
         target->setFaction(factionid);
         target->SetUInt32Value(UNIT_FIELD_FLAGS, flag);
-        target->SetUInt64Value(UNIT_FIELD_NPC_FLAGS, npcflag);
-        target->SetUInt32Value(OBJECT_FIELD_DYNAMIC_FLAGS, dyflag);
+        target->SetUInt32Value(UNIT_NPC_FLAGS, npcflag);
+        target->SetUInt32Value(UNIT_DYNAMIC_FLAGS, dyflag);
 
         return true;
     }
@@ -416,6 +466,52 @@ public:
         return true;
     }
 
+    //Edit Player TP
+    static bool HandleModifyTalentCommand (ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        int tp = atoi((char*)args);
+        if (tp < 0)
+            return false;
+
+        Unit* target = handler->getSelectedUnit();
+        if (!target)
+        {
+            handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        if (target->GetTypeId() == TYPEID_PLAYER)
+        {
+            // check online security
+            if (handler->HasLowerSecurity(target->ToPlayer(), 0))
+                return false;
+            target->ToPlayer()->SetFreeTalentPoints(tp);
+            target->ToPlayer()->SendTalentsInfoData(false);
+            return true;
+        }
+        else if (target->ToCreature()->isPet())
+        {
+            Unit* owner = target->GetOwner();
+            if (owner && owner->GetTypeId() == TYPEID_PLAYER && ((Pet*)target)->IsPermanentPetFor(owner->ToPlayer()))
+            {
+                // check online security
+                if (handler->HasLowerSecurity(owner->ToPlayer(), 0))
+                    return false;
+                ((Pet*)target)->SetFreeTalentPoints(tp);
+                owner->ToPlayer()->SendTalentsInfoData(true);
+                return true;
+            }
+        }
+
+        handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
+        handler->SetSentErrorMessage(true);
+        return false;
+    }
+
     //Edit Player Aspeed
     static bool HandleModifyASpeedCommand(ChatHandler* handler, const char* args)
     {
@@ -445,7 +541,7 @@ public:
 
         std::string targetNameLink = handler->GetNameLink(target);
 
-        if (target->IsInFlight())
+        if (target->isInFlight())
         {
             handler->PSendSysMessage(LANG_CHAR_IN_FLIGHT, targetNameLink.c_str());
             handler->SetSentErrorMessage(true);
@@ -456,11 +552,11 @@ public:
         if (handler->needReportToTarget(target))
             ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_ASPEED_CHANGED, handler->GetNameLink().c_str(), ASpeed);
 
-        target->SetSpeed(MOVE_WALK,     ASpeed, true);
-        target->SetSpeed(MOVE_RUN,      ASpeed, true);
-        target->SetSpeed(MOVE_SWIM,     ASpeed, true);
+        target->SetSpeed(MOVE_WALK,    ASpeed, true);
+        target->SetSpeed(MOVE_RUN,     ASpeed, true);
+        target->SetSpeed(MOVE_SWIM,    ASpeed, true);
         //target->SetSpeed(MOVE_TURN,    ASpeed, true);
-        target->SetSpeed(MOVE_FLIGHT,   ASpeed, true);
+        target->SetSpeed(MOVE_FLIGHT,     ASpeed, true);
         return true;
     }
 
@@ -493,7 +589,7 @@ public:
 
         std::string targetNameLink = handler->GetNameLink(target);
 
-        if (target->IsInFlight())
+        if (target->isInFlight())
         {
             handler->PSendSysMessage(LANG_CHAR_IN_FLIGHT, targetNameLink.c_str());
             handler->SetSentErrorMessage(true);
@@ -538,7 +634,7 @@ public:
 
         std::string targetNameLink = handler->GetNameLink(target);
 
-        if (target->IsInFlight())
+        if (target->isInFlight())
         {
             handler->PSendSysMessage(LANG_CHAR_IN_FLIGHT, targetNameLink.c_str());
             handler->SetSentErrorMessage(true);
@@ -583,7 +679,7 @@ public:
 
         std::string targetNameLink = handler->GetNameLink(target);
 
-        if (target->IsInFlight())
+        if (target->isInFlight())
         {
             handler->PSendSysMessage(LANG_CHAR_IN_FLIGHT, targetNameLink.c_str());
             handler->SetSentErrorMessage(true);
@@ -964,7 +1060,7 @@ public:
         {
             int64 newmoney = int64(targetMoney) + moneyToAdd;
 
-            TC_LOG_DEBUG("misc", handler->GetTrinityString(LANG_CURRENT_MONEY), uint32(targetMoney), int32(moneyToAdd), int32(newmoney));
+            sLog->outDebug(LOG_FILTER_GENERAL, handler->GetTrinityString(LANG_CURRENT_MONEY), uint32(targetMoney), int32(moneyToAdd), uint32(newmoney));
             if (newmoney <= 0)
             {
                 handler->PSendSysMessage(LANG_YOU_TAKE_ALL_MONEY, handler->GetNameLink(target).c_str());
@@ -987,17 +1083,17 @@ public:
         }
         else
         {
-            handler->PSendSysMessage(LANG_YOU_GIVE_MONEY, int32(moneyToAdd), handler->GetNameLink(target).c_str());
+            handler->PSendSysMessage(LANG_YOU_GIVE_MONEY, uint32(moneyToAdd), handler->GetNameLink(target).c_str());
             if (handler->needReportToTarget(target))
-                ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_MONEY_GIVEN, handler->GetNameLink().c_str(), int32(moneyToAdd));
+                ChatHandler(target->GetSession()).PSendSysMessage(LANG_YOURS_MONEY_GIVEN, handler->GetNameLink().c_str(), uint32(moneyToAdd));
 
-            if (targetMoney + moneyToAdd >= MAX_MONEY_AMOUNT)
+            if (moneyToAdd >= MAX_MONEY_AMOUNT)
                 target->SetMoney(MAX_MONEY_AMOUNT);
             else
                 target->ModifyMoney(moneyToAdd);
         }
 
-        TC_LOG_DEBUG("misc", handler->GetTrinityString(LANG_NEW_MONEY), int32(targetMoney), int32(moneyToAdd), uint32(target->GetMoney()));
+        sLog->outDebug(LOG_FILTER_GENERAL, handler->GetTrinityString(LANG_NEW_MONEY), uint32(targetMoney), int32(moneyToAdd), uint32(target->GetMoney()));
 
         return true;
     }
@@ -1057,7 +1153,7 @@ public:
         return true;
     }
 
-    static bool HandleModifyCurrencyCommand(ChatHandler* handler, const char* args)
+    static bool HandleModifyHonorCommand(ChatHandler* handler, const char* args)
     {
         if (!*args)
             return false;
@@ -1065,21 +1161,21 @@ public:
         Player* target = handler->getSelectedPlayer();
         if (!target)
         {
-            handler->PSendSysMessage(LANG_PLAYER_NOT_FOUND);
+            handler->SendSysMessage(LANG_PLAYER_NOT_FOUND);
             handler->SetSentErrorMessage(true);
             return false;
         }
 
-        uint32 currencyId = atoi(strtok((char*)args, " "));
-        const CurrencyTypesEntry* currencyType = sCurrencyTypesStore.LookupEntry(currencyId);
-        if (!currencyType)
+        // check online security
+        if (handler->HasLowerSecurity(target, 0))
             return false;
 
-        uint32 amount = atoi(strtok(NULL, " "));
-        if (!amount)
-            return false;
+        int32 amount = (uint32)atoi(args);
 
-        target->ModifyCurrency(currencyId, amount, true, true, false);
+        target->ModifyCurrency(CURRENCY_TYPE_HONOR_POINTS, amount, true, true);
+
+        handler->PSendSysMessage(LANG_COMMAND_MODIFY_HONOR, handler->GetNameLink(target).c_str(), target->GetCurrency(CURRENCY_TYPE_HONOR_POINTS, false));
+
         return true;
     }
 
@@ -1123,7 +1219,7 @@ public:
 
         int32 amount = 0;
         char *rankTxt = strtok(NULL, " ");
-        if (!factionId || !rankTxt)
+        if (!factionTxt || !rankTxt)
             return false;
 
         amount = atoi(rankTxt);
@@ -1192,7 +1288,6 @@ public:
         }
 
         target->GetReputationMgr().SetOneFactionReputation(factionEntry, amount, false);
-        target->GetReputationMgr().SendState(target->GetReputationMgr().GetState(factionEntry));
         handler->PSendSysMessage(LANG_COMMAND_MODIFY_REP, factionEntry->name, factionId,
             handler->GetNameLink(target).c_str(), target->GetReputationMgr().GetReputation(factionEntry));
         return true;
@@ -1248,7 +1343,7 @@ public:
             return false;
 
         uint32 anim_id = atoi((char*)args);
-        handler->GetSession()->GetPlayer()->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, anim_id);
+        handler->GetSession()->GetPlayer()->SetUInt32Value(UNIT_NPC_EMOTESTATE, anim_id);
 
         return true;
     }
@@ -1298,8 +1393,8 @@ public:
         }
 
         // Set gender
-        target->SetGender( gender);
-        target->SetByteValue(PLAYER_FIELD_PVP_INFO, 0, gender);
+        target->SetByteValue(UNIT_FIELD_BYTES_0, 2, gender);
+        target->SetByteValue(PLAYER_BYTES_3, 0, gender);
 
         // Change display ID
         target->InitDisplayIds();
@@ -1325,6 +1420,33 @@ public:
             return false;
 
         target->DeMorph();
+
+        return true;
+    }
+
+    static bool HandleModifyCurrencyCommand(ChatHandler* handler, const char* args)
+    {
+        if (!*args)
+            return false;
+
+        Player* target = handler->getSelectedPlayer();
+        if (!target)
+        {
+            handler->PSendSysMessage(LANG_PLAYER_NOT_FOUND);
+            handler->SetSentErrorMessage(true);
+            return false;
+        }
+
+        uint32 currencyId = atoi(strtok((char*)args, " "));
+        const CurrencyTypesEntry* currencyType =  sCurrencyTypesStore.LookupEntry(currencyId);
+        if (!currencyType)
+            return false;
+
+        uint32 amount = atoi(strtok(NULL, " "));
+        if (!amount)
+            return false;
+
+        target->ModifyCurrency(currencyId, amount, true, true);
 
         return true;
     }

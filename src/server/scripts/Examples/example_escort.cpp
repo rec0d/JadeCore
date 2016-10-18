@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -31,8 +30,14 @@ EndScriptData */
 #include "Player.h"
 #include "CreatureTextMgr.h"
 
-enum Yells
+enum eEnums
 {
+    NPC_FELBOAR                 = 21878,
+
+    SPELL_DEATH_COIL            = 33130,
+    SPELL_ELIXIR_OF_FORTITUDE   = 3593,
+    SPELL_BLUE_FIREWORK         = 11540,
+
     SAY_AGGRO1                  = 0,
     SAY_AGGRO2                  = 1,
     SAY_WP_1                    = 2,
@@ -45,18 +50,6 @@ enum Yells
     SAY_SPELL                   = 9,
     SAY_RAND_1                  = 10,
     SAY_RAND_2                  = 11
-};
-
-enum Spells
-{
-    SPELL_DEATH_COIL            = 33130,
-    SPELL_ELIXIR_OF_FORTITUDE   = 3593,
-    SPELL_BLUE_FIREWORK         = 11540
-};
-
-enum Creatures
-{
-    NPC_FELBOAR                 = 21878
 };
 
 #define GOSSIP_ITEM_1   "Click to Test Escort(Attack, Run)"
@@ -80,13 +73,13 @@ class example_escort : public CreatureScript
             uint32 m_uiDeathCoilTimer;
             uint32 m_uiChatTimer;
 
-            void JustSummoned(Creature* summoned) override
+            void JustSummoned(Creature* summoned)
             {
                 summoned->AI()->AttackStart(me);
             }
 
             // Pure Virtual Functions (Have to be implemented)
-            void WaypointReached(uint32 waypointId) override
+            void WaypointReached(uint32 waypointId)
             {
                 switch (waypointId)
                 {
@@ -101,7 +94,7 @@ class example_escort : public CreatureScript
                         if (Player* player = GetPlayerForEscort())
                         {
                             //pTmpPlayer is the target of the text
-                            Talk(SAY_WP_3, player);
+                            Talk(SAY_WP_3, player->GetGUID());
                             //pTmpPlayer is the source of the text
                             sCreatureTextMgr->SendChat(me, SAY_WP_4, 0, CHAT_MSG_ADDON, LANG_ADDON, TEXT_RANGE_NORMAL, 0, TEAM_OTHER, false, player);
                         }
@@ -109,24 +102,24 @@ class example_escort : public CreatureScript
                 }
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 if (HasEscortState(STATE_ESCORT_ESCORTING))
                 {
                     if (Player* player = GetPlayerForEscort())
-                        Talk(SAY_AGGRO1, player);
+                        Talk(SAY_AGGRO1, player->GetGUID());
                 }
                 else
                     Talk(SAY_AGGRO2);
             }
 
-            void Reset() override
+            void Reset()
             {
                 m_uiDeathCoilTimer = 4000;
                 m_uiChatTimer = 4000;
             }
 
-            void JustDied(Unit* killer) override
+            void JustDied(Unit* killer)
             {
                 if (HasEscortState(STATE_ESCORT_ESCORTING))
                 {
@@ -134,16 +127,16 @@ class example_escort : public CreatureScript
                     {
                         // not a likely case, code here for the sake of example
                         if (killer == me)
-                            Talk(SAY_DEATH_1, player);
+                            Talk(SAY_DEATH_1, player->GetGUID());
                         else
-                            Talk(SAY_DEATH_2, player);
+                            Talk(SAY_DEATH_2, player->GetGUID());
                     }
                 }
                 else
                     Talk(SAY_DEATH_3);
             }
 
-            void UpdateAI(uint32 uiDiff) override
+            void UpdateAI(const uint32 uiDiff)
             {
                 //Must update npc_escortAI
                 npc_escortAI::UpdateAI(uiDiff);
@@ -187,12 +180,12 @@ class example_escort : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new example_escortAI(creature);
         }
 
-        bool OnGossipHello(Player* player, Creature* creature) override
+        bool OnGossipHello(Player* player, Creature* creature)
         {
             player->TalkedToCreature(creature->GetEntry(), creature->GetGUID());
             player->PrepareGossipMenu(creature, 0);
@@ -206,7 +199,7 @@ class example_escort : public CreatureScript
             return true;
         }
 
-        bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+        bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
         {
             player->PlayerTalkClass->ClearMenus();
             npc_escortAI* pEscortAI = CAST_AI(example_escort::example_escortAI, creature->AI());

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -39,12 +38,19 @@ EndContentData */
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "Player.h"
+#include "BattlegroundAB.h"
+#include "BattlegroundWS.h"
+#include "BattlegroundIC.h"
+#include "BattlegroundSA.h"
+#include "BattlegroundAV.h"
+#include "BattlegroundBFG.h"
+#include "BattlegroundTP.h"
 
 /*######
 ## at_coilfang_waterfall
 ######*/
 
-enum CoilfangGOs
+enum eCoilfangGOs
 {
     GO_COILFANG_WATERFALL   = 184212
 };
@@ -72,7 +78,7 @@ class AreaTrigger_at_coilfang_waterfall : public AreaTriggerScript
 ## at_legion_teleporter
 #####*/
 
-enum LegionTeleporter
+enum eLegionTeleporter
 {
     SPELL_TELE_A_TO         = 37387,
     QUEST_GAINING_ACCESS_A  = 10589,
@@ -92,7 +98,7 @@ class AreaTrigger_at_legion_teleporter : public AreaTriggerScript
 
         bool OnTrigger(Player* player, AreaTriggerEntry const* /*trigger*/)
         {
-            if (player->IsAlive() && !player->IsInCombat())
+            if (player->isAlive() && !player->isInCombat())
             {
                 if (player->GetTeam() == ALLIANCE && player->GetQuestRewardStatus(QUEST_GAINING_ACCESS_A))
                 {
@@ -116,7 +122,7 @@ class AreaTrigger_at_legion_teleporter : public AreaTriggerScript
 ## at_stormwright_shelf
 ######*/
 
-enum StormwrightShelf
+enum eStormwrightShelf
 {
     QUEST_STRENGTH_OF_THE_TEMPEST               = 12741,
 
@@ -145,7 +151,7 @@ class AreaTrigger_at_stormwright_shelf : public AreaTriggerScript
 ## at_scent_larkorwi
 ######*/
 
-enum ScentLarkorwi
+enum eScentLarkorwi
 {
     QUEST_SCENT_OF_LARKORWI                     = 4291,
     NPC_LARKORWI_MATE                           = 9683
@@ -176,7 +182,7 @@ class AreaTrigger_at_scent_larkorwi : public AreaTriggerScript
 ## at_last_rites
 #####*/
 
-enum AtLastRites
+enum eAtLastRites
 {
     QUEST_LAST_RITES                          = 12019,
     QUEST_BREAKING_THROUGH                    = 11898,
@@ -211,11 +217,7 @@ class AreaTrigger_at_last_rites : public AreaTriggerScript
                     pPosition = WorldLocation(571, 3802.38f, 3585.95f, 49.5765f, 0.0f);
                     break;
                 case 5340:
-                    if (player->GetQuestStatus(QUEST_LAST_RITES) == QUEST_STATUS_INCOMPLETE ||
-                        player->GetQuestStatus(QUEST_LAST_RITES) == QUEST_STATUS_COMPLETE)
-                        pPosition = WorldLocation(571, 3687.91f, 3577.28f, 473.342f);
-                    else
-                        pPosition = WorldLocation(571, 3739.38f, 3567.09f, 341.58f);
+                    pPosition = WorldLocation(571, 3687.91f, 3577.28f, 473.342f, 0.0f);
                     break;
                 default:
                     return false;
@@ -231,7 +233,7 @@ class AreaTrigger_at_last_rites : public AreaTriggerScript
 ## at_sholazar_waygate
 ######*/
 
-enum Waygate
+enum eWaygate
 {
     SPELL_SHOLAZAR_TO_UNGORO_TELEPORT           = 52056,
     SPELL_UNGORO_TO_SHOLAZAR_TELEPORT           = 52057,
@@ -248,7 +250,7 @@ class AreaTrigger_at_sholazar_waygate : public AreaTriggerScript
 {
     public:
 
-        AreaTrigger_at_sholazar_waygate() : AreaTriggerScript("at_sholazar_waygate") { }
+        AreaTrigger_at_sholazar_waygate() : AreaTriggerScript("at_sholazar_waygate") {}
 
         bool OnTrigger(Player* player, AreaTriggerEntry const* trigger)
         {
@@ -289,7 +291,7 @@ class AreaTrigger_at_nats_landing : public AreaTriggerScript
 
         bool OnTrigger(Player* player, AreaTriggerEntry const* /*trigger*/)
         {
-            if (!player->IsAlive() || !player->HasAura(SPELL_FISH_PASTE))
+            if (!player->isAlive() || !player->HasAura(SPELL_FISH_PASTE))
                 return false;
 
             if (player->GetQuestStatus(QUEST_NATS_BARGAIN) == QUEST_STATUS_INCOMPLETE)
@@ -343,11 +345,11 @@ class AreaTrigger_at_brewfest : public AreaTriggerScript
             {
                 case AT_BREWFEST_DUROTAR:
                     if (Creature* tapper = player->FindNearestCreature(NPC_TAPPER_SWINDLEKEG, 20.0f))
-                        tapper->AI()->Talk(SAY_WELCOME, player);
+                        tapper->AI()->Talk(SAY_WELCOME, player->GetGUID());
                     break;
                 case AT_BREWFEST_DUN_MOROGH:
                     if (Creature* ipfelkofer = player->FindNearestCreature(NPC_IPFELKOFER_IRONKEG, 20.0f))
-                        ipfelkofer->AI()->Talk(SAY_WELCOME, player);
+                        ipfelkofer->AI()->Talk(SAY_WELCOME, player->GetGUID());
                     break;
                 default:
                     break;
@@ -389,7 +391,7 @@ class AreaTrigger_at_area_52_entrance : public AreaTriggerScript
         {
             float x = 0.0f, y = 0.0f, z = 0.0f;
 
-            if (!player->IsAlive())
+            if (!player->isAlive())
                 return false;
 
             uint32 triggerId = trigger->id;
@@ -430,71 +432,6 @@ class AreaTrigger_at_area_52_entrance : public AreaTriggerScript
         std::map<uint32, time_t> _triggerTimes;
 };
 
-/*######
- ## at_frostgrips_hollow
- ######*/
-
-enum FrostgripsHollow
-{
-    QUEST_THE_LONESOME_WATCHER      = 12877,
-
-    NPC_STORMFORGED_MONITOR         = 29862,
-    NPC_STORMFORGED_ERADICTOR       = 29861,
-
-    TYPE_WAYPOINT                   = 0,
-    DATA_START                      = 0
-};
-
-Position const stormforgedMonitorPosition = {6963.95f, 45.65f, 818.71f, 4.948f};
-Position const stormforgedEradictorPosition = {6983.18f, 7.15f, 806.33f, 2.228f};
-
-class AreaTrigger_at_frostgrips_hollow : public AreaTriggerScript
-{
-public:
-    AreaTrigger_at_frostgrips_hollow() : AreaTriggerScript("at_frostgrips_hollow")
-    {
-        stormforgedMonitorGUID = 0;
-        stormforgedEradictorGUID = 0;
-    }
-
-    bool OnTrigger(Player* player, AreaTriggerEntry const* /* trigger */)
-    {
-        if (player->GetQuestStatus(QUEST_THE_LONESOME_WATCHER) != QUEST_STATUS_INCOMPLETE)
-            return false;
-
-        Creature* stormforgedMonitor = Creature::GetCreature(*player, stormforgedMonitorGUID);
-        if (stormforgedMonitor)
-            return false;
-
-        Creature* stormforgedEradictor = Creature::GetCreature(*player, stormforgedEradictorGUID);
-        if (stormforgedEradictor)
-            return false;
-
-        stormforgedMonitor = player->SummonCreature(NPC_STORMFORGED_MONITOR, stormforgedMonitorPosition, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
-        if (stormforgedMonitor)
-        {
-            stormforgedMonitorGUID = stormforgedMonitor->GetGUID();
-            stormforgedMonitor->SetWalk(false);
-            /// The npc would search an alternative way to get to the last waypoint without this unit state.
-            stormforgedMonitor->AddUnitState(UNIT_STATE_IGNORE_PATHFINDING);
-            stormforgedMonitor->GetMotionMaster()->MovePath(NPC_STORMFORGED_MONITOR * 100, false);
-        }
-
-        stormforgedEradictor = player->SummonCreature(NPC_STORMFORGED_ERADICTOR, stormforgedEradictorPosition, TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT, 60000);
-        if (stormforgedEradictor)
-        {
-            stormforgedEradictorGUID = stormforgedEradictor->GetGUID();
-            stormforgedEradictor->GetMotionMaster()->MovePath(NPC_STORMFORGED_ERADICTOR * 100, false);
-        }
-
-        return true;
-    }
-
-private:
-    uint64 stormforgedMonitorGUID;
-    uint64 stormforgedEradictorGUID;
-};
-
 void AddSC_areatrigger_scripts()
 {
     new AreaTrigger_at_coilfang_waterfall();
@@ -506,5 +443,4 @@ void AddSC_areatrigger_scripts()
     new AreaTrigger_at_nats_landing();
     new AreaTrigger_at_brewfest();
     new AreaTrigger_at_area_52_entrance();
-    new AreaTrigger_at_frostgrips_hollow();
 }

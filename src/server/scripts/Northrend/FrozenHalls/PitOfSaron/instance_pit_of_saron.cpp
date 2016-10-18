@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -44,7 +41,7 @@ class instance_pit_of_saron : public InstanceMapScript
         {
             instance_pit_of_saron_InstanceScript(Map* map) : InstanceScript(map)
             {
-                SetBossNumber(EncounterCount);
+                SetBossNumber(MAX_ENCOUNTER);
                 LoadDoorData(Doors);
                 _garfrostGUID = 0;
                 _krickGUID = 0;
@@ -56,19 +53,19 @@ class instance_pit_of_saron : public InstanceMapScript
                 _teamInInstance = 0;
             }
 
-            void OnPlayerEnter(Player* player) override
+            void OnPlayerEnter(Player* player)
             {
                 if (!_teamInInstance)
                     _teamInInstance = player->GetTeam();
             }
 
-            void OnCreatureCreate(Creature* creature) override
+            void OnCreatureCreate(Creature* creature)
             {
                 if (!_teamInInstance)
                 {
                     Map::PlayerList const &players = instance->GetPlayers();
                     if (!players.isEmpty())
-                        if (Player* player = players.begin()->GetSource())
+                        if (Player* player = players.begin()->getSource())
                             _teamInInstance = player->GetTeam();
                 }
 
@@ -167,7 +164,7 @@ class instance_pit_of_saron : public InstanceMapScript
                 }
             }
 
-            void OnGameObjectCreate(GameObject* go) override
+            void OnGameObjectCreate(GameObject* go)
             {
                 switch (go->GetEntry())
                 {
@@ -178,7 +175,7 @@ class instance_pit_of_saron : public InstanceMapScript
                 }
             }
 
-            void OnGameObjectRemove(GameObject* go) override
+            void OnGameObjectRemove(GameObject* go)
             {
                 switch (go->GetEntry())
                 {
@@ -189,7 +186,7 @@ class instance_pit_of_saron : public InstanceMapScript
                 }
             }
 
-            bool SetBossState(uint32 type, EncounterState state) override
+            bool SetBossState(uint32 type, EncounterState state)
             {
                 if (!InstanceScript::SetBossState(type, state))
                     return false;
@@ -227,7 +224,7 @@ class instance_pit_of_saron : public InstanceMapScript
                 return true;
             }
 
-            uint32 GetData(uint32 type) const override
+            uint32 GetData(uint32 type) const
             {
                 switch (type)
                 {
@@ -240,7 +237,7 @@ class instance_pit_of_saron : public InstanceMapScript
                 return 0;
             }
 
-            uint64 GetData64(uint32 type) const override
+            uint64 GetData64(uint32 type) const
             {
                 switch (type)
                 {
@@ -267,7 +264,7 @@ class instance_pit_of_saron : public InstanceMapScript
                 return 0;
             }
 
-            std::string GetSaveData() override
+            std::string GetSaveData()
             {
                 OUT_SAVE_INST_DATA;
 
@@ -278,7 +275,7 @@ class instance_pit_of_saron : public InstanceMapScript
                 return saveStream.str();
             }
 
-            void Load(const char* in) override
+            void Load(const char* in)
             {
                 if (!in)
                 {
@@ -295,7 +292,7 @@ class instance_pit_of_saron : public InstanceMapScript
 
                 if (dataHead1 == 'P' && dataHead2 == 'S')
                 {
-                    for (uint8 i = 0; i < EncounterCount; ++i)
+                    for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
                     {
                         uint32 tmpState;
                         loadStream >> tmpState;
@@ -325,7 +322,7 @@ class instance_pit_of_saron : public InstanceMapScript
             uint32 _teamInInstance;
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const
         {
             return new instance_pit_of_saron_InstanceScript(map);
         }

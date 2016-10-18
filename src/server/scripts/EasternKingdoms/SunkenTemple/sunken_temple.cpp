@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -42,7 +41,7 @@ class at_malfurion_stormrage : public AreaTriggerScript
 public:
     at_malfurion_stormrage() : AreaTriggerScript("at_malfurion_stormrage") { }
 
-    bool OnTrigger(Player* player, const AreaTriggerEntry* /*at*/) override
+    bool OnTrigger(Player* player, const AreaTriggerEntry* /*at*/)
     {
         if (player->GetInstanceScript() && !player->FindNearestCreature(15362, 15))
             player->SummonCreature(15362, player->GetPositionX(), player->GetPositionY(), player->GetPositionZ(), -1.52f, TEMPSUMMON_TIMED_OR_DEAD_DESPAWN, 100000);
@@ -59,7 +58,7 @@ class go_atalai_statue : public GameObjectScript
 public:
     go_atalai_statue() : GameObjectScript("go_atalai_statue") { }
 
-    bool OnGossipHello(Player* player, GameObject* go) override
+    bool OnGossipHello(Player* player, GameObject* go)
     {
         if (InstanceScript* instance = player->GetInstanceScript())
             instance->SetData(EVENT_STATE, go->GetEntry());

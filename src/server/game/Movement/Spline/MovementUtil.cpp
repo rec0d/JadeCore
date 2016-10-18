@@ -1,19 +1,19 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
- * option) any later version.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "MoveSplineFlag.h"
@@ -30,9 +30,8 @@ namespace Movement
     float terminalSafefallVelocity = 7.0f;
 
     const float terminal_length = float(terminalVelocity * terminalVelocity) / (2.0f * gravity);
-    const float terminal_safeFall_length = (terminalSafefallVelocity * terminalSafefallVelocity) / (2.0f * gravity);
-    const float terminal_fallTime = float(terminalVelocity / gravity); // the time that needed to reach terminalVelocity
-    const float terminal_safeFall_fallTime = float(terminalSafefallVelocity / gravity); // the time that needed to reach terminalVelocity with safefall
+    const float terminal_safefall_length = (terminalSafefallVelocity * terminalSafefallVelocity) / (2.0f * gravity);
+    const float terminalFallTime = float(terminalVelocity / gravity); // the time that needed to reach terminalVelocity
 
     float computeFallTime(float path_length, bool isSafeFall)
     {
@@ -42,15 +41,15 @@ namespace Movement
         float time;
         if (isSafeFall)
         {
-            if (path_length >= terminal_safeFall_length)
-                time = (path_length - terminal_safeFall_length) / terminalSafefallVelocity + terminal_safeFall_fallTime;
+            if (path_length >= terminal_safefall_length)
+                time = (path_length - terminal_safefall_length) / terminalSafefallVelocity + terminalSafefallVelocity / gravity;
             else
                 time = sqrtf(2.0f * path_length / gravity);
         }
         else
         {
             if (path_length >= terminal_length)
-                time = (path_length - terminal_length) / terminalVelocity + terminal_fallTime;
+                time = (path_length - terminal_length) / terminalVelocity + terminalFallTime;
             else
                 time = sqrtf(2.0f * path_length / gravity);
         }
@@ -58,7 +57,7 @@ namespace Movement
         return time;
     }
 
-    float computeFallElevation(float t_passed, bool isSafeFall, float start_velocity /*= 0.0f*/)
+    float computeFallElevation(float t_passed, bool isSafeFall, float start_velocity)
     {
         float termVel;
         float result;
@@ -71,16 +70,32 @@ namespace Movement
         if (start_velocity > termVel)
             start_velocity = termVel;
 
-        float terminal_time = (isSafeFall ? terminal_safeFall_fallTime : terminal_fallTime) - start_velocity / gravity; // the time that needed to reach terminalVelocity
+        float terminal_time = terminalFallTime - start_velocity / gravity; // the time that needed to reach terminalVelocity
 
         if (t_passed > terminal_time)
         {
-            result = termVel * (t_passed - terminal_time) +
+            result = terminalVelocity * (t_passed - terminal_time) +
                 start_velocity * terminal_time +
                 gravity * terminal_time * terminal_time*0.5f;
         }
         else
             result = t_passed * (start_velocity + t_passed * gravity * 0.5f);
+
+        return result;
+    }
+
+    float computeFallElevation(float t_passed)
+    {
+        float result;
+
+        if (t_passed > terminalFallTime)
+        {
+            //result = terminalVelocity * (t_passed - terminal_time) + gravity*terminal_time*terminal_time*0.5f;
+            // simplified view:
+            result = terminalVelocity * (t_passed - terminalFallTime) + terminal_length;
+        }
+        else
+            result = t_passed * t_passed * gravity * 0.5f;
 
         return result;
     }
@@ -98,18 +113,18 @@ namespace Movement
         STR(Pitch_Up           ), // 0x00000040,
         STR(Pitch_Down         ), // 0x00000080,
 
-        STR(Walking            ), // 0x00000100,               // Walking
-        STR(DisableGravity     ), // 0x00000200,
+        STR(Walk               ), // 0x00000100,               // Walking
+        STR(Levitation         ), // 0x00000200,
         STR(Root               ), // 0x00000400,
         STR(Falling            ), // 0x00000800,
-        STR(FallingFar         ), // 0x00001000,
-        STR(PendingStop        ), // 0x00002000,
-        STR(PendingStrafeStop  ), // 0x00004000,
-        STR(PendingForward     ), // 0x00008000,
-        STR(PendingBackward    ), // 0x00010000,
-        STR(PendingStrafeLeft  ), // 0x00020000,
-        STR(PendingStrafeRight ), // 0x00040000,
-        STR(PendingRoot        ), // 0x00080000,
+        STR(Fallingfar         ), // 0x00001000,
+        STR(Pendingstop        ), // 0x00002000,
+        STR(PendingSTRafestop  ), // 0x00004000,
+        STR(Pendingforward     ), // 0x00008000,
+        STR(Pendingbackward    ), // 0x00010000,
+        STR(PendingSTRafeleft  ), // 0x00020000,
+        STR(PendingSTRaferight ), // 0x00040000,
+        STR(Pendingroot        ), // 0x00080000,
         STR(Swimming           ), // 0x00100000,               // Appears With Fly Flag Also
         STR(Ascending          ), // 0x00200000,               // Swim Up Also
         STR(Descending         ), // 0x00400000,               // Swim Down Also
@@ -122,26 +137,22 @@ namespace Movement
         STR(Local_Dirty        ), // 0x20000000
         STR(None31             ), // 0x40000000
         STR(None32             ), // 0x80000000
-    };
-
-    char const* g_MovementFlagExtra_names[] =
-    {
-        STR(NoStrafe             ),
-        STR(NoJump               ),
-        STR(FullSpeedTurning     ),
-        STR(FullSpeedPitching    ),
-        STR(Allow_Pitching       ),
-        STR(Unk6                 ),
-        STR(Unk7                 ),
-        STR(Unk8                 ),
-        STR(Unk9                 ),
-        STR(Unk10                ),
-        STR(Unk11                ),
-        STR(Unk12                ),
-        STR(Unk13                ),
-        STR(Interpolated_Movement),
-        STR(Interpolated_Turning ),
-        STR(Interpolated_Pitching),
+        STR(Unk1               ),
+        STR(Unk2               ),
+        STR(Unk3               ),
+        STR(Fullspeedturning   ),
+        STR(Fullspeedpitching  ),
+        STR(Allow_Pitching     ),
+        STR(Unk4               ),
+        STR(Unk5               ),
+        STR(Unk6               ),
+        STR(Unk7               ),
+        STR(Interp_Move        ),
+        STR(Interp_Turning     ),
+        STR(Interp_Pitching    ),
+        STR(None8              ),
+        STR(None9              ),
+        STR(None10             ),
     };
 
     char const* g_SplineFlag_names[32] =
@@ -194,20 +205,6 @@ namespace Movement
     {
         std::string str;
         print_flags(raw(), g_SplineFlag_names, str);
-        return str;
-    }
-
-    std::string MovementFlags_ToString(uint32 flags)
-    {
-        std::string str;
-        print_flags(flags, g_MovementFlag_names, str);
-        return str;
-    }
-
-    std::string MovementFlagsExtra_ToString(uint32 flags)
-    {
-        std::string str;
-        print_flags(flags, g_MovementFlagExtra_names, str);
         return str;
     }
 }

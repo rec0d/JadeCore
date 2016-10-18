@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -39,37 +39,12 @@
 
 #include <cmath>
 
-ObjectAccessor::ObjectAccessor() { }
-
-ObjectAccessor::~ObjectAccessor() { }
-
-template<class T> T* ObjectAccessor::GetObjectInWorld(uint32 mapid, float x, float y, uint64 guid, T* /*fake*/)
+ObjectAccessor::ObjectAccessor()
 {
-    T* obj = HashMapHolder<T>::Find(guid);
-    if (!obj || obj->GetMapId() != mapid)
-        return NULL;
+}
 
-    CellCoord p = Trinity::ComputeCellCoord(x, y);
-    if (!p.IsCoordValid())
-    {
-        TC_LOG_ERROR("misc", "ObjectAccessor::GetObjectInWorld: invalid coordinates supplied X:%f Y:%f grid cell [%u:%u]", x, y, p.x_coord, p.y_coord);
-        return NULL;
-    }
-
-    CellCoord q = Trinity::ComputeCellCoord(obj->GetPositionX(), obj->GetPositionY());
-    if (!q.IsCoordValid())
-    {
-        TC_LOG_ERROR("misc", "ObjectAccessor::GetObjecInWorld: object (GUID: %u TypeId: %u) has invalid coordinates X:%f Y:%f grid cell [%u:%u]", obj->GetGUIDLow(), obj->GetTypeId(), obj->GetPositionX(), obj->GetPositionY(), q.x_coord, q.y_coord);
-        return NULL;
-    }
-
-    int32 dx = int32(p.x_coord) - int32(q.x_coord);
-    int32 dy = int32(p.y_coord) - int32(q.y_coord);
-
-    if (dx > -2 && dx < 2 && dy > -2 && dy < 2)
-        return obj;
-    else
-        return NULL;
+ObjectAccessor::~ObjectAccessor()
+{
 }
 
 Player* ObjectAccessor::GetObjectInWorld(uint64 guid, Player* /*typeSpecifier*/)
@@ -147,15 +122,6 @@ GameObject* ObjectAccessor::GetGameObject(WorldObject const& u, uint64 guid)
     return GetObjectInMap(guid, u.GetMap(), (GameObject*)NULL);
 }
 
-Transport* ObjectAccessor::GetTransport(WorldObject const& u, uint64 guid)
-{
-    if (GUID_HIPART(guid) != HIGHGUID_MO_TRANSPORT)
-        return NULL;
-
-    GameObject* go = GetGameObject(u, guid);
-    return go ? go->ToTransport() : NULL;
-}
-
 DynamicObject* ObjectAccessor::GetDynamicObject(WorldObject const& u, uint64 guid)
 {
     return GetObjectInMap(guid, u.GetMap(), (DynamicObject*)NULL);
@@ -207,11 +173,6 @@ Player* ObjectAccessor::FindPlayer(uint64 guid)
     return GetObjectInWorld(guid, (Player*)NULL);
 }
 
-DynamicObject* ObjectAccessor::FindDynamicObject(uint64 guid)
-{
-    return GetObjectInWorld(guid, (DynamicObject*)NULL);
-}
-
 Unit* ObjectAccessor::FindUnit(uint64 guid)
 {
     return GetObjectInWorld(guid, (Unit*)NULL);
@@ -261,7 +222,7 @@ void ObjectAccessor::RemoveCorpse(Corpse* corpse)
 {
     ASSERT(corpse && corpse->GetType() != CORPSE_BONES);
 
-    /// @todo more works need to be done for corpse and other world object
+    //TODO: more works need to be done for corpse and other world object
     if (Map* map = corpse->FindMap())
     {
         corpse->DestroyForNearbyPlayers();
@@ -282,7 +243,7 @@ void ObjectAccessor::RemoveCorpse(Corpse* corpse)
         TRINITY_WRITE_GUARD(ACE_RW_Thread_Mutex, i_corpseLock);
 
         Player2CorpsesMapType::iterator iter = i_player2corpse.find(corpse->GetOwnerGUID());
-        if (iter == i_player2corpse.end()) /// @todo Fix this
+        if (iter == i_player2corpse.end()) // TODO: Fix this
             return;
 
         // build mapid*cellid -> guid_set map
@@ -344,7 +305,7 @@ Corpse* ObjectAccessor::ConvertCorpseForPlayer(uint64 player_guid, bool insignia
         return NULL;
     }
 
-    TC_LOG_DEBUG("misc", "Deleting Corpse and spawned bones.");
+    sLog->outDebug(LOG_FILTER_GENERAL, "Deleting Corpse and spawned bones.");
 
     // Map can be NULL
     Map* map = corpse->FindMap();
@@ -383,8 +344,8 @@ Corpse* ObjectAccessor::ConvertCorpseForPlayer(uint64 player_guid, bool insignia
 
         for (uint8 i = 0; i < EQUIPMENT_SLOT_END; ++i)
         {
-            if (corpse->GetUInt32Value(CORPSE_FIELD_ITEMS + i))
-                bones->SetUInt32Value(CORPSE_FIELD_ITEMS + i, 0);
+            if (corpse->GetUInt32Value(CORPSE_FIELD_ITEM + i))
+                bones->SetUInt32Value(CORPSE_FIELD_ITEM + i, 0);
         }
 
         // add bones in grid store if grid loaded where corpse placed

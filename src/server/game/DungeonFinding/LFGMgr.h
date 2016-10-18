@@ -1,20 +1,18 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2014 WoWSource 4.3.4
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
- * option) any later version.
+ * Do Not Share The SourceCode
+ * and read our WoWSource Terms
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
+/* ScriptData
+SDName: LFG
+SD%Complete: 100%
+SDComment: Fully Working
+SDCategory: LFG
+EndScriptData
+*/
 
 #ifndef _LFGMGR_H
 #define _LFGMGR_H
@@ -153,12 +151,13 @@ typedef UNORDERED_MAP<uint32, LFGDungeonData> LFGDungeonContainer;
 struct LfgJoinResultData
 {
     LfgJoinResultData(LfgJoinResult _result = LFG_JOIN_OK, LfgRoleCheckState _state = LFG_ROLECHECK_DEFAULT):
-        result(_result), state(_state) { }
+        result(_result), state(_state) {}
     LfgJoinResult result;
     LfgRoleCheckState state;
     LfgLockPartyMap lockmap;
 };
 
+// Data needed by SMSG_LFG_UPDATE_PARTY and SMSG_LFG_UPDATE_PLAYER
 // Data needed by SMSG_LFG_UPDATE_STATUS
 struct LfgUpdateData
 {
@@ -180,7 +179,7 @@ struct LfgQueueStatusData
     LfgQueueStatusData(uint8 _queueId = 0, uint32 _dungeonId = 0, time_t _joinTime = 0, int32 _waitTime = -1, int32 _waitTimeAvg = -1, int32 _waitTimeTank = -1, int32 _waitTimeHealer = -1,
         int32 _waitTimeDps = -1, uint32 _queuedTime = 0, uint8 _tanks = 0, uint8 _healers = 0, uint8 _dps = 0) :
         queueId(_queueId), dungeonId(_dungeonId), joinTime(_joinTime), waitTime(_waitTime), waitTimeAvg(_waitTimeAvg), waitTimeTank(_waitTimeTank),
-        waitTimeHealer(_waitTimeHealer), waitTimeDps(_waitTimeDps), queuedTime(_queuedTime), tanks(_tanks), healers(_healers), dps(_dps) { }
+        waitTimeHealer(_waitTimeHealer), waitTimeDps(_waitTimeDps), queuedTime(_queuedTime), tanks(_tanks), healers(_healers), dps(_dps) {}
 
     uint8 queueId;
     uint32 dungeonId;
@@ -288,8 +287,9 @@ struct LFGDungeonData
     uint8 maxlevel;
     Difficulty difficulty;
     bool seasonal;
-    float x, y, z, o;
-
+    float x, y, z, o;    
+    uint16 neededILevel;
+    
     // Helpers
     uint32 Entry() const { return id + (type << 24); }
 };
@@ -374,7 +374,7 @@ class LFGMgr
 
         // LFGHandler
         /// Get locked dungeons
-        LfgLockMap const& GetLockedDungeons(uint64 guid);
+        LfgLockMap const GetLockedDungeons(uint64 guid);
         /// Returns current lfg status
         LfgUpdateData GetLfgStatus(uint64 guid);
         /// Checks if Seasonal dungeon is active
@@ -423,6 +423,7 @@ class LFGMgr
         static bool HasIgnore(uint64 guid1, uint64 guid2);
         /// Sends queue status to player
         static void SendLfgQueueStatus(uint64 guid, LfgQueueStatusData const& data);
+        LFGDungeonData const* GetLFGDungeon(uint32 id);
 
     private:
         uint8 GetTeam(uint64 guid);
@@ -430,13 +431,12 @@ class LFGMgr
         void ClearState(uint64 guid, char const* debugMsg);
         void SetDungeon(uint64 guid, uint32 dungeon);
         void SetSelectedDungeons(uint64 guid, LfgDungeonSet const& dungeons);
-        void SetLockedDungeons(uint64 guid, LfgLockMap const& lock);
+        void SetLockedDungeons(uint64 guid, LfgLockMap const& lock); 
         void DecreaseKicksLeft(uint64 guid);
         void SetState(uint64 guid, LfgState state);
         void RemovePlayerData(uint64 guid);
         void GetCompatibleDungeons(LfgDungeonSet& dungeons, LfgGuidSet const& players, LfgLockPartyMap& lockMap);
         void _SaveToDB(uint64 guid, uint32 db_guid);
-        LFGDungeonData const* GetLFGDungeon(uint32 id);
 
         // Proposals
         void RemoveProposal(LfgProposalContainer::iterator itProposal, LfgUpdateType type);
@@ -444,7 +444,6 @@ class LFGMgr
 
         // Generic
         LFGQueue& GetQueue(uint64 guid);
-
         LfgDungeonSet const& GetDungeonsByRandom(uint32 randomdungeon);
         LfgType GetDungeonType(uint32 dungeon);
 

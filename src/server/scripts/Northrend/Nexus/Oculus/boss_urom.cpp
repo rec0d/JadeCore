@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -58,7 +55,7 @@ enum Yells
     SAY_PLAYER_KILL                               = 7
 };
 
-enum Creatures
+enum eCreature
 {
     NPC_PHANTASMAL_CLOUDSCRAPER                   = 27645,
     NPC_PHANTASMAL_MAMMOTH                        = 27642,
@@ -95,16 +92,16 @@ class boss_urom : public CreatureScript
 public:
     boss_urom() : CreatureScript("boss_urom") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_uromAI(creature);
+        return new boss_uromAI (creature);
     }
 
     struct boss_uromAI : public BossAI
     {
-        boss_uromAI(Creature* creature) : BossAI(creature, DATA_UROM_EVENT) { }
+        boss_uromAI(Creature* creature) : BossAI(creature, DATA_UROM_EVENT) {}
 
-        void Reset() override
+        void Reset()
         {
             me->CastSpell(me, SPELL_EVOCATE);
 
@@ -130,7 +127,7 @@ public:
             timeBombTimer = urand(20000, 25000);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             _EnterCombat();
 
@@ -142,7 +139,7 @@ public:
                 instance->SetData(DATA_UROM_PLATAFORM, instance->GetData(DATA_UROM_PLATAFORM)+1);
         }
 
-        void AttackStart(Unit* who) override
+        void AttackStart(Unit* who)
         {
             if (!who)
                 return;
@@ -238,12 +235,12 @@ public:
             DoCast(TeleportSpells[instance->GetData(DATA_UROM_PLATAFORM)]);
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_PLAYER_KILL);
         }
 
-        void UpdateAI(uint32 uiDiff) override
+        void UpdateAI(const uint32 uiDiff)
         {
             if (!UpdateVictim())
                 return;
@@ -280,7 +277,7 @@ public:
 
                     me->NearTeleportTo(pPos.GetPositionX(), pPos.GetPositionY(), pPos.GetPositionZ(), pPos.GetOrientation());
                     me->GetMotionMaster()->MoveChase(me->GetVictim(), 0, 0);
-                    me->SetWalk(true);
+                    me->SetUnitMovementFlags(MOVEMENTFLAG_WALKING);
 
                     Talk(EMOTE_ARCANE_EXPLOSION);
                     Talk(SAY_ARCANE_EXPLOSION);
@@ -311,7 +308,7 @@ public:
             DoMeleeAttackIfReady();
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             _JustDied();
             Talk(SAY_DEATH);
@@ -325,7 +322,7 @@ public:
             me->DeleteThreatList();
         }
 
-        void SpellHit(Unit* /*pCaster*/, const SpellInfo* pSpell) override
+        void SpellHit(Unit* /*pCaster*/, const SpellInfo* pSpell)
         {
             switch (pSpell->Id)
             {

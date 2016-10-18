@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -70,7 +69,7 @@ public:
             else if (player->GetTeam() == HORDE)
                 creature->setFaction(FACTION_ESCORTEE_H);
 
-            creature->AI()->Talk(SAY_OOX_START, player);
+            creature->AI()->Talk(SAY_OOX_START, player->GetGUID());
 
             if (npc_00x09hlAI* pEscortAI = CAST_AI(npc_00x09hl::npc_00x09hlAI, creature->AI()))
                 pEscortAI->Start(false, false, player->GetGUID(), quest);
@@ -78,7 +77,7 @@ public:
         return true;
     }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_00x09hlAI(creature);
     }
@@ -87,7 +86,7 @@ public:
     {
         npc_00x09hlAI(Creature* creature) : npc_escortAI(creature) { }
 
-        void Reset() override { }
+        void Reset() { }
 
         void WaypointReached(uint32 waypointId)
         {
@@ -140,7 +139,7 @@ public:
             Talk(SAY_OOX_AGGRO);
         }
 
-        void JustSummoned(Creature* summoned) override
+        void JustSummoned(Creature* summoned)
         {
             summoned->GetMotionMaster()->MovePoint(0, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ());
         }

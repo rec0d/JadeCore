@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,7 +35,7 @@ class instance_the_botanica : public InstanceMapScript
                 WarpSplinterGUID            = 0;
             }
 
-            void OnCreatureCreate(Creature* creature) override
+            void OnCreatureCreate(Creature* creature)
             {
                 switch (creature->GetEntry())
                 {
@@ -61,7 +59,7 @@ class instance_the_botanica : public InstanceMapScript
                 }
             }
 
-            uint64 GetData64(uint32 type) const override
+            uint64 GetData64(uint32 type) const
             {
                 switch (type)
                 {
@@ -82,7 +80,7 @@ class instance_the_botanica : public InstanceMapScript
                 return 0;
             }
 
-            bool SetBossState(uint32 type, EncounterState state) override
+            bool SetBossState(uint32 type, EncounterState state)
             {
                 if (!InstanceScript::SetBossState(type, state))
                     return false;
@@ -102,7 +100,7 @@ class instance_the_botanica : public InstanceMapScript
                 return true;
             }
 
-            std::string GetSaveData() override
+            std::string GetSaveData()
             {
                 OUT_SAVE_INST_DATA;
 
@@ -113,7 +111,7 @@ class instance_the_botanica : public InstanceMapScript
                 return saveStream.str();
             }
 
-            void Load(char const* str) override
+            void Load(char const* str)
             {
                 if (!str)
                 {
@@ -154,7 +152,7 @@ class instance_the_botanica : public InstanceMapScript
             uint64 WarpSplinterGUID;
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const
         {
             return new instance_the_botanica_InstanceMapScript(map);
         }

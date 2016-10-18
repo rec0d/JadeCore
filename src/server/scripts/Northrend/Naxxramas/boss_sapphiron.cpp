@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -92,12 +89,13 @@ class boss_sapphiron : public CreatureScript
 
         struct boss_sapphironAI : public BossAI
         {
-            boss_sapphironAI(Creature* creature) :
-                BossAI(creature, BOSS_SAPPHIRON), _phase(PHASE_NULL),
-                _map(me->GetMap())
-            { }
+            boss_sapphironAI(Creature* creature) : BossAI(creature, BOSS_SAPPHIRON)
+                , _phase(PHASE_NULL)
+            {
+                _map = me->GetMap();
+            }
 
-            void InitializeAI() override
+            void InitializeAI()
             {
                 float x, y, z;
                 me->GetPosition(x, y, z);
@@ -109,7 +107,7 @@ class boss_sapphiron : public CreatureScript
                 BossAI::InitializeAI();
             }
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
 
@@ -122,7 +120,7 @@ class boss_sapphiron : public CreatureScript
                 _checkFrostResistTimer = 5 * IN_MILLISECONDS;
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 _EnterCombat();
 
@@ -134,7 +132,7 @@ class boss_sapphiron : public CreatureScript
                 CheckPlayersFrostResist();
             }
 
-            void SpellHitTarget(Unit* target, SpellInfo const* spell) override
+            void SpellHitTarget(Unit* target, SpellInfo const* spell)
             {
                 if (spell->Id == SPELL_ICEBOLT)
                 {
@@ -147,7 +145,7 @@ class boss_sapphiron : public CreatureScript
                 }
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 _JustDied();
                 me->CastSpell(me, SPELL_DIES, true);
@@ -155,13 +153,13 @@ class boss_sapphiron : public CreatureScript
                 CheckPlayersFrostResist();
             }
 
-            void MovementInform(uint32 /*type*/, uint32 id) override
+            void MovementInform(uint32 /*type*/, uint32 id)
             {
                 if (id == 1)
                     events.ScheduleEvent(EVENT_LIFTOFF, 0);
             }
 
-            void DoAction(int32 param) override
+            void DoAction(int32 const param)
             {
                 if (param == DATA_SAPPHIRON_BIRTH)
                 {
@@ -177,7 +175,7 @@ class boss_sapphiron : public CreatureScript
                     Map::PlayerList const &players = _map->GetPlayers();
                     for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
                     {
-                        if (itr->GetSource()->GetResistance(SPELL_SCHOOL_FROST) > MAX_FROST_RESISTANCE)
+                        if (itr->getSource()->GetResistance(SPELL_SCHOOL_FROST) > MAX_FROST_RESISTANCE)
                         {
                             _canTheHundredClub = false;
                             break;
@@ -211,7 +209,7 @@ class boss_sapphiron : public CreatureScript
                 _iceblocks.clear();
             }
 
-            uint32 GetData(uint32 data) const override
+            uint32 GetData(uint32 data) const
             {
                 if (data == DATA_THE_HUNDRED_CLUB)
                     return _canTheHundredClub;
@@ -219,7 +217,7 @@ class boss_sapphiron : public CreatureScript
                 return 0;
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!_phase)
                     return;
@@ -404,9 +402,9 @@ class boss_sapphiron : public CreatureScript
             Map* _map;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return new boss_sapphironAI(creature);
+            return new boss_sapphironAI (creature);
         }
 };
 
@@ -415,7 +413,7 @@ class achievement_the_hundred_club : public AchievementCriteriaScript
     public:
         achievement_the_hundred_club() : AchievementCriteriaScript("achievement_the_hundred_club") { }
 
-        bool OnCheck(Player* /*source*/, Unit* target) override
+        bool OnCheck(Player* /*source*/, Unit* target)
         {
             return target && target->GetAI()->GetData(DATA_THE_HUNDRED_CLUB);
         }

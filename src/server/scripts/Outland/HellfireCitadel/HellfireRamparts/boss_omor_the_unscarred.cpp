@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,9 +26,8 @@ EndScriptData */
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "Player.h"
-#include "hellfire_ramparts.h"
 
-enum Says
+enum eSays
 {
     SAY_AGGRO                    = 0,
     SAY_SUMMON                   = 1,
@@ -39,7 +37,7 @@ enum Says
     SAY_WIPE                     = 5
 };
 
-enum Spells
+enum eSpells
 {
     SPELL_ORBITAL_STRIKE         = 30637,
     SPELL_SHADOW_WHIP            = 30638,
@@ -55,16 +53,29 @@ class boss_omor_the_unscarred : public CreatureScript
 {
     public:
 
-        boss_omor_the_unscarred() : CreatureScript("boss_omor_the_unscarred") { }
-
-        struct boss_omor_the_unscarredAI : public BossAI
+        boss_omor_the_unscarred()
+            : CreatureScript("boss_omor_the_unscarred")
         {
-            boss_omor_the_unscarredAI(Creature* creature) : BossAI(creature, DATA_OMOR_THE_UNSCARRED)
+        }
+
+        struct boss_omor_the_unscarredAI : public ScriptedAI
+        {
+            boss_omor_the_unscarredAI(Creature* creature) : ScriptedAI(creature)
             {
                 SetCombatMovement(false);
             }
 
-            void Reset() override
+            uint32 OrbitalStrike_Timer;
+            uint32 ShadowWhip_Timer;
+            uint32 Aura_Timer;
+            uint32 DemonicShield_Timer;
+            uint32 Shadowbolt_Timer;
+            uint32 Summon_Timer;
+            uint32 SummonedCount;
+            uint64 PlayerGUID;
+            bool CanPullBack;
+
+            void Reset()
             {
                 Talk(SAY_WIPE);
 
@@ -77,17 +88,14 @@ class boss_omor_the_unscarred : public CreatureScript
                 SummonedCount = 0;
                 PlayerGUID = 0;
                 CanPullBack = false;
-
-                _Reset();
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
-                _EnterCombat();
                 Talk(SAY_AGGRO);
             }
 
-            void KilledUnit(Unit* /*victim*/) override
+            void KilledUnit(Unit* /*victim*/)
             {
                 if (rand()%2)
                     return;
@@ -95,7 +103,7 @@ class boss_omor_the_unscarred : public CreatureScript
                 Talk(SAY_KILL_1);
             }
 
-            void JustSummoned(Creature* summoned) override
+            void JustSummoned(Creature* summoned)
             {
                 Talk(SAY_SUMMON);
 
@@ -105,13 +113,12 @@ class boss_omor_the_unscarred : public CreatureScript
                 ++SummonedCount;
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 Talk(SAY_DIE);
-                _JustDied();
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -133,7 +140,7 @@ class boss_omor_the_unscarred : public CreatureScript
                 {
                     if (ShadowWhip_Timer <= diff)
                     {
-                        if (Player* temp = ObjectAccessor::GetPlayer(*me, PlayerGUID))
+                        if (Player* temp = Unit::GetPlayer(*me, PlayerGUID))
                         {
                             //if unit dosen't have this flag, then no pulling back (script will attempt cast, even if orbital strike was resisted)
                             if (temp->HasUnitMovementFlag(MOVEMENTFLAG_FALLING_FAR))
@@ -210,20 +217,9 @@ class boss_omor_the_unscarred : public CreatureScript
 
                 DoMeleeAttackIfReady();
             }
-
-            private:
-                uint32 OrbitalStrike_Timer;
-                uint32 ShadowWhip_Timer;
-                uint32 Aura_Timer;
-                uint32 DemonicShield_Timer;
-                uint32 Shadowbolt_Timer;
-                uint32 Summon_Timer;
-                uint32 SummonedCount;
-                uint64 PlayerGUID;
-                bool CanPullBack;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_omor_the_unscarredAI(creature);
         }

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -35,9 +34,9 @@ namespace VMAP
 
 // Set of helper macros for extractors (VMAP and MMAP)
 #ifndef NO_CORE_FUNCS
-#define VMAP_ERROR_LOG(FILTER, ...) TC_LOG_ERROR(FILTER, __VA_ARGS__)
-#define VMAP_DEBUG_LOG(FILTER, ...) TC_LOG_DEBUG(FILTER, __VA_ARGS__)
-#define VMAP_INFO_LOG(FILTER, ...) TC_LOG_INFO(FILTER, __VA_ARGS__)
+#define VMAP_ERROR_LOG(FILTER, ...) sLog->outError(FILTER, __VA_ARGS__)
+#define VMAP_DEBUG_LOG(FILTER, ...) sLog->outDebug(FILTER, __VA_ARGS__)
+#define VMAP_INFO_LOG(FILTER, ...) sLog->outInfo(FILTER, __VA_ARGS__)
 #else
 #define VMAP_ERROR_LOG(FILTER, ...) (void)sizeof(FILTER)
 #define VMAP_DEBUG_LOG(FILTER, ...) (void)sizeof(FILTER)

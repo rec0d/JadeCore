@@ -1,26 +1,9 @@
-# Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
-# Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
-# Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
-#
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-# more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program. If not, see <http://www.gnu.org/licenses/>.
-
 FUNCTION(GET_COMMON_PCH_PARAMS PCH_HEADER PCH_FE INCLUDE_PREFIX)
   GET_FILENAME_COMPONENT(PCH_HEADER_N ${PCH_HEADER} NAME)
   GET_DIRECTORY_PROPERTY(TARGET_INCLUDES INCLUDE_DIRECTORIES)
 
   FOREACH(ITEM ${TARGET_INCLUDES})
-    LIST(APPEND INCLUDE_FLAGS_LIST "${INCLUDE_PREFIX}\"${ITEM}\" ")
+    LIST(APPEND INCLUDE_FLAGS_LIST "${INCLUDE_PREFIX}${ITEM} ")
   ENDFOREACH(ITEM)
 
   SET(PCH_HEADER_NAME ${PCH_HEADER_N} PARENT_SCOPE)

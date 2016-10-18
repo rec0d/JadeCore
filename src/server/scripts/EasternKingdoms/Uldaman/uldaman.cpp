@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,7 +24,8 @@ SDCategory: Uldaman
 EndScriptData */
 
 /* ContentData
-npc_jadespine_basilisk
+mob_jadespine_basilisk
+npc_lore_keeper_of_norgannon
 go_keystone_chamber
 at_map_chamber
 EndContentData */
@@ -36,39 +36,39 @@ EndContentData */
 #include "Player.h"
 
 /*######
-## npc_jadespine_basilisk
+## mob_jadespine_basilisk
 ######*/
 
-enum Spells
+enum eSpells
 {
     SPELL_CRYSTALLINE_SLUMBER   = 3636,
 };
 
-class npc_jadespine_basilisk : public CreatureScript
+class mob_jadespine_basilisk : public CreatureScript
 {
     public:
 
-        npc_jadespine_basilisk()
-            : CreatureScript("npc_jadespine_basilisk")
+        mob_jadespine_basilisk()
+            : CreatureScript("mob_jadespine_basilisk")
         {
         }
 
-        struct npc_jadespine_basiliskAI : public ScriptedAI
+        struct mob_jadespine_basiliskAI : public ScriptedAI
         {
-            npc_jadespine_basiliskAI(Creature* creature) : ScriptedAI(creature) { }
+            mob_jadespine_basiliskAI(Creature* creature) : ScriptedAI(creature) {}
 
             uint32 uiCslumberTimer;
 
-            void Reset() override
+            void Reset()
             {
                 uiCslumberTimer = 2000;
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
             }
 
-            void UpdateAI(uint32 uiDiff) override
+            void UpdateAI(const uint32 uiDiff)
             {
                 //Return since we have no target
                 if (!UpdateVictim())
@@ -97,9 +97,9 @@ class npc_jadespine_basilisk : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return new npc_jadespine_basiliskAI(creature);
+            return new mob_jadespine_basiliskAI(creature);
         }
 };
 
@@ -112,7 +112,7 @@ class go_keystone_chamber : public GameObjectScript
 public:
     go_keystone_chamber() : GameObjectScript("go_keystone_chamber") { }
 
-    bool OnGossipHello(Player* /*player*/, GameObject* go) override
+    bool OnGossipHello(Player* /*player*/, GameObject* go)
     {
         if (InstanceScript* instance = go->GetInstanceScript())
             instance->SetData(DATA_IRONAYA_SEAL, IN_PROGRESS); //door animation and save state.
@@ -136,7 +136,7 @@ class AreaTrigger_at_map_chamber : public AreaTriggerScript
         {
         }
 
-        bool OnTrigger(Player* player, AreaTriggerEntry const* /*trigger*/) override
+        bool OnTrigger(Player* player, AreaTriggerEntry const* /*trigger*/)
         {
             if (player->GetQuestStatus(QUEST_HIDDEN_CHAMBER) == QUEST_STATUS_INCOMPLETE)
                 player->AreaExploredOrEventHappens(QUEST_HIDDEN_CHAMBER);
@@ -147,7 +147,7 @@ class AreaTrigger_at_map_chamber : public AreaTriggerScript
 
 void AddSC_uldaman()
 {
-    new npc_jadespine_basilisk();
+    new mob_jadespine_basilisk();
     new go_keystone_chamber();
     new AreaTrigger_at_map_chamber();
 }

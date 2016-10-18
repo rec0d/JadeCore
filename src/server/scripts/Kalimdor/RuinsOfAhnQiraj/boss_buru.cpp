@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -17,6 +15,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "SpellScript.h"
@@ -43,11 +42,11 @@ enum Spells
 
 enum Events
 {
-    EVENT_DISMEMBER             = 1,
-    EVENT_GATHERING_SPEED       = 2,
-    EVENT_FULL_SPEED            = 3,
-    EVENT_CREEPING_PLAGUE       = 4,
-    EVENT_RESPAWN_EGG           = 5
+    EVENT_DISMEMBER             = 0,
+    EVENT_GATHERING_SPEED       = 1,
+    EVENT_FULL_SPEED            = 2,
+    EVENT_CREEPING_PLAGUE       = 3,
+    EVENT_RESPAWN_EGG           = 4
 };
 
 enum Phases
@@ -72,7 +71,7 @@ class boss_buru : public CreatureScript
             {
             }
 
-            void EnterEvadeMode() override
+            void EnterEvadeMode()
             {
                 BossAI::EnterEvadeMode();
 
@@ -83,10 +82,10 @@ class boss_buru : public CreatureScript
                 Eggs.clear();
             }
 
-            void EnterCombat(Unit* who) override
+            void EnterCombat(Unit* who)
             {
                 _EnterCombat();
-                Talk(EMOTE_TARGET, who);
+                Talk(EMOTE_TARGET, who->GetGUID());
                 DoCast(me, SPELL_THORNS);
 
                 events.ScheduleEvent(EVENT_DISMEMBER, 5000);
@@ -96,14 +95,14 @@ class boss_buru : public CreatureScript
                 _phase = PHASE_EGG;
             }
 
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 if (action == ACTION_EXPLODE)
                     if (_phase == PHASE_EGG)
                         me->DealDamage(me, 45000);
             }
 
-            void KilledUnit(Unit* victim) override
+            void KilledUnit(Unit* victim)
             {
                 if (victim->GetTypeId() == TYPEID_PLAYER)
                     ChaseNewVictim();
@@ -123,7 +122,7 @@ class boss_buru : public CreatureScript
                 {
                     DoResetThreat();
                     AttackStart(victim);
-                    Talk(EMOTE_TARGET, victim);
+                    Talk(EMOTE_TARGET, victim->GetGUID());
                 }
             }
 
@@ -134,7 +133,7 @@ class boss_buru : public CreatureScript
                 events.ScheduleEvent(EVENT_RESPAWN_EGG, 100000);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -187,7 +186,7 @@ class boss_buru : public CreatureScript
             std::list<uint64> Eggs;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_buruAI(creature);
         }
@@ -198,22 +197,21 @@ class npc_buru_egg : public CreatureScript
     public:
         npc_buru_egg() : CreatureScript("npc_buru_egg") { }
 
-        struct npc_buru_eggAI : public ScriptedAI
+        struct npc_buru_eggAI : public Scripted_NoMovementAI
         {
-            npc_buru_eggAI(Creature* creature) : ScriptedAI(creature)
+            npc_buru_eggAI(Creature* creature) : Scripted_NoMovementAI(creature)
             {
                 _instance = me->GetInstanceScript();
-                SetCombatMovement(false);
             }
 
-            void EnterCombat(Unit* attacker) override
+            void EnterCombat(Unit* attacker)
             {
                 if (Creature* buru = me->GetMap()->GetCreature(_instance->GetData64(DATA_BURU)))
-                    if (!buru->IsInCombat())
+                    if (!buru->isInCombat())
                         buru->AI()->AttackStart(attacker);
             }
 
-            void JustSummoned(Creature* who) override
+            void JustSummoned(Creature* who)
             {
                 if (who->GetEntry() == NPC_HATCHLING)
                     if (Creature* buru = me->GetMap()->GetCreature(_instance->GetData64(DATA_BURU)))
@@ -221,7 +219,7 @@ class npc_buru_egg : public CreatureScript
                             who->AI()->AttackStart(target);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 DoCastAOE(SPELL_EXPLODE, true);
                 DoCastAOE(SPELL_EXPLODE_2, true); // Unknown purpose
@@ -235,7 +233,7 @@ class npc_buru_egg : public CreatureScript
             InstanceScript* _instance;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_buru_eggAI(creature);
         }
@@ -262,14 +260,14 @@ class spell_egg_explosion : public SpellScriptLoader
                     GetCaster()->DealDamage(target, -16 * GetCaster()->GetDistance(target) + 500);
             }
 
-            void Register() override
+            void Register()
             {
                 AfterCast += SpellCastFn(spell_egg_explosion_SpellScript::HandleAfterCast);
                 OnEffectHitTarget += SpellEffectFn(spell_egg_explosion_SpellScript::HandleDummyHitTarget, EFFECT_0, SPELL_EFFECT_DUMMY);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_egg_explosion_SpellScript();
         }

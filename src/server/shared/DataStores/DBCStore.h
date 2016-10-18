@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,7 +20,6 @@
 #define DBCSTORE_H
 
 #include "DBCFileLoader.h"
-#include "DBStorageIterator.h"
 #include "Log.h"
 #include "Field.h"
 #include "DatabaseWorkerPool.h"
@@ -71,10 +69,7 @@ template<class T>
 class DBCStorage
 {
     typedef std::list<char*> StringPoolList;
-
     public:
-		typedef DBStorageIterator<T> iterator;
-
         explicit DBCStorage(char const* f)
             : fmt(f), nCount(0), fieldCount(0), dataTable(NULL)
         {
@@ -87,6 +82,10 @@ class DBCStorage
         {
             return (id >= nCount) ? NULL : indexTable.asT[id];
         }
+
+        T* LookupRow(uint32 id) const {
+		    return (id >= nCount) ? NULL : indexTable.asT[id];
+	    }
 
         uint32  GetNumRows() const { return nCount; }
         char const* GetFormat() const { return fmt; }
@@ -125,7 +124,7 @@ class DBCStorage
                     // Check if sql index pos is valid
                     if (int32(result->GetFieldCount() - 1) < sql->sqlIndexPos)
                     {
-                        TC_LOG_ERROR("server.loading", "Invalid index pos for dbc:'%s'", sql->sqlTableName.c_str());
+                        sLog->outError(LOG_FILTER_SERVER_LOADING, "Invalid index pos for dbc:'%s'", sql->sqlTableName.c_str());
                         return false;
                     }
                 }
@@ -156,7 +155,7 @@ class DBCStorage
                             uint32 id = fields[sql->sqlIndexPos].GetUInt32();
                             if (indexTable.asT[id])
                             {
-                                TC_LOG_ERROR("server.loading", "Index %d already exists in dbc:'%s'", id, sql->sqlTableName.c_str());
+                                sLog->outError(LOG_FILTER_SERVER_LOADING, "Index %d already exists in dbc:'%s'", id, sql->sqlTableName.c_str());
                                 return false;
                             }
 
@@ -213,7 +212,7 @@ class DBCStorage
                                         offset += 1;
                                         break;
                                     case FT_STRING:
-                                        TC_LOG_ERROR("server.loading", "Unsupported data type in table '%s' at char %d", sql->sqlTableName.c_str(), columnNumber);
+                                        sLog->outError(LOG_FILTER_SERVER_LOADING, "Unsupported data type in table '%s' at char %d", sql->sqlTableName.c_str(), columnNumber);
                                         return false;
                                     case FT_SORT:
                                         break;
@@ -221,19 +220,19 @@ class DBCStorage
                                         validSqlColumn = false;
                                         break;
                                 }
-                                if (validSqlColumn && (columnNumber != (sql->formatString->size()-1)))
+                                if (validSqlColumn)
                                     sqlColumnNumber++;
                             }
                             else
                             {
-                                TC_LOG_ERROR("server.loading", "Incorrect sql format string '%s' at char %d", sql->sqlTableName.c_str(), columnNumber);
+                                sLog->outError(LOG_FILTER_SERVER_LOADING, "Incorrect sql format string '%s' at char %d", sql->sqlTableName.c_str(), columnNumber);
                                 return false;
                             }
                         }
 
-                        if (sqlColumnNumber != (result->GetFieldCount() - 1))
+                        if (sqlColumnNumber != result->GetFieldCount())
                         {
-                            TC_LOG_ERROR("server.loading", "SQL and DBC format strings are not matching for table: '%s'", sql->sqlTableName.c_str());
+                            sLog->outError(LOG_FILTER_SERVER_LOADING, "SQL and DBC format strings are not matching for table: '%s'", sql->sqlTableName.c_str());
                             return false;
                         }
 
@@ -281,9 +280,6 @@ class DBCStorage
 
             nCount = 0;
         }
-
-		iterator begin() { return iterator(indexTable.asT, nCount); }
-		iterator end() { return iterator(indexTable.asT, nCount, nCount); }
 
     private:
         char const* fmt;

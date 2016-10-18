@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -52,22 +52,14 @@ struct Position;
 class Battleground;
 class MapInstanced;
 class InstanceMap;
-class Transport;
 namespace Trinity { struct ObjectUpdater; }
 
 struct ScriptAction
 {
     uint64 sourceGUID;
     uint64 targetGUID;
-    uint64 ownerGUID;                                       ///> owner of source if source is item
-    ScriptInfo const* script;                               ///> pointer to static script data
-};
-
-/// Represents a map magic value of 4 bytes (used in versions)
-union u_map_magic
-{
-    char asChar[4]; ///> Non-null terminated string
-    uint32 asUInt;  ///> uint32 representation
+    uint64 ownerGUID;                                       // owner of source if source is item
+    ScriptInfo const* script;                               // pointer to static script data
 };
 
 // ******************************************
@@ -75,9 +67,9 @@ union u_map_magic
 // ******************************************
 struct map_fileheader
 {
-    u_map_magic mapMagic;
-    u_map_magic versionMagic;
-    u_map_magic buildMagic;
+    uint32 mapMagic;
+    uint32 versionMagic;
+    uint32 buildMagic;
     uint32 areaMapOffset;
     uint32 areaMapSize;
     uint32 heightMapOffset;
@@ -229,18 +221,6 @@ enum LevelRequirementVsMode
     LEVELREQUIREMENT_HEROIC = 70
 };
 
-struct ZoneDynamicInfo
-{
-    ZoneDynamicInfo() : MusicId(0), WeatherId(0), WeatherGrade(0.0f),
-        OverrideLightId(0), LightFadeInTime(0) { }
-
-    uint32 MusicId;
-    uint32 WeatherId;
-    float WeatherGrade;
-    uint32 OverrideLightId;
-    uint32 LightFadeInTime;
-};
-
 #if defined(__GNUC__)
 #pragma pack()
 #else
@@ -254,8 +234,6 @@ struct ZoneDynamicInfo
 #define MIN_UNLOAD_DELAY      1                             // immediate unload
 
 typedef std::map<uint32/*leaderDBGUID*/, CreatureGroup*>        CreatureGroupHolderType;
-
-typedef UNORDERED_MAP<uint32 /*zoneId*/, ZoneDynamicInfo> ZoneDynamicInfoMap;
 
 class Map : public GridRefManager<NGridType>
 {
@@ -288,12 +266,12 @@ class Map : public GridRefManager<NGridType>
         virtual void Update(const uint32);
 
         float GetVisibilityRange() const { return m_VisibleDistance; }
+        float GetVisibilityRange(uint32 cellId) const;
         //function for setting up visibility distance for maps on per-type/per-Id basis
         virtual void InitVisibilityDistance();
 
         void PlayerRelocation(Player*, float x, float y, float z, float orientation);
         void CreatureRelocation(Creature* creature, float x, float y, float z, float ang, bool respawnRelocationOnFail = true);
-        void GameObjectRelocation(GameObject* go, float x, float y, float z, float orientation, bool respawnRelocationOnFail = true);
 
         template<class T, class CONTAINER> void Visit(const Cell& cell, TypeContainerVisitor<T, CONTAINER> &visitor);
 
@@ -366,13 +344,11 @@ class Map : public GridRefManager<NGridType>
         }
 
         void MoveAllCreaturesInMoveList();
-        void MoveAllGameObjectsInMoveList();
         void RemoveAllObjectsInRemoveList();
         virtual void RemoveAllPlayers();
 
         // used only in MoveAllCreaturesInMoveList and ObjectGridUnloader
         bool CreatureRespawnRelocation(Creature* c, bool diffGridOnly);
-        bool GameObjectRespawnRelocation(GameObject* go, bool diffGridOnly);
 
         // assert print helper
         bool CheckGridIntegrity(Creature* c, bool moved) const;
@@ -393,7 +369,7 @@ class Map : public GridRefManager<NGridType>
         bool IsRaid() const { return i_mapEntry && i_mapEntry->IsRaid(); }
         bool IsRaidOrHeroicDungeon() const { return IsRaid() || i_spawnMode > DUNGEON_DIFFICULTY_NORMAL; }
         bool IsHeroic() const { return IsRaid() ? i_spawnMode >= RAID_DIFFICULTY_10MAN_HEROIC : i_spawnMode >= DUNGEON_DIFFICULTY_HEROIC; }
-        bool Is25ManRaid() const { return IsRaid() && (i_spawnMode == RAID_DIFFICULTY_25MAN_NORMAL || i_spawnMode == RAID_DIFFICULTY_25MAN_HEROIC); }   // since 25man difficulties are 1 and 3, we can check them like that
+        bool Is25ManRaid() const { return IsRaid() && i_spawnMode & RAID_DIFFICULTY_MASK_25MAN; }   // since 25man difficulties are 1 and 3, we can check them like that
         bool IsBattleground() const { return i_mapEntry && i_mapEntry->IsBattleground(); }
         bool IsBattleArena() const { return i_mapEntry && i_mapEntry->IsBattleArena(); }
         bool IsBattlegroundOrArena() const { return i_mapEntry && i_mapEntry->IsBattlegroundOrArena(); }
@@ -433,13 +409,17 @@ class Map : public GridRefManager<NGridType>
 
         // must called with AddToWorld
         template<class T>
-        void AddToActive(T* obj);
+        void AddToActive(T* obj) { AddToActiveHelper(obj); }
+
+        void AddToActive(Creature* obj);
 
         // must called with RemoveFromWorld
         template<class T>
-        void RemoveFromActive(T* obj);
+        void RemoveFromActive(T* obj) { RemoveFromActiveHelper(obj); }
 
-        template<class T> void SwitchGridContainers(T* obj, bool on);
+        void RemoveFromActive(Creature* obj);
+
+        void SwitchGridContainers(Creature* creature, bool toWorldContainer);
         template<class NOTIFIER> void VisitAll(const float &x, const float &y, float radius, NOTIFIER &notifier);
         template<class NOTIFIER> void VisitFirstFound(const float &x, const float &y, float radius, NOTIFIER &notifier);
         template<class NOTIFIER> void VisitWorld(const float &x, const float &y, float radius, NOTIFIER &notifier);
@@ -448,11 +428,10 @@ class Map : public GridRefManager<NGridType>
 
         void UpdateIteratorBack(Player* player);
 
-        TempSummon* SummonCreature(uint32 entry, Position const& pos, SummonPropertiesEntry const* properties = NULL, uint32 duration = 0, Unit* summoner = NULL, uint32 spellId = 0, uint32 vehId = 0);
+		TempSummon* SummonCreature(uint32 entry, Position const& pos, SummonPropertiesEntry const* properties = NULL, uint32 duration = 0, Unit* summoner = NULL, uint32 spellId = 0, uint32 vehId = 0);
         void SummonCreatureGroup(uint8 group, std::list<TempSummon*>* list = NULL);
         Creature* GetCreature(uint64 guid);
         GameObject* GetGameObject(uint64 guid);
-        Transport* GetTransport(uint64 guid);
         DynamicObject* GetDynamicObject(uint64 guid);
 
         MapInstanced* ToMapInstanced(){ if (Instanceable())  return reinterpret_cast<MapInstanced*>(this); else return NULL;  }
@@ -501,14 +480,6 @@ class Map : public GridRefManager<NGridType>
 
         static void DeleteRespawnTimesInDB(uint16 mapId, uint32 instanceId);
 
-        void SendInitTransports(Player* player);
-        void SendRemoveTransports(Player* player);
-        void SendZoneDynamicInfo(Player* player);
-
-        void SetZoneMusic(uint32 zoneId, uint32 musicId);
-        void SetZoneWeather(uint32 zoneId, uint32 weatherId, float weatherGrade);
-        void SetZoneOverrideLight(uint32 zoneId, uint32 lightId, uint32 fadeInTime);
-
     private:
         void LoadMapAndVMap(int gx, int gy);
         void LoadVMap(int gx, int gy);
@@ -520,20 +491,17 @@ class Map : public GridRefManager<NGridType>
 
         void SendInitSelf(Player* player);
 
+        void SendInitTransports(Player* player);
+        void SendRemoveTransports(Player* player);
+
         bool CreatureCellRelocation(Creature* creature, Cell new_cell);
-        bool GameObjectCellRelocation(GameObject* go, Cell new_cell);
 
         template<class T> void InitializeObject(T* obj);
         void AddCreatureToMoveList(Creature* c, float x, float y, float z, float ang);
         void RemoveCreatureFromMoveList(Creature* c);
-        void AddGameObjectToMoveList(GameObject* go, float x, float y, float z, float ang);
-        void RemoveGameObjectFromMoveList(GameObject* go);
 
         bool _creatureToMoveLock;
         std::vector<Creature*> _creaturesToMove;
-
-        bool _gameObjectsToMoveLock;
-        std::vector<GameObject*> _gameObjectsToMove;
 
         bool IsGridLoaded(const GridCoord &) const;
         void EnsureGridCreated(const GridCoord &);
@@ -542,6 +510,9 @@ class Map : public GridRefManager<NGridType>
         void EnsureGridLoadedForActiveObject(Cell const&, WorldObject* object);
 
         void buildNGridLinkage(NGridType* pNGridType) { pNGridType->link(this); }
+
+        template<class T> void AddType(T *obj);
+        template<class T> void RemoveType(T *obj, bool);
 
         NGridType* getNGrid(uint32 x, uint32 y) const
         {
@@ -579,11 +550,6 @@ class Map : public GridRefManager<NGridType>
         ActiveNonPlayers m_activeNonPlayers;
         ActiveNonPlayers::iterator m_activeNonPlayersIter;
 
-        // Objects that must update even in inactive grids without activating them
-        typedef std::set<Transport*> TransportsContainer;
-        TransportsContainer _transports;
-        TransportsContainer::iterator _transportsUpdateIter;
-
     private:
         Player* _GetScriptPlayerSourceOrTarget(Object* source, Object* target, const ScriptInfo* scriptInfo) const;
         Creature* _GetScriptCreatureSourceOrTarget(Object* source, Object* target, const ScriptInfo* scriptInfo, bool bReverse = false) const;
@@ -618,17 +584,19 @@ class Map : public GridRefManager<NGridType>
 
         // Type specific code for add/remove to/from grid
         template<class T>
-        void AddToGrid(T* object, Cell const& cell);
+            void AddToGrid(T* object, Cell const& cell);
 
         template<class T>
-        void DeleteFromWorld(T*);
+            void DeleteFromWorld(T*);
 
-        void AddToActiveHelper(WorldObject* obj)
+        template<class T>
+        void AddToActiveHelper(T* obj)
         {
             m_activeNonPlayers.insert(obj);
         }
 
-        void RemoveFromActiveHelper(WorldObject* obj)
+        template<class T>
+        void RemoveFromActiveHelper(T* obj)
         {
             // Map::Update for active object in proccess
             if (m_activeNonPlayersIter != m_activeNonPlayers.end())
@@ -646,9 +614,6 @@ class Map : public GridRefManager<NGridType>
 
         UNORDERED_MAP<uint32 /*dbGUID*/, time_t> _creatureRespawnTimes;
         UNORDERED_MAP<uint32 /*dbGUID*/, time_t> _goRespawnTimes;
-
-        ZoneDynamicInfoMap _zoneDynamicInfo;
-        uint32 _defaultLight;
 };
 
 enum InstanceResetMethod

@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -48,9 +46,9 @@ class boss_azgalor : public CreatureScript
 public:
     boss_azgalor() : CreatureScript("boss_azgalor") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_azgalorAI(creature);
+        return new boss_azgalorAI (creature);
     }
 
     struct boss_azgalorAI : public hyjal_trashAI
@@ -70,7 +68,7 @@ public:
 
         bool go;
 
-        void Reset() override
+        void Reset()
         {
             damageTaken = 0;
             RainTimer = 20000;
@@ -84,29 +82,29 @@ public:
                 instance->SetData(DATA_AZGALOREVENT, NOT_STARTED);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             if (instance && IsEvent)
                 instance->SetData(DATA_AZGALOREVENT, IN_PROGRESS);
             Talk(SAY_ONAGGRO);
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_ONSLAY);
         }
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId)
         {
             if (waypointId == 7 && instance)
             {
                 Unit* target = Unit::GetUnit(*me, instance->GetData64(DATA_THRALL));
-                if (target && target->IsAlive())
+                if (target && target->isAlive())
                     me->AddThreat(target, 0.0f);
             }
         }
 
-        void JustDied(Unit* killer) override
+        void JustDied(Unit* killer)
         {
             hyjal_trashAI::JustDied(killer);
             if (instance && IsEvent)
@@ -114,7 +112,7 @@ public:
             Talk(SAY_ONDEATH);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (IsEvent)
             {
@@ -181,19 +179,19 @@ public:
 
 };
 
-class npc_lesser_doomguard : public CreatureScript
+class mob_lesser_doomguard : public CreatureScript
 {
 public:
-    npc_lesser_doomguard() : CreatureScript("npc_lesser_doomguard") { }
+    mob_lesser_doomguard() : CreatureScript("mob_lesser_doomguard") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_lesser_doomguardAI(creature);
+        return new mob_lesser_doomguardAI (creature);
     }
 
-    struct npc_lesser_doomguardAI : public hyjal_trashAI
+    struct mob_lesser_doomguardAI : public hyjal_trashAI
     {
-        npc_lesser_doomguardAI(Creature* creature) : hyjal_trashAI(creature)
+        mob_lesser_doomguardAI(Creature* creature) : hyjal_trashAI(creature)
         {
             instance = creature->GetInstanceScript();
             if (instance)
@@ -206,7 +204,7 @@ public:
         uint64 AzgalorGUID;
         InstanceScript* instance;
 
-        void Reset() override
+        void Reset()
         {
             CrippleTimer = 50000;
             WarstompTimer = 10000;
@@ -214,30 +212,29 @@ public:
             CheckTimer = 5000;
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
         }
 
-        void WaypointReached(uint32 /*waypointId*/) override
+        void WaypointReached(uint32 /*waypointId*/)
         {
         }
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
-            if (me->IsWithinDist(who, 50) && !me->IsInCombat() && me->IsValidAttackTarget(who))
+            if (me->IsWithinDist(who, 50) && !me->isInCombat() && me->IsValidAttackTarget(who))
                 AttackStart(who);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (CheckTimer <= diff)
             {
@@ -279,5 +276,5 @@ public:
 void AddSC_boss_azgalor()
 {
     new boss_azgalor();
-    new npc_lesser_doomguard();
+    new mob_lesser_doomguard();
 }

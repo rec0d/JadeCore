@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -52,10 +49,7 @@ enum Events
     EVENT_FRENZY    = 3
 };
 
-enum Misc
-{
-    DATA_FRENZY_DISPELS         = 1
-};
+#define DATA_FRENZY_DISPELS 1
 
 class boss_faerlina : public CreatureScript
 {
@@ -70,7 +64,7 @@ class boss_faerlina : public CreatureScript
             }
 
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 _EnterCombat();
                 Talk(SAY_AGGRO);
@@ -79,15 +73,14 @@ class boss_faerlina : public CreatureScript
                 events.ScheduleEvent(EVENT_FRENZY, urand(60000, 80000));
             }
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 _delayFrenzy = false;
                 _frenzyDispels = 0;
             }
 
-            void MoveInLineOfSight(Unit* who) override
-
+            void MoveInLineOfSight(Unit* who)
             {
                 if (!_introDone && who->GetTypeId() == TYPEID_PLAYER)
                 {
@@ -98,30 +91,30 @@ class boss_faerlina : public CreatureScript
                 BossAI::MoveInLineOfSight(who);
             }
 
-            void KilledUnit(Unit* /*victim*/) override
+            void KilledUnit(Unit* /*victim*/)
             {
                 if (!urand(0, 2))
                     Talk(SAY_SLAY);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 _JustDied();
                 Talk(SAY_DEATH);
             }
 
-            void SpellHit(Unit* caster, SpellInfo const* spell) override
+            void SpellHit(Unit* caster, SpellInfo const* spell)
             {
                 if (spell->Id == SPELL_WIDOWS_EMBRACE || spell->Id == H_SPELL_WIDOWS_EMBRACE)
                 {
-                    /// @todo Add Text
+                    // TODO : Add Text
                     ++_frenzyDispels;
                     _delayFrenzy = true;
                     me->Kill(caster);
                 }
             }
 
-            uint32 GetData(uint32 type) const override
+            uint32 GetData(uint32 type) const
             {
                 if (type == DATA_FRENZY_DISPELS)
                     return _frenzyDispels;
@@ -129,7 +122,7 @@ class boss_faerlina : public CreatureScript
                 return 0;
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -160,7 +153,7 @@ class boss_faerlina : public CreatureScript
                             events.ScheduleEvent(EVENT_FIRE, urand(6000, 18000));
                             break;
                         case EVENT_FRENZY:
-                            /// @todo Add Text
+                            // TODO : Add Text
                             if (!me->HasAura(SPELL_WIDOWS_EMBRACE_HELPER))
                                 DoCast(me, RAID_MODE(SPELL_FRENZY, H_SPELL_FRENZY));
                             else
@@ -180,25 +173,25 @@ class boss_faerlina : public CreatureScript
             bool _delayFrenzy;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_faerlinaAI(creature);
         }
 };
 
-class npc_faerlina_add : public CreatureScript
+class mob_faerlina_add : public CreatureScript
 {
     public:
-        npc_faerlina_add() : CreatureScript("npc_faerlina_add") { }
+        mob_faerlina_add() : CreatureScript("mob_faerlina_add") { }
 
-        struct npc_faerlina_addAI : public ScriptedAI
+        struct mob_faerlina_addAI : public ScriptedAI
         {
-            npc_faerlina_addAI(Creature* creature) : ScriptedAI(creature),
+            mob_faerlina_addAI(Creature* creature) : ScriptedAI(creature),
                 _instance(creature->GetInstanceScript())
             {
             }
 
-            void Reset() override
+            void Reset()
             {
                 if (GetDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL) {
                     me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_BIND, true);
@@ -206,7 +199,7 @@ class npc_faerlina_add : public CreatureScript
                 }
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 if (_instance && GetDifficulty() == RAID_DIFFICULTY_10MAN_NORMAL)
                     if (Creature* faerlina = ObjectAccessor::GetCreature(*me, _instance->GetData64(DATA_FAERLINA)))
@@ -217,9 +210,9 @@ class npc_faerlina_add : public CreatureScript
             InstanceScript* const _instance;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return new npc_faerlina_addAI(creature);
+            return new mob_faerlina_addAI(creature);
         }
 };
 
@@ -228,7 +221,7 @@ class achievement_momma_said_knock_you_out : public AchievementCriteriaScript
     public:
         achievement_momma_said_knock_you_out() : AchievementCriteriaScript("achievement_momma_said_knock_you_out") { }
 
-        bool OnCheck(Player* /*source*/, Unit* target) override
+        bool OnCheck(Player* /*source*/, Unit* target)
         {
             return target && !target->GetAI()->GetData(DATA_FRENZY_DISPELS);
         }
@@ -237,6 +230,6 @@ class achievement_momma_said_knock_you_out : public AchievementCriteriaScript
 void AddSC_boss_faerlina()
 {
     new boss_faerlina();
-    new npc_faerlina_add();
+    new mob_faerlina_add();
     new achievement_momma_said_knock_you_out();
 }

@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,11 +35,11 @@ OutdoorPvPSI::OutdoorPvPSI()
     m_LastController = 0;
 }
 
-void OutdoorPvPSI::FillInitialWorldStates(WorldStateBuilder& builder)
+void OutdoorPvPSI::FillInitialWorldStates(WorldPacket &data)
 {
-    builder.AppendState(SI_GATHERED_A, m_Gathered_A);
-    builder.AppendState(SI_GATHERED_H, m_Gathered_H);
-    builder.AppendState(SI_SILITHYST_MAX, SI_MAX_RESOURCES);
+    data << SI_GATHERED_A << m_Gathered_A;
+    data << SI_GATHERED_H << m_Gathered_H;
+    data << SI_SILITHYST_MAX << SI_MAX_RESOURCES;
 }
 
 void OutdoorPvPSI::SendRemoveWorldStates(Player* player)
@@ -246,7 +244,7 @@ class OutdoorPvP_silithus : public OutdoorPvPScript
         {
         }
 
-        OutdoorPvP* GetOutdoorPvP() const override
+        OutdoorPvP* GetOutdoorPvP() const
         {
             return new OutdoorPvPSI();
         }

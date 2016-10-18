@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -35,14 +33,14 @@ class instance_nexus : public InstanceMapScript
 public:
     instance_nexus() : InstanceMapScript("instance_nexus", 576) { }
 
-    InstanceScript* GetInstanceScript(InstanceMap* map) const override
+    InstanceScript* GetInstanceScript(InstanceMap* map) const
     {
         return new instance_nexus_InstanceMapScript(map);
     }
 
     struct instance_nexus_InstanceMapScript : public InstanceScript
     {
-        instance_nexus_InstanceMapScript(Map* map) : InstanceScript(map) { }
+        instance_nexus_InstanceMapScript(Map* map) : InstanceScript(map) {}
 
         uint32 m_auiEncounter[NUMBER_OF_ENCOUNTERS];
 
@@ -55,7 +53,7 @@ public:
 
         std::string strInstData;
 
-        void Initialize() override
+        void Initialize()
         {
             memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
 
@@ -66,14 +64,14 @@ public:
             TelestrasContainmentSphere = 0;
         }
 
-        void OnCreatureCreate(Creature* creature) override
+        void OnCreatureCreate(Creature* creature)
         {
             Map::PlayerList const &players = instance->GetPlayers();
             uint32 TeamInInstance = 0;
 
             if (!players.isEmpty())
             {
-                if (Player* player = players.begin()->GetSource())
+                if (Player* player = players.begin()->getSource())
                     TeamInInstance = player->GetTeam();
             }
             switch (creature->GetEntry())
@@ -128,7 +126,7 @@ public:
             }
         }
 
-        void OnGameObjectCreate(GameObject* go) override
+        void OnGameObjectCreate(GameObject* go)
         {
             switch (go->GetEntry())
             {
@@ -136,27 +134,27 @@ public:
                 {
                     AnomalusContainmentSphere = go->GetGUID();
                     if (m_auiEncounter[1] == DONE)
-                        go->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                        go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
                     break;
                 }
                 case 188528:
                 {
                     OrmoroksContainmentSphere = go->GetGUID();
                     if (m_auiEncounter[2] == DONE)
-                        go->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                        go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
                     break;
                 }
                 case 188526:
                 {
                     TelestrasContainmentSphere = go->GetGUID();
                     if (m_auiEncounter[0] == DONE)
-                        go->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                        go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
                     break;
                 }
             }
         }
 
-        uint32 GetData(uint32 identifier) const override
+        uint32 GetData(uint32 identifier) const
         {
             switch (identifier)
             {
@@ -168,7 +166,7 @@ public:
             return 0;
         }
 
-        void SetData(uint32 identifier, uint32 data) override
+        void SetData(uint32 identifier, uint32 data)
         {
             switch (identifier)
             {
@@ -178,7 +176,7 @@ public:
                     {
                         GameObject* Sphere = instance->GetGameObject(TelestrasContainmentSphere);
                         if (Sphere)
-                            Sphere->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                            Sphere->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
                     }
                     m_auiEncounter[0] = data;
                     break;
@@ -188,7 +186,7 @@ public:
                     if (data == DONE)
                     {
                         if (GameObject* Sphere = instance->GetGameObject(AnomalusContainmentSphere))
-                            Sphere->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                            Sphere->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
                     }
                     m_auiEncounter[1] = data;
                     break;
@@ -198,7 +196,7 @@ public:
                     if (data == DONE)
                     {
                         if (GameObject* Sphere = instance->GetGameObject(OrmoroksContainmentSphere))
-                            Sphere->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                            Sphere->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
                     }
                     m_auiEncounter[2] = data;
                     break;
@@ -223,7 +221,7 @@ public:
             }
         }
 
-        uint64 GetData64(uint32 uiIdentifier) const override
+        uint64 GetData64(uint32 uiIdentifier) const
         {
             switch (uiIdentifier)
             {
@@ -236,7 +234,7 @@ public:
             return 0;
         }
 
-        std::string GetSaveData() override
+        std::string GetSaveData()
         {
             return strInstData;
         }

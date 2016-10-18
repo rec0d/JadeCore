@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,9 +24,9 @@ PassiveAI::PassiveAI(Creature* c) : CreatureAI(c) { me->SetReactState(REACT_PASS
 PossessedAI::PossessedAI(Creature* c) : CreatureAI(c) { me->SetReactState(REACT_PASSIVE); }
 NullCreatureAI::NullCreatureAI(Creature* c) : CreatureAI(c) { me->SetReactState(REACT_PASSIVE); }
 
-void PassiveAI::UpdateAI(uint32)
+void PassiveAI::UpdateAI(const uint32)
 {
-    if (me->IsInCombat() && me->getAttackers().empty())
+    if (me->isInCombat() && me->getAttackers().empty())
         EnterEvadeMode();
 }
 
@@ -36,7 +35,7 @@ void PossessedAI::AttackStart(Unit* target)
     me->Attack(target, true);
 }
 
-void PossessedAI::UpdateAI(uint32 /*diff*/)
+void PossessedAI::UpdateAI(const uint32 /*diff*/)
 {
     if (me->GetVictim())
     {
@@ -50,14 +49,14 @@ void PossessedAI::UpdateAI(uint32 /*diff*/)
 void PossessedAI::JustDied(Unit* /*u*/)
 {
     // We died while possessed, disable our loot
-    me->RemoveFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+    me->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
 }
 
 void PossessedAI::KilledUnit(Unit* victim)
 {
     // We killed a creature, disable victim's loot
     if (victim->GetTypeId() == TYPEID_UNIT)
-        victim->RemoveFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+        victim->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
 }
 
 void CritterAI::DamageTaken(Unit* /*done_by*/, uint32&)

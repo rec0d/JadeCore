@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -32,7 +30,7 @@ EndScriptData */
 #include "trial_of_the_champion.h"
 #include "Player.h"
 
-enum Spells
+enum eSpells
 {
     //Vehicle
     SPELL_CHARGE                    = 63010,
@@ -77,7 +75,7 @@ enum Spells
     SPELL_POISON_BOTTLE             = 67701
 };
 
-enum Seats
+enum eSeat
 {
     SEAT_ID_0                       = 0
 };
@@ -104,12 +102,12 @@ void AggroAllPlayers(Creature* temp)
 
     for (Map::PlayerList::const_iterator i = PlList.begin(); i != PlList.end(); ++i)
     {
-        if (Player* player = i->GetSource())
+        if (Player* player = i->getSource())
         {
-            if (player->IsGameMaster())
+            if (player->isGameMaster())
                 continue;
 
-            if (player->IsAlive())
+            if (player->isAlive())
             {
                 temp->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_IMMUNE_TO_PC);
                 temp->SetReactState(REACT_AGGRESSIVE);
@@ -134,9 +132,9 @@ bool GrandChampionsOutVehicle(Creature* me)
 
     if (pGrandChampion1 && pGrandChampion2 && pGrandChampion3)
     {
-        if (!pGrandChampion1->m_movementInfo.transport.guid &&
-            !pGrandChampion2->m_movementInfo.transport.guid &&
-            !pGrandChampion3->m_movementInfo.transport.guid)
+        if (!pGrandChampion1->m_movementInfo.t_guid &&
+            !pGrandChampion2->m_movementInfo.t_guid &&
+            !pGrandChampion3->m_movementInfo.t_guid)
             return true;
     }
 
@@ -171,14 +169,14 @@ public:
 
         uint32 uiWaypointPath;
 
-        void Reset() override
+        void Reset()
         {
             uiChargeTimer = 5000;
             uiShieldBreakerTimer = 8000;
             uiBuffTimer = urand(30000, 60000);
         }
 
-        void SetData(uint32 uiType, uint32 /*uiData*/) override
+        void SetData(uint32 uiType, uint32 /*uiData*/)
         {
             switch (uiType)
             {
@@ -207,7 +205,7 @@ public:
                 Start(false, true, 0, NULL);
         }
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId)
         {
             if (!instance)
                 return;
@@ -224,7 +222,7 @@ public:
             }
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             DoCastSpellShield();
         }
@@ -235,7 +233,7 @@ public:
                 DoCast(me, SPELL_SHIELD, true);
         }
 
-        void UpdateAI(uint32 uiDiff) override
+        void UpdateAI(const uint32 uiDiff)
         {
             npc_escortAI::UpdateAI(uiDiff);
 
@@ -257,8 +255,8 @@ public:
                 {
                     for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
                     {
-                        Player* player = itr->GetSource();
-                        if (player && !player->IsGameMaster() && me->IsInRange(player, 8.0f, 25.0f, false))
+                        Player* player = itr->getSource();
+                        if (player && !player->isGameMaster() && me->IsInRange(player, 8.0f, 25.0f, false))
                         {
                             DoResetThreat();
                             me->AddThreat(player, 1.0f);
@@ -284,8 +282,8 @@ public:
                     {
                         for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
                         {
-                            Player* player = itr->GetSource();
-                            if (player && !player->IsGameMaster() && me->IsInRange(player, 10.0f, 30.0f, false))
+                            Player* player = itr->getSource();
+                            if (player && !player->isGameMaster() && me->IsInRange(player, 10.0f, 30.0f, false))
                             {
                                 pPassenger->CastSpell(player, SPELL_SHIELD_BREAKER, true);
                                 break;
@@ -300,7 +298,7 @@ public:
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new generic_vehicleAI_toc5AI(creature);
     }
@@ -342,14 +340,14 @@ public:
         bool bDone;
         bool bHome;
 
-        void Reset() override
+        void Reset()
         {
             uiBladeStormTimer = urand(15000, 20000);
             uiInterceptTimer  = 7000;
             uiMortalStrikeTimer = urand(8000, 12000);
         }
 
-        void JustReachedHome() override
+        void JustReachedHome()
         {
             ScriptedAI::JustReachedHome();
 
@@ -362,7 +360,7 @@ public:
             bHome = false;
         }
 
-        void UpdateAI(uint32 uiDiff) override
+        void UpdateAI(const uint32 uiDiff)
         {
             if (!bDone && GrandChampionsOutVehicle(me))
             {
@@ -388,7 +386,7 @@ public:
                 }
             }else uiPhaseTimer -= uiDiff;
 
-            if (!UpdateVictim() || me->m_movementInfo.transport.guid)
+            if (!UpdateVictim() || me->m_movementInfo.t_guid)
                 return;
 
             if (uiInterceptTimer <= uiDiff)
@@ -398,8 +396,8 @@ public:
                 {
                     for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
                     {
-                        Player* player = itr->GetSource();
-                        if (player && !player->IsGameMaster() && me->IsInRange(player, 8.0f, 25.0f, false))
+                        Player* player = itr->getSource();
+                        if (player && !player->isGameMaster() && me->IsInRange(player, 8.0f, 25.0f, false))
                         {
                             DoResetThreat();
                             me->AddThreat(player, 5.0f);
@@ -426,14 +424,14 @@ public:
             DoMeleeAttackIfReady();
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             if (instance)
                 instance->SetData(BOSS_GRAND_CHAMPIONS, DONE);
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_warrior_toc5AI(creature);
     }
@@ -475,7 +473,7 @@ public:
         bool bDone;
         bool bHome;
 
-        void Reset() override
+        void Reset()
         {
             uiFireBallTimer = 5000;
             uiPolymorphTimer  = 8000;
@@ -483,7 +481,7 @@ public:
             uiHasteTimer = 22000;
         }
 
-        void JustReachedHome() override
+        void JustReachedHome()
         {
             ScriptedAI::JustReachedHome();
 
@@ -496,7 +494,7 @@ public:
             bHome = false;
         }
 
-        void UpdateAI(uint32 uiDiff) override
+        void UpdateAI(const uint32 uiDiff)
         {
             if (!bDone && GrandChampionsOutVehicle(me))
             {
@@ -532,7 +530,7 @@ public:
                 uiFireBallTimer = 5000;
             } else uiFireBallTimer -= uiDiff;
 
-            if (!UpdateVictim() || me->m_movementInfo.transport.guid)
+            if (!UpdateVictim() || me->m_movementInfo.t_guid)
                 return;
 
             if (uiFireBallTimer <= uiDiff)
@@ -565,14 +563,14 @@ public:
             DoMeleeAttackIfReady();
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             if (instance)
                 instance->SetData(BOSS_GRAND_CHAMPIONS, DONE);
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_mage_toc5AI(creature);
     }
@@ -614,7 +612,7 @@ public:
         bool bDone;
         bool bHome;
 
-        void Reset() override
+        void Reset()
         {
             uiChainLightningTimer = 16000;
             uiHealingWaveTimer = 12000;
@@ -622,13 +620,13 @@ public:
             uiHexMendingTimer = urand(20000, 25000);
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* who)
         {
             DoCast(me, SPELL_EARTH_SHIELD);
             DoCast(who, SPELL_HEX_OF_MENDING);
         };
 
-        void JustReachedHome() override
+        void JustReachedHome()
         {
             ScriptedAI::JustReachedHome();
 
@@ -641,7 +639,7 @@ public:
             bHome = false;
         }
 
-        void UpdateAI(uint32 uiDiff) override
+        void UpdateAI(const uint32 uiDiff)
         {
             if (!bDone && GrandChampionsOutVehicle(me))
             {
@@ -670,7 +668,7 @@ public:
                 }
             }else uiPhaseTimer -= uiDiff;
 
-            if (!UpdateVictim() || me->m_movementInfo.transport.guid)
+            if (!UpdateVictim() || me->m_movementInfo.t_guid)
                 return;
 
             if (uiChainLightningTimer <= uiDiff)
@@ -712,14 +710,14 @@ public:
             DoMeleeAttackIfReady();
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             if (instance)
                 instance->SetData(BOSS_GRAND_CHAMPIONS, DONE);
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_shaman_toc5AI(creature);
     }
@@ -763,7 +761,7 @@ public:
         bool bDone;
         bool bHome;
 
-        void Reset() override
+        void Reset()
         {
             uiShootTimer = 12000;
             uiMultiShotTimer = 0;
@@ -774,7 +772,7 @@ public:
             bShoot = false;
         }
 
-        void JustReachedHome() override
+        void JustReachedHome()
         {
             ScriptedAI::JustReachedHome();
 
@@ -787,7 +785,7 @@ public:
             bHome = false;
         }
 
-        void UpdateAI(uint32 uiDiff) override
+        void UpdateAI(const uint32 uiDiff)
         {
             if (!bDone && GrandChampionsOutVehicle(me))
             {
@@ -816,7 +814,7 @@ public:
                 }
             }else uiPhaseTimer -= uiDiff;
 
-            if (!UpdateVictim() || me->m_movementInfo.transport.guid)
+            if (!UpdateVictim() || me->m_movementInfo.t_guid)
                 return;
 
             if (uiLightningArrowsTimer <= uiDiff)
@@ -853,8 +851,8 @@ public:
                     {
                         for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
                         {
-                            Player* player = itr->GetSource();
-                            if (player && !player->IsGameMaster() && me->IsInRange(player, 5.0f, 30.0f, false))
+                            Player* player = itr->getSource();
+                            if (player && !player->isGameMaster() && me->IsInRange(player, 5.0f, 30.0f, false))
                             {
                                 DoCast(player, SPELL_MULTI_SHOT);
                                 break;
@@ -868,14 +866,14 @@ public:
             DoMeleeAttackIfReady();
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             if (instance)
                 instance->SetData(BOSS_GRAND_CHAMPIONS, DONE);
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_hunter_toc5AI(creature);
     }
@@ -915,14 +913,14 @@ public:
         bool bDone;
         bool bHome;
 
-        void Reset() override
+        void Reset()
         {
             uiEviscerateTimer = 8000;
             uiFanKivesTimer   = 14000;
             uiPosionBottleTimer = 19000;
         }
 
-        void JustReachedHome() override
+        void JustReachedHome()
         {
             ScriptedAI::JustReachedHome();
 
@@ -935,7 +933,7 @@ public:
             bHome = false;
         }
 
-        void UpdateAI(uint32 uiDiff) override
+        void UpdateAI(const uint32 uiDiff)
         {
             if (!bDone && GrandChampionsOutVehicle(me))
             {
@@ -964,7 +962,7 @@ public:
                 }
             } else uiPhaseTimer -= uiDiff;
 
-            if (!UpdateVictim() || me->m_movementInfo.transport.guid)
+            if (!UpdateVictim() || me->m_movementInfo.t_guid)
                 return;
 
             if (uiEviscerateTimer <= uiDiff)
@@ -989,14 +987,14 @@ public:
             DoMeleeAttackIfReady();
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             if (instance)
                 instance->SetData(BOSS_GRAND_CHAMPIONS, DONE);
         }
     };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_rouge_toc5AI(creature);
     }

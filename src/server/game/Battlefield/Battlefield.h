@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -26,7 +25,6 @@
 #include "GameObject.h"
 #include "Battleground.h"
 #include "ObjectAccessor.h"
-#include "WorldStateBuilder.h"
 
 enum BattlefieldTypes
 {
@@ -36,7 +34,8 @@ enum BattlefieldTypes
 
 enum BattlefieldIDs
 {
-    BATTLEFIELD_BATTLEID_WG                      = 1        // Wintergrasp battle
+    BATTLEFIELD_BATTLEID_WG                      = 1,        // Wintergrasp battle
+    BATTLEFIELD_BATTLEID_TB                      = 21       //Tol Barad battle
 };
 
 enum BattlefieldObjectiveStates
@@ -74,7 +73,7 @@ class BfGraveyard;
 
 typedef std::set<uint64> GuidSet;
 typedef std::vector<BfGraveyard*> GraveyardVect;
-typedef std::map<uint64, time_t> PlayerTimerMap;
+typedef std::map<uint64, uint32> PlayerTimerMap;
 
 class BfCapturePoint
 {
@@ -83,13 +82,14 @@ class BfCapturePoint
 
         virtual ~BfCapturePoint() { }
 
-        virtual void FillInitialWorldStates(WorldStateBuilder& /*builder*/) { }
+        virtual void FillInitialWorldStates(WorldPacket& /*data*/) {}
 
         // Send world state update to all players present
         void SendUpdateWorldState(uint32 field, uint32 value);
 
         // Send kill notify to players in the controlling faction
         void SendObjectiveComplete(uint32 id, uint64 guid);
+
 
         // Used when player is activated/inactivated in the area
         virtual bool HandlePlayerEnter(Player* player);
@@ -101,10 +101,11 @@ class BfCapturePoint
 
         // Returns true if the state of the objective has changed, in this case, the OutdoorPvP must send a world state ui update.
         virtual bool Update(uint32 diff);
-        virtual void ChangeTeam(TeamId /*oldTeam*/) { }
+        virtual void ChangeTeam(TeamId /*oldTeam*/) {}
         virtual void SendChangePhase();
 
         bool SetCapturePointData(GameObject* capturePoint);
+        bool SetCapturePointData(uint32 entry, uint32 map, float x, float y, float z, float o);
         GameObject* GetCapturePointGo();
         uint32 GetCapturePointEntry(){ return m_capturePointEntry; }
 
@@ -141,6 +142,9 @@ class BfCapturePoint
 
         // Gameobject related to that capture point
         uint64 m_capturePointGUID;
+
+        // pointer to the Battlefield this objective belongs to
+        GameObject *m_capturePoint;
 };
 
 class BfGraveyard
@@ -157,6 +161,7 @@ class BfGraveyard
 
         // Initialize the graveyard
         void Initialize(TeamId startcontrol, uint32 gy);
+        void Init(uint32 horde_entry, uint32 alliance_entry, float x, float y, float z, float o, TeamId startcontrol, uint32 gy);
 
         // Set spirit service for the graveyard
         void SetSpirit(Creature* spirit, TeamId team);
@@ -226,7 +231,7 @@ class Battlefield : public ZoneScript
         void InvitePlayersInZoneToWar();
 
         /// Called when a Unit is kill in battlefield zone
-        virtual void HandleKill(Player* /*killer*/, Unit* /*killed*/) { };
+        virtual void HandleKill(Player* /*killer*/, Unit* /*killed*/) {};
 
         uint32 GetTypeId() { return m_TypeId; }
         uint32 GetZoneId() { return m_ZoneId; }
@@ -290,7 +295,7 @@ class Battlefield : public ZoneScript
 
         // Misc methods
         Creature* SpawnCreature(uint32 entry, float x, float y, float z, float o, TeamId team);
-        Creature* SpawnCreature(uint32 entry, const Position& pos, TeamId team);
+        Creature* SpawnCreature(uint32 entry, Position pos, TeamId team);
         GameObject* SpawnGameObject(uint32 entry, float x, float y, float z, float o);
 
         Creature* GetCreature(uint64 GUID);
@@ -314,7 +319,7 @@ class Battlefield : public ZoneScript
         virtual void OnPlayerEnterZone(Player* /*player*/) { }
 
         WorldPacket BuildWarningAnnPacket(std::string const& msg);
-        void SendWarningToAllInZone(uint32 entry);
+        void SendWarningToAllInZone(int32 entry, ...);
         //void SendWarningToAllInWar(int32 entry, ...); -- UNUSED
         void SendWarningToPlayer(Player* player, uint32 entry);
 
@@ -327,12 +332,12 @@ class Battlefield : public ZoneScript
 
         /// Send all worldstate data to all player in zone.
         virtual void SendInitWorldStatesToAll() = 0;
-        virtual void FillInitialWorldStates(WorldStateBuilder& /*builder*/) = 0;
+        virtual void FillInitialWorldStates(WorldPacket& /*data*/) = 0;
 
         /// Return if we can use mount in battlefield
         bool CanFlyIn() { return !m_isActive; }
 
-        void SendAreaSpiritHealerQueryOpcode(Player* player, ObjectGuid guid);
+        void SendAreaSpiritHealerQueryOpcode(Player* player, uint64 guid);
 
         void StartBattle();
         void EndBattle(bool endByTimer);
@@ -358,6 +363,7 @@ class Battlefield : public ZoneScript
         uint64 StalkerGuid;
         uint32 m_Timer;                                         // Global timer for event
         bool m_IsEnabled;
+        bool m_WarTime;
         bool m_isActive;
         TeamId m_DefenderTeam;
 
@@ -386,6 +392,8 @@ class Battlefield : public ZoneScript
         uint32 m_TimeForAcceptInvite;
         uint32 m_uiKickDontAcceptTimer;
         WorldLocation KickPosition;                             // Position where players are teleported if they switch to afk during the battle or if they don't accept invitation
+        WorldLocation KickPositionA;
+        WorldLocation KickPositionH;
 
         uint32 m_uiKickAfkPlayersTimer;                         // Timer for check Afk in war
 
@@ -404,7 +412,7 @@ class Battlefield : public ZoneScript
         void KickAfkPlayers();
 
         // use for switch off all worldstate for client
-        virtual void SendRemoveWorldStates(Player* /*player*/) { }
+        virtual void SendRemoveWorldStates(Player* /*player*/) {}
 
         // use for send a packet for all player list
         void BroadcastPacketToZone(WorldPacket& data) const;

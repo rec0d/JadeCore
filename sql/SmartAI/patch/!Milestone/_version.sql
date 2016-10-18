@@ -1,2 +1,2 @@
--- "patch" SmartAI Lab 547.02 "Shado-Pan Monastery"
+UPDATE `version` SET `db_version`=('CataCoreDB 434.04 updates & "patch" SmartAI Lab 434.12 "Deathwing Madness"');
 

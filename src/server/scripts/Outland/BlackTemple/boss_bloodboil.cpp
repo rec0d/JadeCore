@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -63,9 +62,9 @@ class boss_gurtogg_bloodboil : public CreatureScript
 public:
     boss_gurtogg_bloodboil() : CreatureScript("boss_gurtogg_bloodboil") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_gurtogg_bloodboilAI(creature);
+        return new boss_gurtogg_bloodboilAI (creature);
     }
 
     struct boss_gurtogg_bloodboilAI : public ScriptedAI
@@ -94,10 +93,10 @@ public:
 
         bool Phase1;
 
-        void Reset() override
+        void Reset()
         {
             if (instance)
-                instance->SetBossState(DATA_GURTOGG_BLOODBOIL, NOT_STARTED);
+                instance->SetData(DATA_GURTOGGBLOODBOILEVENT, NOT_STARTED);
 
             TargetGUID = 0;
 
@@ -120,23 +119,23 @@ public:
             me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_ATTACK_ME, false);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             DoZoneInCombat();
             Talk(SAY_AGGRO);
             if (instance)
-                instance->SetBossState(DATA_GURTOGG_BLOODBOIL, IN_PROGRESS);
+                instance->SetData(DATA_GURTOGGBLOODBOILEVENT, IN_PROGRESS);
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             Talk(SAY_SLAY);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             if (instance)
-                instance->SetBossState(DATA_GURTOGG_BLOODBOIL, DONE);
+                instance->SetData(DATA_GURTOGGBLOODBOILEVENT, DONE);
 
             Talk(SAY_DEATH);
         }
@@ -156,7 +155,7 @@ public:
             {
                 Unit* target = Unit::GetUnit(*me, (*itr)->getUnitGuid());
                                                                 //only on alive players
-                if (target && target->IsAlive() && target->GetTypeId() == TYPEID_PLAYER)
+                if (target && target->isAlive() && target->GetTypeId() == TYPEID_PLAYER)
                     targets.push_back(target);
             }
 
@@ -188,7 +187,9 @@ public:
 
         void RevertThreatOnTarget(uint64 guid)
         {
-            if (Unit* unit = Unit::GetUnit(*me, guid))
+            Unit* unit = NULL;
+            unit = Unit::GetUnit(*me, guid);
+            if (unit)
             {
                 if (DoGetThreat(unit))
                     DoModifyThreatPercent(unit, -100);
@@ -197,7 +198,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -278,7 +279,8 @@ public:
             {
                 if (Phase1)
                 {
-                    if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
+                    Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0);
+                    if (target && target->isAlive())
                     {
                         Phase1 = false;
 
@@ -306,8 +308,7 @@ public:
                         AcidGeyserTimer = 1000;
                         PhaseChangeTimer = 30000;
                     }
-                }
-                else                                           // Encounter is a loop pretty much. Phase 1 -> Phase 2 -> Phase 1 -> Phase 2 till death or enrage
+                } else                                           // Encounter is a loop pretty much. Phase 1 -> Phase 2 -> Phase 1 -> Phase 2 till death or enrage
                 {
                     if (TargetGUID)
                         RevertThreatOnTarget(TargetGUID);

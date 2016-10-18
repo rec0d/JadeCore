@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -42,10 +40,10 @@ enum Spells
 
 enum Events
 {
-    EVENT_ARCANE_EXPLOSION      = 1,
-    EVENT_FULLFILMENT           = 2,
-    EVENT_BLINK                 = 3,
-    EVENT_EARTH_SHOCK           = 4
+    EVENT_ARCANE_EXPLOSION      = 0,
+    EVENT_FULLFILMENT           = 1,
+    EVENT_BLINK                 = 2,
+    EVENT_EARTH_SHOCK           = 3
 };
 
 uint32 const BlinkSpells[3] = { 4801, 8195, 20449 };
@@ -59,26 +57,26 @@ class boss_skeram : public CreatureScript
         {
             boss_skeramAI(Creature* creature) : BossAI(creature, DATA_SKERAM) { }
 
-            void Reset() override
+            void Reset()
             {
                 _flag = 0;
                 _hpct = 75.0f;
                 me->SetVisible(true);
             }
 
-            void KilledUnit(Unit* /*victim*/) override
+            void KilledUnit(Unit* /*victim*/)
             {
                 Talk(SAY_SLAY);
             }
 
-            void EnterEvadeMode() override
+            void EnterEvadeMode()
             {
                 ScriptedAI::EnterEvadeMode();
-                if (me->IsSummon())
+                if (me->isSummon())
                     ((TempSummon*)me)->UnSummon();
             }
 
-            void JustSummoned(Creature* creature) override
+            void JustSummoned(Creature* creature)
             {
                 // Shift the boss and images (Get it? *Shift*?)
                 uint8 rand = 0;
@@ -115,15 +113,15 @@ class boss_skeram : public CreatureScript
                 creature->SetHealth(creature->GetMaxHealth() * (me->GetHealthPct() / 100.0f));
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
-                if (!me->IsSummon())
+                if (!me->isSummon())
                     Talk(SAY_DEATH);
                 else
                     me->RemoveCorpse();
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 _EnterCombat();
                 events.Reset();
@@ -136,7 +134,7 @@ class boss_skeram : public CreatureScript
                 Talk(SAY_AGGRO);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -152,7 +150,7 @@ class boss_skeram : public CreatureScript
                             events.ScheduleEvent(EVENT_ARCANE_EXPLOSION, urand(8000, 18000));
                             break;
                         case EVENT_FULLFILMENT:
-                            /// @todo For some weird reason boss does not cast this
+                            // TODO: For some weird reason boss does not cast this
                             // Spell actually works, tested in duel
                             DoCast(SelectTarget(SELECT_TARGET_RANDOM, 0, 0.0f, true), SPELL_TRUE_FULFILLMENT, true);
                             events.ScheduleEvent(EVENT_FULLFILMENT, urand(20000, 30000));
@@ -170,7 +168,7 @@ class boss_skeram : public CreatureScript
                     }
                 }
 
-                if (!me->IsSummon() && me->GetHealthPct() < _hpct)
+                if (!me->isSummon() && me->GetHealthPct() < _hpct)
                 {
                     DoCast(me, SPELL_SUMMON_IMAGES);
                     Talk(SAY_SPLIT);
@@ -191,7 +189,7 @@ class boss_skeram : public CreatureScript
             uint8 _flag;
         };
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new boss_skeramAI(creature);
     }
@@ -203,7 +201,7 @@ class PlayerOrPetCheck
         bool operator()(WorldObject* object) const
         {
             if (object->GetTypeId() != TYPEID_PLAYER)
-                if (!object->ToCreature()->IsPet())
+                if (!object->ToCreature()->isPet())
                     return true;
 
             return false;
@@ -224,13 +222,13 @@ class spell_skeram_arcane_explosion : public SpellScriptLoader
                 targets.remove_if(PlayerOrPetCheck());
             }
 
-            void Register() override
+            void Register()
             {
                 OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_skeram_arcane_explosion_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENEMY);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_skeram_arcane_explosion_SpellScript();
         }

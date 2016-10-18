@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -28,7 +25,7 @@
 #include "GridNotifiersImpl.h"
 #include "ulduar.h"
 
-/* @todo Achievements
+/* #TODO: Achievements
           Storm Cloud (Shaman ability)
           Destroying of Toasty Fires
 */
@@ -145,11 +142,7 @@ enum HodirActions
 #define ACHIEVEMENT_THIS_CACHE_WAS_RARE          RAID_MODE<uint8>(3182, 3184)
 #define ACHIEVEMENT_COOLEST_FRIENDS              RAID_MODE<uint8>(2963, 2965)
 #define FRIENDS_COUNT                            RAID_MODE<uint8>(4, 8)
-
-enum Misc
-{
-    DATA_GETTING_COLD_IN_HERE                    = 29672968 // 2967, 2968 are achievement IDs
-};
+#define DATA_GETTING_COLD_IN_HERE                29672968 // 2967, 2968 are achievement IDs
 
 Position const SummonPositions[8] =
 {
@@ -194,13 +187,13 @@ class npc_flash_freeze : public CreatureScript
             uint64 targetGUID;
             uint32 checkDespawnTimer;
 
-            void Reset() override
+            void Reset()
             {
                 targetGUID = 0;
                 checkDespawnTimer = 1000;
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim() || me->GetVictim()->HasAura(SPELL_BLOCK_OF_ICE) || me->GetVictim()->HasAura(SPELL_FLASH_FREEZE_HELPER))
                     return;
@@ -211,7 +204,7 @@ class npc_flash_freeze : public CreatureScript
                 if (checkDespawnTimer <= diff)
                 {
                     if (Unit* target = ObjectAccessor::GetUnit(*me, targetGUID))
-                        if (!target->IsAlive())
+                        if (!target->isAlive())
                             me->DisappearAndDie();
                     checkDespawnTimer = 2500;
                 }
@@ -219,7 +212,7 @@ class npc_flash_freeze : public CreatureScript
                     checkDespawnTimer -= diff;
             }
 
-            void IsSummonedBy(Unit* summoner) override
+            void IsSummonedBy(Unit* summoner)
             {
                 targetGUID = summoner->GetGUID();
                 me->SetInCombatWith(summoner);
@@ -236,7 +229,7 @@ class npc_flash_freeze : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_flash_freezeAI(creature);
         }
@@ -261,7 +254,7 @@ class npc_ice_block : public CreatureScript
 
             uint64 targetGUID;
 
-            void IsSummonedBy(Unit* summoner) override
+            void IsSummonedBy(Unit* summoner)
             {
                 targetGUID = summoner->GetGUID();
                 summoner->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_STUNNED | UNIT_FLAG_PACIFIED);
@@ -276,7 +269,7 @@ class npc_ice_block : public CreatureScript
                 }
             }
 
-            void DamageTaken(Unit* who, uint32& /*damage*/) override
+            void DamageTaken(Unit* who, uint32& /*damage*/)
             {
                 if (Creature* Helper = ObjectAccessor::GetCreature(*me, targetGUID))
                 {
@@ -284,7 +277,7 @@ class npc_ice_block : public CreatureScript
 
                     if (Creature* Hodir = ObjectAccessor::GetCreature(*me, instance ? instance->GetData64(BOSS_HODIR) : 0))
                     {
-                        if (!Hodir->IsInCombat())
+                        if (!Hodir->isInCombat())
                         {
                             Hodir->SetReactState(REACT_AGGRESSIVE);
                             Hodir->AI()->DoZoneInCombat();
@@ -297,7 +290,7 @@ class npc_ice_block : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_ice_blockAI(creature);
         }
@@ -322,7 +315,7 @@ class boss_hodir : public CreatureScript
             bool iHaveTheCoolestFriends;
             bool iCouldSayThatThisCacheWasRare;
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 me->SetReactState(REACT_PASSIVE);
@@ -332,7 +325,7 @@ class boss_hodir : public CreatureScript
                         FrozenHelper->CastSpell(FrozenHelper, SPELL_SUMMON_FLASH_FREEZE_HELPER, true);
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 _EnterCombat();
                 Talk(SAY_AGGRO);
@@ -352,13 +345,13 @@ class boss_hodir : public CreatureScript
                 events.ScheduleEvent(EVENT_BERSERK, 480000);
             }
 
-            void KilledUnit(Unit* who) override
+            void KilledUnit(Unit* who)
             {
                 if (who->GetTypeId() == TYPEID_PLAYER)
                     Talk(SAY_SLAY);
             }
 
-            void DamageTaken(Unit* /*who*/, uint32& damage) override
+            void DamageTaken(Unit* /*who*/, uint32& damage)
             {
                 if (damage >= me->GetHealth())
                 {
@@ -388,7 +381,7 @@ class boss_hodir : public CreatureScript
                 }
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -467,7 +460,7 @@ class boss_hodir : public CreatureScript
                 DoMeleeAttackIfReady();
             }
 
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 switch (action)
                 {
@@ -491,7 +484,7 @@ class boss_hodir : public CreatureScript
                 for (std::list<Unit*>::iterator itr = TargetList.begin(); itr != TargetList.end(); ++itr)
                 {
                     Unit* target = *itr;
-                    if (!target || !target->IsAlive() || GetClosestCreatureWithEntry(target, NPC_SNOWPACKED_ICICLE, 5.0f))
+                    if (!target || !target->isAlive() || GetClosestCreatureWithEntry(target, NPC_SNOWPACKED_ICICLE, 5.0f))
                         continue;
 
                     if (target->HasAura(SPELL_FLASH_FREEZE_HELPER) || target->HasAura(SPELL_BLOCK_OF_ICE))
@@ -505,7 +498,7 @@ class boss_hodir : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<boss_hodirAI>(creature);
         };
@@ -527,12 +520,12 @@ class npc_icicle : public CreatureScript
 
             uint32 icicleTimer;
 
-            void Reset() override
+            void Reset()
             {
                 icicleTimer = 2500;
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (icicleTimer <= diff)
                 {
@@ -553,7 +546,7 @@ class npc_icicle : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<npc_icicleAI>(creature);
         };
@@ -575,12 +568,12 @@ class npc_snowpacked_icicle : public CreatureScript
 
             uint32 despawnTimer;
 
-            void Reset() override
+            void Reset()
             {
                 despawnTimer = 12000;
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (despawnTimer <= diff)
                 {
@@ -593,7 +586,7 @@ class npc_snowpacked_icicle : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<npc_snowpacked_icicleAI>(creature);
         };
@@ -611,14 +604,14 @@ class npc_hodir_priest : public CreatureScript
                 instance = me->GetInstanceScript();
             }
 
-            void Reset() override
+            void Reset()
             {
                 events.Reset();
                 events.ScheduleEvent(EVENT_HEAL, urand(4000, 8000));
                 events.ScheduleEvent(EVENT_DISPEL_MAGIC, urand(15000, 20000));
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim() || me->HasUnitState(UNIT_STATE_STUNNED) || me->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED))
                     return;
@@ -659,7 +652,7 @@ class npc_hodir_priest : public CreatureScript
                 DoSpellAttackIfReady(SPELL_SMITE);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
              {
                 if (Creature* Hodir = ObjectAccessor::GetCreature(*me, instance ? instance->GetData64(BOSS_HODIR) : 0))
                     Hodir->AI()->DoAction(ACTION_I_HAVE_THE_COOLEST_FRIENDS);
@@ -670,7 +663,7 @@ class npc_hodir_priest : public CreatureScript
             EventMap events;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<npc_hodir_priestAI>(creature);
         };
@@ -688,13 +681,13 @@ class npc_hodir_shaman : public CreatureScript
                 instance = me->GetInstanceScript();
             }
 
-            void Reset() override
+            void Reset()
             {
                 events.Reset();
                 events.ScheduleEvent(EVENT_STORM_CLOUD, urand(10000, 12500));
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim() || me->HasUnitState(UNIT_STATE_STUNNED) || me->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED))
                     return;
@@ -721,7 +714,7 @@ class npc_hodir_shaman : public CreatureScript
                 DoSpellAttackIfReady(SPELL_LAVA_BURST);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
              {
                 if (Creature* Hodir = ObjectAccessor::GetCreature(*me, instance ? instance->GetData64(BOSS_HODIR) : 0))
                     Hodir->AI()->DoAction(ACTION_I_HAVE_THE_COOLEST_FRIENDS);
@@ -732,7 +725,7 @@ class npc_hodir_shaman : public CreatureScript
             EventMap events;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<npc_hodir_shamanAI>(creature);
         };
@@ -750,13 +743,13 @@ class npc_hodir_druid : public CreatureScript
                 instance = me->GetInstanceScript();
             }
 
-            void Reset() override
+            void Reset()
             {
                 events.Reset();
                 events.ScheduleEvent(EVENT_STARLIGHT, urand(15000, 17500));
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim() || me->HasUnitState(UNIT_STATE_STUNNED) || me->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED))
                     return;
@@ -782,7 +775,7 @@ class npc_hodir_druid : public CreatureScript
                 DoSpellAttackIfReady(SPELL_WRATH);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
              {
                 if (Creature* Hodir = ObjectAccessor::GetCreature(*me, instance ? instance->GetData64(BOSS_HODIR) : 0))
                     Hodir->AI()->DoAction(ACTION_I_HAVE_THE_COOLEST_FRIENDS);
@@ -793,7 +786,7 @@ class npc_hodir_druid : public CreatureScript
             EventMap events;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<npc_hodir_druidAI>(creature);
         };
@@ -811,7 +804,7 @@ class npc_hodir_mage : public CreatureScript
                 instance = me->GetInstanceScript();
             }
 
-            void Reset() override
+            void Reset()
             {
                 events.Reset();
                 summons.DespawnAll();
@@ -819,19 +812,19 @@ class npc_hodir_mage : public CreatureScript
                 events.ScheduleEvent(EVENT_MELT_ICE, 5000);
             }
 
-            void JustSummoned(Creature* summoned) override
+            void JustSummoned(Creature* summoned)
             {
                 if (summoned->GetEntry() == NPC_TOASTY_FIRE)
                     summons.Summon(summoned);
             }
 
-            void SummonedCreatureDespawn(Creature* summoned) override
+            void SummonedCreatureDespawn(Creature* summoned)
             {
                 if (summoned->GetEntry() == NPC_TOASTY_FIRE)
-                    summons.Despawn(summoned);
+                    summons.remove(summoned->GetGUID());
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim() || me->HasUnitState(UNIT_STATE_STUNNED) || me->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED))
                     return;
@@ -862,7 +855,7 @@ class npc_hodir_mage : public CreatureScript
                 DoSpellAttackIfReady(SPELL_FIREBALL);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
              {
                   if (Creature* Hodir = ObjectAccessor::GetCreature(*me, instance ? instance->GetData64(BOSS_HODIR) : 0))
                     Hodir->AI()->DoAction(ACTION_I_HAVE_THE_COOLEST_FRIENDS);
@@ -874,7 +867,7 @@ class npc_hodir_mage : public CreatureScript
             SummonList summons;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<npc_hodir_mageAI>(creature);
         };
@@ -892,12 +885,12 @@ class npc_toasty_fire : public CreatureScript
                 me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
             }
 
-            void Reset() override
+            void Reset()
             {
                 DoCast(me, SPELL_SINGED, true);
             }
 
-            void SpellHit(Unit* /*who*/, const SpellInfo* spell) override
+            void SpellHit(Unit* /*who*/, const SpellInfo* spell)
             {
                 if (spell->Id == SPELL_BLOCK_OF_ICE || spell->Id == SPELL_ICE_SHARD || spell->Id == SPELL_ICE_SHARD_HIT)
                 {
@@ -908,7 +901,7 @@ class npc_toasty_fire : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<npc_toasty_fireAI>(creature);
         };
@@ -931,7 +924,7 @@ class spell_biting_cold : public SpellScriptLoader
                 for (TargetList::iterator itr = listOfTargets.begin(); itr != listOfTargets.end(); ++itr)
                 {
                     if (itr->first != target->GetGUID())
-                        continue;
+                        return;
 
                     if (itr->second >= 4)
                     {
@@ -954,7 +947,7 @@ class spell_biting_cold : public SpellScriptLoader
                     listOfTargets.push_back(std::make_pair(target->GetGUID(), 1));
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectPeriodic += AuraEffectPeriodicFn(spell_biting_cold_AuraScript::HandleEffectPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
             }
@@ -964,7 +957,7 @@ class spell_biting_cold : public SpellScriptLoader
             TargetList listOfTargets;
         };
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const
         {
             return new spell_biting_cold_AuraScript();
         }
@@ -992,13 +985,13 @@ public:
                 caster->RemoveAuraFromStack(SPELL_BITING_COLD_TRIGGERED);
         }
 
-        void Register() override
+        void Register()
         {
             OnEffectPeriodic += AuraEffectPeriodicFn(spell_biting_cold_dot_AuraScript::HandleEffectPeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
         }
     };
 
-    AuraScript* GetAuraScript() const override
+    AuraScript* GetAuraScript() const
     {
         return new spell_biting_cold_dot_AuraScript();
     }

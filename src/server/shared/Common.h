@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,7 +20,7 @@
 #define TRINITYCORE_COMMON_H
 
 // config.h needs to be included 1st
-/// @todo this thingy looks like hack, but its not, need to
+// TODO this thingy looks like hack, but its not, need to
 // make separate header however, because It makes mess here.
 #ifdef HAVE_CONFIG_H
 // Remove Some things that we will define
@@ -93,7 +92,6 @@
 #include <ace/Guard_T.h>
 #include <ace/RW_Thread_Mutex.h>
 #include <ace/Thread_Mutex.h>
-#include <ace/OS_NS_time.h>
 
 #if PLATFORM == PLATFORM_WINDOWS
 #  include <ace/config-all.h>
@@ -151,12 +149,11 @@ enum TimeConstants
 
 enum AccountTypes
 {
-    SEC_PLAYER         = 0,
-    SEC_VIP            = 1,
-    SEC_MODERATOR      = 2,
-    SEC_GAMEMASTER     = 3,
-    SEC_ADMINISTRATOR  = 4,
-    SEC_CONSOLE        = 5                                  // must be always last in list, accounts must have less security level always also
+     SEC_PLAYER         = 0, 
+     SEC_MODERATOR      = 1, 
+     SEC_GAMEMASTER     = 2, 
+     SEC_ADMINISTRATOR  = 3, 
+     SEC_CONSOLE        = 4                                  // must be always last in list, accounts must have less security level always also
 };
 
 enum LocaleConstant
@@ -169,16 +166,13 @@ enum LocaleConstant
     LOCALE_zhTW = 5,
     LOCALE_esES = 6,
     LOCALE_esMX = 7,
-    LOCALE_ruRU = 8,
-    LOCALE_itIT = 9,
-    LOCALE_ptBR = 10,
-    LOCALE_ptPT = 11
+    LOCALE_ruRU = 8
 };
 
-const uint8 TOTAL_LOCALES = 12;
-#define DEFAULT_LOCALE LOCALE_enUS
+const uint8 TOTAL_LOCALES = 9;
+const LocaleConstant DEFAULT_LOCALE = LOCALE_enUS;
 
-#define MAX_LOCALES 11
+#define MAX_LOCALES 8
 #define MAX_ACCOUNT_TUTORIAL_VALUES 8
 
 extern char const* localeNames[TOTAL_LOCALES];
@@ -186,23 +180,6 @@ extern char const* localeNames[TOTAL_LOCALES];
 LocaleConstant GetLocaleByName(const std::string& name);
 
 typedef std::vector<std::string> StringVector;
-
-#if defined(__GNUC__)
-#pragma pack(1)
-#else
-#pragma pack(push, 1)
-#endif
-
-struct LocalizedString
-{
-    char const* Str[TOTAL_LOCALES];
-};
-
-#if defined(__GNUC__)
-#pragma pack()
-#else
-#pragma pack(pop)
-#endif
 
 // we always use stdlibc++ std::max/std::min, undefine some not C++ standard defines (Win API and some other platforms)
 #ifdef max

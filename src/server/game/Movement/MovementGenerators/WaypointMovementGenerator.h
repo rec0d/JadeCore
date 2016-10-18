@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -42,8 +42,8 @@ template<class T, class P>
 class PathMovementBase
 {
     public:
-        PathMovementBase() : i_path(NULL), i_currentNode(0) { }
-        virtual ~PathMovementBase() { };
+        PathMovementBase() : i_path(NULL), i_currentNode(0) {}
+        virtual ~PathMovementBase() {};
 
         // template pattern, not defined .. override required
         void LoadPath(T &);
@@ -63,7 +63,7 @@ class WaypointMovementGenerator<Creature> : public MovementGeneratorMedium< Crea
 {
     public:
         WaypointMovementGenerator(uint32 _path_id = 0, bool _repeating = true)
-            : i_nextMoveTime(0), m_isArrivalDone(false), path_id(_path_id), repeating(_repeating)  { }
+            : i_nextMoveTime(0), m_isArrivalDone(false), path_id(_path_id), repeating(_repeating)  {}
         ~WaypointMovementGenerator() { i_path = NULL; }
         void DoInitialize(Creature*);
         void DoFinalize(Creature*);

@@ -1,21 +1,19 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
- */
+* Copyright (C) 2011 - 2012 ArkCORE <http://www.arkania.net/>
+*
+* This program is free software; you can redistribute it and/or modify it
+* under the terms of the GNU General Public License as published by the
+* Free Software Foundation; either version 2 of the License, or (at your
+* option) any later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+* more details.
+*
+* You should have received a copy of the GNU General Public License along
+* with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include "ScriptPCH.h"
 #include "ScriptedEscortAI.h"
@@ -23,11 +21,9 @@
 #include "Player.h"
 #include "Creature.h"
 #include "Vehicle.h"
-#include "ScriptedCreature.h"
-#include "ScriptedGossip.h"
 #include "SpellScript.h"
-#include "SpellInfo.h"
-#include "ScriptMgr.h"
+#include "SpellAuraEffects.h"
+#include "SpellAuras.h"
 
 #define SAY_D_A "Ecrouabouille, what are you doing sitting there? You do not recognize the one who is lying?"
 #define SAY_D_B  "That's $ N! It is only thanks to $ he: she, if we still breath instead of being pieces of rind grids has Kezan."
@@ -77,7 +73,7 @@ public:
             start = false;
         }
 
-        void DoAction(int32 param)
+        void DoAction(const int32 param)
         {
             if (param == 1)
                 isEventInProgress = true;
@@ -104,7 +100,7 @@ public:
                 me->DespawnOrUnsummon();
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             if (!isEventInProgress)
             {
@@ -125,17 +121,17 @@ public:
                     switch (eventTalk)
                     {
                     case 0 :
-                        me->MonsterSay(SAY_D_A, LANG_UNIVERSAL, 0);
+                        me->MonsterSay(SAY_D_A, LANG_UNIVERSAL, player->GetGUID());
                         break;
                     case 1 :
-                        me->MonsterSay(SAY_D_B, LANG_UNIVERSAL, 0);
+                        me->MonsterSay(SAY_D_B, LANG_UNIVERSAL, player->GetGUID());
                         break;
                     case 2 :
                         if (Creature *c = me->FindNearestCreature(GIZMO, 10))
-                            c->MonsterSay(SAY_D_C, LANG_UNIVERSAL, 0);
+                            c->MonsterSay(SAY_D_C, LANG_UNIVERSAL, player->GetGUID());
                         break;
                     case 3 :
-                        me->MonsterSay(SAY_D_D, LANG_UNIVERSAL, 0);
+                        me->MonsterSay(SAY_D_D, LANG_UNIVERSAL, player->GetGUID());
                         me->CastSpell(player, 54732, true);
                         break;
                     default :
@@ -158,20 +154,20 @@ public:
                 switch(eventTalk2)
                 {
                 case 0 :
-                    me->MonsterSay(SAY_D_E, LANG_UNIVERSAL,0);
+                    me->MonsterSay(SAY_D_E, LANG_UNIVERSAL, player->GetGUID());
                     me->CastSpell(player, 54732, true);
                     player->RemoveAurasDueToSpell(SPELL_DEAD_STILL);
 					player->SetPhaseMask(1, true);
                     break;
                 case 1 :
-                    me->MonsterSay(SAY_D_F, LANG_UNIVERSAL, 0);
+                    me->MonsterSay(SAY_D_F, LANG_UNIVERSAL, player->GetGUID());
                     break;
                 case 2 :
-                    me->MonsterSay(SAY_D_G, LANG_UNIVERSAL, 0);
+                    me->MonsterSay(SAY_D_G, LANG_UNIVERSAL, player->GetGUID());
                     break;
                 case 3 :
                     me->CastSpell(player, 54732, true);
-                    me->MonsterSay(SAY_D_H, LANG_UNIVERSAL, 0);
+                    me->MonsterSay(SAY_D_H, LANG_UNIVERSAL, player->GetGUID());
                     mui_talk2 = 2000;
                     break;
                 case 4 :
@@ -267,7 +263,7 @@ public:
             case 18:
                 if (Player *player = me->FindNearestPlayer(20))
                 {
-                    me->MonsterSay("It will suffice for now. I can go it alone. Thank you for escorting me, $ N.", LANG_UNIVERSAL,0);
+                    me->MonsterSay("It will suffice for now. I can go it alone. Thank you for escorting me, $ N.", LANG_UNIVERSAL, player->GetGUID());
                     player->KilledMonsterCredit(35816, 0);
                 }
                 else
@@ -403,7 +399,7 @@ public:
             isRandomMoving = false;
         }
 
-        void DoAction(int32 param)
+        void DoAction(const int32 param)
         {
             isActive = false;
             canCastRocket = false;
@@ -443,7 +439,7 @@ public:
                 me->CastSpell(me, 8858, true);
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             if (!isActive)
                 return;
@@ -538,7 +534,7 @@ public:
                 c->ToCreature()->AI()->Talk(irand(0, 7));
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
         }
     };
@@ -629,7 +625,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             npc_escortAI::UpdateAI(diff);
         }
@@ -655,7 +651,7 @@ public:
             {
                 player->CastCustomSpell(VEHICLE_SPELL_RIDE_HARDCODED, SPELLVALUE_BASE_POINT0, 1, t, false);
                 CAST_AI(npc_escortAI, (t->AI()))->Start(false, true, player->GetGUID(), _Quest);
-                t->AI()->Talk(SAY_GYRO, 0);
+                t->AI()->Talk(SAY_GYRO, player->GetGUID());
             }
         }
         return true;
@@ -721,7 +717,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             npc_escortAI::UpdateAI(diff);
         }
@@ -790,7 +786,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             npc_escortAI::UpdateAI(diff);
         }
@@ -910,7 +906,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             npc_escortAI::UpdateAI(diff);
         }
@@ -967,7 +963,7 @@ public:
             cnt = 6;
         }
 
-        void DoAction(int32 param)
+        void DoAction(const int32 param)
         {
         }
 
@@ -990,7 +986,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             if (mui_talk <= diff)
             {
@@ -1003,8 +999,7 @@ public:
                         phaseId.insert(180);
                         p->ToPlayer()->CastSpell(p->ToPlayer(), 68750, true);
                         p->ToPlayer()->KilledMonsterCredit(38024, 1);
-						std::set<uint32> worldMapArea;
-						p->ToPlayer()->GetSession()->SendSetPhaseShift(phaseId, terrainswap, worldMapArea);
+                        p->ToPlayer()->GetSession()->SendSetPhaseShift(phaseId, terrainswap);
                     }
                 me->DespawnOrUnsummon();
                 mui_talk = 6000;
@@ -1033,7 +1028,7 @@ public:
             me->GetMotionMaster()->MoveRandom(10.0f);
         }
 
-        void DoAction(int32 param)
+        void DoAction(const int32 param)
         {
             me->CastSpell(me, 67919, true);
         }
@@ -1054,7 +1049,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
         }
     };
@@ -1144,7 +1139,7 @@ public:
             }
         }
 
-        void DoAction(int32 param)
+        void DoAction(const int32 param)
         {
             if (param == 1)
             {
@@ -1157,7 +1152,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             DoMeleeAttackIfReady();
         }
@@ -1176,7 +1171,7 @@ public:
 
     bool operator()(Unit* unit)
     {
-		if (!unit->IsAlive())
+        if (!unit->isAlive())
             return false;
 
         switch (unit->GetEntry())
@@ -1247,7 +1242,7 @@ public:
             me->GetMotionMaster()->MoveRandom(5);
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             if (ui_findPlayer <= diff)
             {
@@ -1305,7 +1300,7 @@ public:
 
     bool operator()(Unit* unit)
     {
-		if (!unit->IsAlive())
+        if (!unit->isAlive())
             return false;
 
         switch (unit->GetEntry())
@@ -1395,7 +1390,7 @@ public:
             if (Player *player =  Unit::GetPlayer(*me, playerGUID))
             {
                 me->GetMotionMaster()->MoveFollow(player, 1.0f, 1.0f);
-                me->MonsterSay(QUEST_RESET_CRACK, LANG_UNIVERSAL, 0);
+                me->MonsterSay(QUEST_RESET_CRACK, LANG_UNIVERSAL, player->GetGUID());
             }
             else
                 me->DespawnOrUnsummon();
@@ -1407,7 +1402,7 @@ public:
             event_p = 0;
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             if (!start)
             {
@@ -1417,7 +1412,7 @@ public:
                     {
                         if (Player *player =  Unit::GetPlayer(*me, playerGUID))
                         {
-                            me->MonsterSay(CRACK_PROVOC, LANG_UNIVERSAL, 0);
+                            me->MonsterSay(CRACK_PROVOC, LANG_UNIVERSAL, player->GetGUID());
                             if (naga = player->SummonCreature(38448, zone->GetPositionX(), zone->GetPositionY(), zone->GetPositionZ() + 2, zone->GetOrientation(), TEMPSUMMON_CORPSE_TIMED_DESPAWN, 60*IN_MILLISECONDS))
                                 naga->setFaction(35);
                         }
@@ -1439,23 +1434,23 @@ public:
                     {
                     case 0 :
                         if (Player *player =  Unit::GetPlayer(*me, playerGUID))
-                            naga->MonsterYell(NAGA_SAY_A, LANG_UNIVERSAL, 0);
+                            naga->MonsterYell(NAGA_SAY_A, LANG_UNIVERSAL, player->GetGUID());
                         break;
                     case 1 :
                         if (Player *player =  Unit::GetPlayer(*me, playerGUID))
-                            naga->MonsterYell(NAGA_SAY_B, LANG_UNIVERSAL, 0);
+                            naga->MonsterYell(NAGA_SAY_B, LANG_UNIVERSAL, player->GetGUID());
                         break;
                     case 2 :
                         if (Player *player =  Unit::GetPlayer(*me, playerGUID))
-                            naga->MonsterYell(NAGA_SAY_C, LANG_UNIVERSAL, 0);
+                            naga->MonsterYell(NAGA_SAY_C, LANG_UNIVERSAL, player->GetGUID());
                         break;
                     case 3 :
                         if (Player *player =  Unit::GetPlayer(*me, playerGUID))
-                            naga->MonsterYell(NAGA_SAY_D, LANG_UNIVERSAL, 0);
+                            naga->MonsterYell(NAGA_SAY_D, LANG_UNIVERSAL, player->GetGUID());
                         break;
                     default :
                         if (Player *player =  Unit::GetPlayer(*me, playerGUID))
-                            me->MonsterYell(CRACK_EVADE, LANG_UNIVERSAL, 0);
+                            me->MonsterYell(CRACK_EVADE, LANG_UNIVERSAL, player->GetGUID());
                         mui_event = 2000;
                         event = false;
                         combats = true;
@@ -1536,7 +1531,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             npc_escortAI::UpdateAI(diff);
         }
@@ -1606,7 +1601,7 @@ public:
                 caster->Kill(me);
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return ;
@@ -1737,7 +1732,7 @@ public:
             {
                 case 1:
                     if (Player *player = me->FindNearestPlayer(10))
-                        chipie->MonsterSay("Hang on $ N! We need makes a clearance here, NOW!", LANG_UNIVERSAL, 0);
+                        chipie->MonsterSay("Hang on $ N! We need makes a clearance here, NOW!", LANG_UNIVERSAL, player->GetGUID());
                     break;
                 case 4 :
                     chipie->MonsterSay("OH MY GOD! BEHIND YOU!", LANG_UNIVERSAL, 0);
@@ -1780,7 +1775,7 @@ public:
         {
         }
 
-        void UpdateAI( uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             npc_escortAI::UpdateAI(diff);
         }
@@ -1815,7 +1810,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             if (mui_soufle <= diff)
             {
@@ -1863,7 +1858,7 @@ public:
 
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             if (_a <= diff)
             {
@@ -1914,7 +1909,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             if (mui_soufle <= diff)
             {
@@ -2036,7 +2031,7 @@ public:
         {
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             npc_escortAI::UpdateAI(diff);
         }
@@ -2172,7 +2167,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 diff)
+        void UpdateAI(const uint32 diff)
         {
             if (!isEventInProgress)
                 return;
@@ -2315,7 +2310,7 @@ public:
         if (!object)
             return true;
         Unit* unit = object->ToUnit();
-		if (!unit || !unit->IsAlive() || unit->GetTypeId() == TYPEID_PLAYER)
+        if (!unit || !unit->isAlive() || unit->GetTypeId() == TYPEID_PLAYER)
             return true;
 
         if (unit->ToCreature())
@@ -2364,6 +2359,22 @@ public:
     }
 };
 
+// 288 cinematic + spell to org
+class npc_sassy_handwrench : public CreatureScript
+{
+public:
+	npc_sassy_handwrench() : CreatureScript("npc_sassy_handwrench") { }
+
+	bool OnGossipHello(Player* player, Creature* creature) override
+	{
+			// 1440.35 -5014.26 12.2184 1.75891  orgrimmar
+			player->TeleportTo(1, 1440.35f, -5014.26f, 12.2184f, 1.75891f);
+			// cinematic id is 288
+			player->SendMovieStart(288);
+		return true;
+	}
+};
+
 void AddSC_lost_isle()
 {
     new npc_Zapnozzle();
@@ -2405,4 +2416,5 @@ void AddSC_lost_isle()
     new npc_grilly_2();
     new npc_Prince();
     new npc_boot();
+	new npc_sassy_handwrench();
 }

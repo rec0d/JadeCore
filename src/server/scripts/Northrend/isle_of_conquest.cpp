@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -29,13 +27,13 @@
 class npc_four_car_garage : public CreatureScript
 {
     public:
-        npc_four_car_garage() : CreatureScript("npc_four_car_garage") { }
+        npc_four_car_garage() : CreatureScript("npc_four_car_garage") {}
 
         struct npc_four_car_garageAI : public NullCreatureAI
         {
             npc_four_car_garageAI(Creature* creature) : NullCreatureAI(creature) { }
 
-            void PassengerBoarded(Unit* who, int8 /*seatId*/, bool apply) override
+            void PassengerBoarded(Unit* who, int8 /*seatId*/, bool apply)
             {
                 if (apply)
                 {
@@ -66,7 +64,7 @@ class npc_four_car_garage : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new npc_four_car_garageAI(creature);
         }

@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,7 +23,6 @@ Category: commandscripts
 EndScriptData */
 
 #include "AchievementMgr.h"
-#include "Guild.h"
 #include "Chat.h"
 #include "Language.h"
 #include "Player.h"
@@ -40,13 +37,13 @@ public:
     {
         static ChatCommand achievementCommandTable[] =
         {
-            { "add", rbac::RBAC_PERM_COMMAND_ACHIEVEMENT_ADD, false, &HandleAchievementAddCommand, "", NULL },
-            { NULL, 0, false, NULL, "", NULL }
+            { "add",            SEC_ADMINISTRATOR,  false,  &HandleAchievementAddCommand,      "", NULL },
+            { NULL,             0,                  false,  NULL,                              "", NULL }
         };
         static ChatCommand commandTable[] =
         {
-            { "achievement", rbac::RBAC_PERM_COMMAND_ACHIEVEMENT,  false, NULL, "", achievementCommandTable },
-            { NULL, 0, false, NULL, "", NULL }
+            { "achievement",    SEC_ADMINISTRATOR,  false, NULL,            "", achievementCommandTable },
+            { NULL,             0,                  false, NULL,                               "", NULL }
         };
         return commandTable;
     }
@@ -74,14 +71,7 @@ public:
         }
 
         if (AchievementEntry const* achievementEntry = sAchievementMgr->GetAchievement(achievementId))
-        {
-            if (achievementEntry->flags & ACHIEVEMENT_FLAG_GUILD)
-            {
-                if (Guild* guild = target->GetGuild())
-                    guild->GetAchievementMgr().CompletedAchievement(achievementEntry, target);
-            } else
-                target->CompletedAchievement(achievementEntry);
-        }
+            target->CompletedAchievement(achievementEntry);
 
         return true;
     }

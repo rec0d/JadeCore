@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -24,6 +24,7 @@
 #include <ace/Atomic_Op.h>
 
 #include "DBCStores.h"
+#include "Player.h"
 #include "SharedDefines.h"
 #include "World.h"
 #include "Weather.h"
@@ -68,9 +69,9 @@ struct OutdoorPvPData;
 
 #define VISIBLE_RANGE       166.0f                          //MAX visible range (size of grid)
 
-
+void DoScriptText(int32 textEntry, WorldObject* pSource, Unit* target = NULL);
 /*
-    @todo Add more script type classes.
+    TODO: Add more script type classes.
 
     MailScript
     SessionScript
@@ -194,7 +195,7 @@ class SpellScriptLoader : public ScriptObject
 
     public:
 
-        bool IsDatabaseBound() const final { return true; }
+        bool IsDatabaseBound() const { return true; }
 
         // Should return a fully valid SpellScript pointer.
         virtual SpellScript* GetSpellScript() const { return NULL; }
@@ -310,7 +311,7 @@ template<class TMap> class MapScript : public UpdatableScript<TMap>
             : _mapEntry(sMapStore.LookupEntry(mapId))
         {
             if (!_mapEntry)
-                TC_LOG_ERROR("scripts", "Invalid MapScript for %u; no such map ID.", mapId);
+                sLog->outError(LOG_FILTER_TSCR, "Invalid MapScript for %u; no such map ID.", mapId);
         }
 
     public:
@@ -335,6 +336,9 @@ template<class TMap> class MapScript : public UpdatableScript<TMap>
 
         // Called when a player leaves the map.
         virtual void OnPlayerLeave(TMap* /*map*/, Player* /*player*/) { }
+
+        // Called on every map update tick.
+        virtual void OnUpdate(TMap* /*map*/, uint32 /*diff*/) { }
 };
 
 class WorldMapScript : public ScriptObject, public MapScript<Map>
@@ -352,7 +356,7 @@ class InstanceMapScript : public ScriptObject, public MapScript<InstanceMap>
 
     public:
 
-        bool IsDatabaseBound() const final { return true; }
+        bool IsDatabaseBound() const { return true; }
 
         // Gets an InstanceScript object for this instance.
         virtual InstanceScript* GetInstanceScript(InstanceMap* /*map*/) const { return NULL; }
@@ -373,7 +377,7 @@ class ItemScript : public ScriptObject
 
     public:
 
-        bool IsDatabaseBound() const final { return true; }
+        bool IsDatabaseBound() const { return true; }
 
         // Called when a dummy spell effect is triggered on the item.
         virtual bool OnDummyEffect(Unit* /*caster*/, uint32 /*spellId*/, SpellEffIndex /*effIndex*/, Item* /*target*/) { return false; }
@@ -395,12 +399,6 @@ class UnitScript : public ScriptObject
         UnitScript(const char* name, bool addToScripts = true);
 
     public:
-        // Called when a unit deals healing to another unit
-        virtual void OnHeal(Unit* /*healer*/, Unit* /*reciever*/, uint32& /*gain*/) { }
-
-        // Called when a unit deals damage to another unit
-        virtual void OnDamage(Unit* /*attacker*/, Unit* /*victim*/, uint32& /*damage*/) { }
-
         // Called when DoT's Tick Damage is being Dealt
         virtual void ModifyPeriodicDamageAurasTick(Unit* /*target*/, Unit* /*attacker*/, uint32& /*damage*/) { }
 
@@ -419,7 +417,7 @@ class CreatureScript : public UnitScript, public UpdatableScript<Creature>
 
     public:
 
-        bool IsDatabaseBound() const final { return true; }
+        bool IsDatabaseBound() const { return true; }
 
         // Called when a dummy spell effect is triggered on the creature.
         virtual bool OnDummyEffect(Unit* /*caster*/, uint32 /*spellId*/, SpellEffIndex /*effIndex*/, Creature* /*target*/) { return false; }
@@ -460,7 +458,7 @@ class GameObjectScript : public ScriptObject, public UpdatableScript<GameObject>
 
     public:
 
-        bool IsDatabaseBound() const final { return true; }
+        bool IsDatabaseBound() const { return true; }
 
         // Called when a dummy spell effect is triggered on the gameobject.
         virtual bool OnDummyEffect(Unit* /*caster*/, uint32 /*spellId*/, SpellEffIndex /*effIndex*/, GameObject* /*target*/) { return false; }
@@ -507,7 +505,7 @@ class AreaTriggerScript : public ScriptObject
 
     public:
 
-        bool IsDatabaseBound() const final { return true; }
+        bool IsDatabaseBound() const { return true; }
 
         // Called when the area trigger is activated by a player.
         virtual bool OnTrigger(Player* /*player*/, AreaTriggerEntry const* /*trigger*/) { return false; }
@@ -521,7 +519,7 @@ class BattlegroundScript : public ScriptObject
 
     public:
 
-        bool IsDatabaseBound() const final { return true; }
+        bool IsDatabaseBound() const { return true; }
 
         // Should return a fully valid Battleground object for the type ID.
         virtual Battleground* GetBattleground() const = 0;
@@ -535,7 +533,7 @@ class OutdoorPvPScript : public ScriptObject
 
     public:
 
-        bool IsDatabaseBound() const final { return true; }
+        bool IsDatabaseBound() const { return true; }
 
         // Should return a fully valid OutdoorPvP object for the type ID.
         virtual OutdoorPvP* GetOutdoorPvP() const = 0;
@@ -561,7 +559,7 @@ class WeatherScript : public ScriptObject, public UpdatableScript<Weather>
 
     public:
 
-        bool IsDatabaseBound() const final { return true; }
+        bool IsDatabaseBound() const { return true; }
 
         // Called when the weather changes in the zone this script is associated with.
         virtual void OnChange(Weather* /*weather*/, WeatherState /*state*/, float /*grade*/) { }
@@ -596,7 +594,7 @@ class ConditionScript : public ScriptObject
 
     public:
 
-        bool IsDatabaseBound() const final { return true; }
+        bool IsDatabaseBound() const { return true; }
 
         // Called when a single condition is checked for a player.
         virtual bool OnConditionCheck(Condition* /*condition*/, ConditionSourceInfo& /*sourceInfo*/) { return true; }
@@ -644,7 +642,7 @@ class TransportScript : public ScriptObject, public UpdatableScript<Transport>
 
     public:
 
-        bool IsDatabaseBound() const final { return true; }
+        bool IsDatabaseBound() const { return true; }
 
         // Called when a player boards the transport.
         virtual void OnAddPassenger(Transport* /*transport*/, Player* /*player*/) { }
@@ -667,7 +665,7 @@ class AchievementCriteriaScript : public ScriptObject
 
     public:
 
-        bool IsDatabaseBound() const final { return true; }
+        bool IsDatabaseBound() const { return true; }
 
         // Called when an additional criteria is checked.
         virtual bool OnCheck(Player* source, Unit* target) = 0;
@@ -690,8 +688,8 @@ class PlayerScript : public UnitScript
         // Called when a player is killed by a creature
         virtual void OnPlayerKilledByCreature(Creature* /*killer*/, Player* /*killed*/) { }
 
-        // Called when a player's level changes (after the level is applied)
-        virtual void OnLevelChanged(Player* /*player*/, uint8 /*oldLevel*/) { }
+        // Called when a player's level changes (right before the level is applied)
+        virtual void OnLevelChanged(Player* /*player*/, uint8 /*newLevel*/) { }
 
         // Called when a player's free talent points change (right before the change is applied)
         virtual void OnFreeTalentPointsChanged(Player* /*player*/, uint32 /*points*/) { }
@@ -757,8 +755,10 @@ class PlayerScript : public UnitScript
         // Called when a player switches to a new zone
         virtual void OnUpdateZone(Player* /*player*/, uint32 /*newZone*/, uint32 /*newArea*/) { }
 
-        // Called when a player changes to a new map (after moving to new map)
-        virtual void OnMapChanged(Player* /*player*/) { }
+        virtual void OnQuestReward(Player* player, Quest const* quest) { }
+
+        virtual void OnQuestComplete(Player* player, Quest const* quest) { }
+
 };
 
 class GuildScript : public ScriptObject
@@ -769,7 +769,7 @@ class GuildScript : public ScriptObject
 
     public:
 
-        bool IsDatabaseBound() const final { return false; }
+        bool IsDatabaseBound() const { return false; }
 
         // Called when a member is added to the guild.
         virtual void OnAddMember(Guild* /*guild*/, Player* /*player*/, uint8& /*plRank*/) { }
@@ -812,7 +812,7 @@ class GroupScript : public ScriptObject
 
     public:
 
-        bool IsDatabaseBound() const final { return false; }
+        bool IsDatabaseBound() const { return false; }
 
         // Called when a member is added to a group.
         virtual void OnAddMember(Group* /*group*/, uint64 /*guid*/) { }
@@ -1033,6 +1033,8 @@ class ScriptMgr
         void OnPlayerSave(Player* player);
         void OnPlayerBindToInstance(Player* player, Difficulty difficulty, uint32 mapid, bool permanent);
         void OnPlayerUpdateZone(Player* player, uint32 newZone, uint32 newArea);
+        void OnQuestReward(Player* player, Quest const* quest);
+        void OnQuestComplete(Player* player, Quest const* quest);
 
     public: /* GuildScript */
 
@@ -1059,8 +1061,6 @@ class ScriptMgr
 
     public: /* UnitScript */
 
-        void OnHeal(Unit* healer, Unit* reciever, uint32& gain);
-        void OnDamage(Unit* attacker, Unit* victim, uint32& damage);
         void ModifyPeriodicDamageAurasTick(Unit* target, Unit* attacker, uint32& damage);
         void ModifyMeleeDamage(Unit* target, Unit* attacker, uint32& damage);
         void ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& damage);

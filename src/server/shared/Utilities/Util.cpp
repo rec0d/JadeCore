@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -34,7 +34,7 @@ int32 irand(int32 min, int32 max)
 
 uint32 urand(uint32 min, uint32 max)
 {
-    ASSERT(max >= min);
+    //ASSERT(max >= min);
     return sfmtRand->URandom(min, max);
 }
 
@@ -215,8 +215,7 @@ uint32 TimeStringToSecs(const std::string& timestring)
 
 std::string TimeToTimestampStr(time_t t)
 {
-    tm aTm;
-    ACE_OS::localtime_r(&t, &aTm);
+    tm* aTm = localtime(&t);
     //       YYYY   year
     //       MM     month (2 digits 01-12)
     //       DD     day (2 digits 01-31)
@@ -224,7 +223,7 @@ std::string TimeToTimestampStr(time_t t)
     //       MM     minutes (2 digits 00-59)
     //       SS     seconds (2 digits 00-59)
     char buf[20];
-    snprintf(buf, 20, "%04d-%02d-%02d_%02d-%02d-%02d", aTm.tm_year+1900, aTm.tm_mon+1, aTm.tm_mday, aTm.tm_hour, aTm.tm_min, aTm.tm_sec);
+    snprintf(buf, 20, "%04d-%02d-%02d_%02d-%02d-%02d", aTm->tm_year+1900, aTm->tm_mon+1, aTm->tm_mday, aTm->tm_hour, aTm->tm_min, aTm->tm_sec);
     return std::string(buf);
 }
 
@@ -510,9 +509,6 @@ void vutf8printf(FILE* out, const char *str, va_list* ap)
     wchar_t wtemp_buf[32*1024];
 
     size_t temp_len = vsnprintf(temp_buf, 32*1024, str, *ap);
-    //vsnprintf returns -1 if the buffer is too small
-    if (temp_len == size_t(-1))
-        temp_len = 32*1024-1;
 
     size_t wtemp_len = 32*1024-1;
     Utf8toWStr(temp_buf, temp_len, wtemp_buf, wtemp_len);

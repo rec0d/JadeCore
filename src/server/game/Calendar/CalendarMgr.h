@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -167,7 +166,7 @@ struct CalendarInvite
         void SetStatusTime(time_t statusTime) { _statusTime = statusTime; }
         time_t GetStatusTime() const { return _statusTime; }
 
-        void SetText(const std::string& text) { _text = text; }
+        void SetText(std::string text) { _text = text; }
         std::string GetText() const { return _text; }
 
         void SetStatus(CalendarInviteStatus status) { _status = status; }
@@ -224,10 +223,10 @@ struct CalendarEvent
         void SetGuildId(uint32 guildId) { _guildId = guildId; }
         uint32 GetGuildId() const { return _guildId; }
 
-        void SetTitle(const std::string& title) { _title = title; }
+        void SetTitle(std::string title) { _title = title; }
         std::string GetTitle() const { return _title; }
 
-        void SetDescription(const std::string& description) { _description = description; }
+        void SetDescription(std::string description) { _description = description; }
         std::string GetDescription() const { return _description; }
 
         void SetType(CalendarEventType type) { _type = type; }
@@ -263,9 +262,9 @@ struct CalendarEvent
         std::string _title;
         std::string _description;
 };
-typedef std::vector<CalendarInvite*> CalendarInviteStore;
+
 typedef std::set<CalendarEvent*> CalendarEventStore;
-typedef std::map<uint64 /* eventId */, CalendarInviteStore > CalendarEventInviteStore;
+typedef std::map<uint64 /* eventId */, std::vector<CalendarInvite*> > CalendarInviteStore;
 
 class CalendarMgr
 {
@@ -276,7 +275,7 @@ class CalendarMgr
         ~CalendarMgr();
 
         CalendarEventStore _events;
-        CalendarEventInviteStore _invites;
+        CalendarInviteStore _invites;
 
         std::deque<uint64> _freeEventIds;
         std::deque<uint64> _freeInviteIds;
@@ -286,14 +285,14 @@ class CalendarMgr
     public:
         void LoadFromDB();
 
-        CalendarEvent* GetEvent(uint64 eventId) const;
+        CalendarEvent* GetEvent(uint64 eventId);
         CalendarEventStore const& GetEvents() const { return _events; }
         CalendarEventStore GetPlayerEvents(uint64 guid);
 
-        CalendarInvite* GetInvite(uint64 inviteId) const;
-        CalendarEventInviteStore const& GetInvites() const { return _invites; }
-        CalendarInviteStore const& GetEventInvites(uint64 eventId);
-        CalendarInviteStore GetPlayerInvites(uint64 guid);
+        CalendarInvite* GetInvite(uint64 inviteId);
+        CalendarInviteStore const& GetInvites() const { return _invites; }
+        std::vector<CalendarInvite*> GetEventInvites(uint64 eventId);
+        std::vector<CalendarInvite*> GetPlayerInvites(uint64 guid);
 
         void FreeEventId(uint64 id);
         uint64 GetFreeEventId();

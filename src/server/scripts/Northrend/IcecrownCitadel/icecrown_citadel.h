@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -58,7 +56,6 @@ enum SharedSpells
     SPELL_FROSTMOURNE_TELEPORT_VISUAL   = 73078,
 
     // Shadowmourne questline
-    SPELL_UNSATED_CRAVING               = 71168,
     SPELL_SHADOWS_FATE                  = 71169
 };
 
@@ -185,14 +182,12 @@ enum CreaturesIds
     // Festergut
     NPC_FESTERGUT                               = 36626,
     NPC_GAS_DUMMY                               = 36659,
-    NPC_MALLEABLE_OOZE_STALKER                  = 38556,
 
     // Rotface
     NPC_ROTFACE                                 = 36627,
     NPC_OOZE_SPRAY_STALKER                      = 37986,
     NPC_PUDDLE_STALKER                          = 37013,
     NPC_UNSTABLE_EXPLOSION_STALKER              = 38107,
-    NPC_VILE_GAS_STALKER                        = 38548,
 
     // Professor Putricide
     NPC_PROFESSOR_PUTRICIDE                     = 36678,
@@ -476,7 +471,7 @@ class spell_trigger_spell_from_caster : public SpellScriptLoader
         public:
             spell_trigger_spell_from_caster_SpellScript(uint32 triggerId) : SpellScript(), _triggerId(triggerId) { }
 
-            bool Validate(SpellInfo const* /*spell*/) override
+            bool Validate(SpellInfo const* /*spell*/)
             {
                 if (!sSpellMgr->GetSpellInfo(_triggerId))
                     return false;
@@ -488,7 +483,7 @@ class spell_trigger_spell_from_caster : public SpellScriptLoader
                 GetCaster()->CastSpell(GetHitUnit(), _triggerId, true);
             }
 
-            void Register() override
+            void Register()
             {
                 AfterHit += SpellHitFn(spell_trigger_spell_from_caster_SpellScript::HandleTrigger);
             }
@@ -496,7 +491,7 @@ class spell_trigger_spell_from_caster : public SpellScriptLoader
             uint32 _triggerId;
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_trigger_spell_from_caster_SpellScript(_triggerId);
         }

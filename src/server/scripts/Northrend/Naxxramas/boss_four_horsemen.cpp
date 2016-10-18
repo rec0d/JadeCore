@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -65,7 +62,7 @@ const Position WaypointPositions[12] =
     {2517.8f, -2896.6f, 241.28f, 2.315f},
 };
 
-const uint32 NPC_HORSEMEN[]     =   {16064, 16065, 30549, 16063};
+const uint32 MOB_HORSEMEN[]     =   {16064, 16065, 30549, 16063};
 const uint32 SPELL_MARK[]       =   {28832, 28833, 28834, 28835};
 #define SPELL_PRIMARY(i)            RAID_MODE(SPELL_PRIMARY_N[i], SPELL_PRIMARY_H[i])
 const uint32 SPELL_PRIMARY_N[]  =   {28884, 28863, 28882, 28883};
@@ -90,9 +87,9 @@ class boss_four_horsemen : public CreatureScript
 public:
     boss_four_horsemen() : CreatureScript("boss_four_horsemen") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_four_horsemenAI(creature);
+        return new boss_four_horsemenAI (creature);
     }
 
     struct boss_four_horsemenAI : public BossAI
@@ -101,7 +98,7 @@ public:
         {
             id = Horsemen(0);
             for (uint8 i = 0; i < 4; ++i)
-                if (me->GetEntry() == NPC_HORSEMEN[i])
+                if (me->GetEntry() == MOB_HORSEMEN[i])
                     id = Horsemen(i);
             caster = (id == HORSEMEN_LADY || id == HORSEMEN_SIR);
             encounterActionReset = false;
@@ -119,7 +116,7 @@ public:
         bool encounterActionReset;
         bool doDelayPunish;
 
-        void Reset() override
+        void Reset()
         {
             if (!encounterActionReset)
                 DoEncounteraction(NULL, false, true, false);
@@ -169,16 +166,16 @@ public:
                 {
                     if (instance->GetBossState(BOSS_HORSEMEN) != NOT_STARTED)
                     {
-                        if (!Thane->IsAlive())
+                        if (!Thane->isAlive())
                             Thane->Respawn();
 
-                        if (!Lady->IsAlive())
+                        if (!Lady->isAlive())
                             Lady->Respawn();
 
-                        if (!Baron->IsAlive())
+                        if (!Baron->isAlive())
                             Baron->Respawn();
 
-                        if (!Sir->IsAlive())
+                        if (!Sir->isAlive())
                             Sir->Respawn();
 
                         CAST_AI(boss_four_horsemen::boss_four_horsemenAI, Thane->AI())->encounterActionReset = true;
@@ -194,7 +191,7 @@ public:
                 }
 
                 if (checkAllDead)
-                    return !Thane->IsAlive() && !Lady->IsAlive() && !Baron->IsAlive() && !Sir->IsAlive();
+                    return !Thane->isAlive() && !Lady->isAlive() && !Baron->isAlive() && !Sir->isAlive();
             }
             return false;
         }
@@ -223,7 +220,7 @@ public:
             }
         }
 
-        void MovementInform(uint32 type, uint32 id) override
+        void MovementInform(uint32 type, uint32 id)
         {
             if (type != POINT_MOTION_TYPE)
                 return;
@@ -266,15 +263,14 @@ public:
             }
         }
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
             BossAI::MoveInLineOfSight(who);
             if (caster)
                 SelectNearestTarget(who);
         }
 
-        void AttackStart(Unit* who) override
+        void AttackStart(Unit* who)
         {
             if (!movementCompleted && !movementStarted)
             {
@@ -293,13 +289,13 @@ public:
             }
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             if (!(rand()%5))
                 Talk(SAY_SLAY);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             events.Reset();
             summons.DespawnAll();
@@ -320,7 +316,7 @@ public:
             Talk(SAY_DEATH);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             _EnterCombat();
             Talk(SAY_AGGRO);
@@ -330,7 +326,7 @@ public:
             events.ScheduleEvent(EVENT_BERSERK, 15*100*1000);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (nextWP && movementStarted && !movementCompleted && !nextMovementStarted)
             {
@@ -439,13 +435,13 @@ class spell_four_horsemen_mark : public SpellScriptLoader
                 }
             }
 
-            void Register() override
+            void Register()
             {
                 AfterEffectApply += AuraEffectApplyFn(spell_four_horsemen_mark_AuraScript::OnApply, EFFECT_0, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL_OR_REAPPLY_MASK);
             }
         };
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const
         {
             return new spell_four_horsemen_mark_AuraScript();
         }

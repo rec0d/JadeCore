@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,7 +25,7 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "deadmines.h"
 
-enum Spels
+enum eSpels
 {
     SPELL_TRASH             = 3391,
     SPELL_SMITE_STOMP       = 6432,
@@ -45,9 +43,9 @@ class boss_mr_smite : public CreatureScript
 public:
     boss_mr_smite() : CreatureScript("boss_mr_smite") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_mr_smiteAI(creature);
+        return new boss_mr_smiteAI (creature);
     }
 
     struct boss_mr_smiteAI : public ScriptedAI
@@ -68,7 +66,7 @@ public:
         uint32 uiPhase;
         uint32 uiTimer;
 
-        void Reset() override
+        void Reset()
         {
             uiTrashTimer = urand(5000, 9000);
             uiSlamTimer = 9000;
@@ -82,7 +80,7 @@ public:
             SetEquipmentSlots(false, EQUIP_SWORD, EQUIP_UNEQUIP, EQUIP_NO_CHANGE);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
            Talk(SAY_AGGRO);
         }
@@ -96,7 +94,7 @@ public:
                 return true;
         }
 
-        void UpdateAI(uint32 uiDiff) override
+        void UpdateAI(uint32 const uiDiff)
         {
             if (!UpdateVictim())
                 return;
@@ -129,12 +127,12 @@ public:
                 ++uiHealth;
                 DoCastAOE(SPELL_SMITE_STOMP, false);
                 SetCombatMovement(false);
-                if (instance)
+                /*                if (instance)
                     if (GameObject* go = GameObject::GetGameObject(*me, instance->GetData64(DATA_SMITE_CHEST)))
                     {
                         me->GetMotionMaster()->Clear();
                         me->GetMotionMaster()->MovePoint(1, go->GetPositionX() - 3.0f, go->GetPositionY(), go->GetPositionZ());
-                    }
+                        }*/
             }
 
             if (uiPhase)
@@ -168,7 +166,7 @@ public:
             DoMeleeAttackIfReady();
         }
 
-        void MovementInform(uint32 uiType, uint32 /*uiId*/) override
+        void MovementInform(uint32 uiType, uint32 /*uiId*/)
         {
             if (uiType != POINT_MOTION_TYPE)
                 return;

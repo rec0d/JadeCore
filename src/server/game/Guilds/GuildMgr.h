@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -30,10 +29,12 @@ private:
     ~GuildMgr();
 
 public:
+    typedef UNORDERED_MAP<uint32, Guild*> GuildContainer;
+
     Guild* GetGuildByLeader(uint64 guid) const;
     Guild* GetGuildById(uint32 guildId) const;
     Guild* GetGuildByGuid(uint64 guid) const;
-    Guild* GetGuildByName(std::string const& guildName) const;
+    Guild* GetGuildByName(const std::string& guildName) const;
     std::string GetGuildNameById(uint32 guildId) const;
 
     void LoadGuildXpForLevel();
@@ -54,8 +55,8 @@ public:
     std::vector<GuildReward> const& GetGuildRewards() const { return GuildRewards; }
 
     void ResetTimes(bool week);
+	void ResetDailyXPCap();
 protected:
-    typedef UNORDERED_MAP<uint32, Guild*> GuildContainer;
     uint32 NextGuildId;
     GuildContainer GuildStore;
     std::vector<uint64> GuildXPperLevel;

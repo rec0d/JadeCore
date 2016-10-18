@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -86,9 +84,9 @@ class boss_sacrolash : public CreatureScript
 public:
     boss_sacrolash() : CreatureScript("boss_sacrolash") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_sacrolashAI(creature);
+        return new boss_sacrolashAI (creature);
     };
 
     struct boss_sacrolashAI : public ScriptedAI
@@ -110,7 +108,7 @@ public:
         uint32 ConflagrationTimer;
         uint32 EnrageTimer;
 
-        void Reset() override
+        void Reset()
         {
             Enraged = false;
 
@@ -125,7 +123,7 @@ public:
                 }
             }
 
-            if (!me->IsInCombat())
+            if (!me->isInCombat())
             {
                 ShadowbladesTimer = 10000;
                 ShadownovaTimer = 30000;
@@ -141,14 +139,14 @@ public:
                 instance->SetData(DATA_EREDAR_TWINS_EVENT, NOT_STARTED);
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* who)
         {
             DoZoneInCombat();
 
             if (instance)
             {
                 Creature* temp = Unit::GetCreature(*me, instance->GetData64(DATA_ALYTHESS));
-                if (temp && temp->IsAlive() && !temp->GetVictim())
+                if (temp && temp->isAlive() && !temp->GetVictim())
                     temp->AI()->AttackStart(who);
             }
 
@@ -156,13 +154,13 @@ public:
                 instance->SetData(DATA_EREDAR_TWINS_EVENT, IN_PROGRESS);
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             if (rand()%4 == 0)
                 Talk(YELL_SAC_KILL);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             // only if ALY death
             if (SisterDeath)
@@ -173,10 +171,10 @@ public:
                     instance->SetData(DATA_EREDAR_TWINS_EVENT, DONE);
             }
             else
-                me->RemoveFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+                me->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
         }
 
-        void SpellHitTarget(Unit* target, const SpellInfo* spell) override
+        void SpellHitTarget(Unit* target, const SpellInfo* spell)
         {
             switch (spell->Id)
             {
@@ -219,7 +217,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!SisterDeath)
             {
@@ -269,7 +267,7 @@ public:
                         if (!SisterDeath)
                         {
                             if (target)
-                                Talk(EMOTE_SHADOW_NOVA, target);
+                                Talk(EMOTE_SHADOW_NOVA, target->GetGUID());
                             Talk(YELL_SHADOW_NOVA);
                         }
                         ShadownovaTimer = 30000+(rand()%5000);
@@ -296,7 +294,7 @@ public:
                 for (uint8 i = 0; i<3; ++i)
                 {
                     target = SelectTarget(SELECT_TARGET_RANDOM, 0);
-                    temp = DoSpawnCreature(NPC_SHADOW_IMAGE, 0, 0, 0, 0, TEMPSUMMON_CORPSE_DESPAWN, 10000);
+                    temp = DoSpawnCreature(MOB_SHADOW_IMAGE, 0, 0, 0, 0, TEMPSUMMON_CORPSE_DESPAWN, 10000);
                     if (temp && target)
                     {
                         temp->AddThreat(target, 1000000);//don't change target(healers)
@@ -342,17 +340,15 @@ class boss_alythess : public CreatureScript
 public:
     boss_alythess() : CreatureScript("boss_alythess") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_alythessAI(creature);
+        return new boss_alythessAI (creature);
     };
 
-    struct boss_alythessAI : public ScriptedAI
+    struct boss_alythessAI : public Scripted_NoMovementAI
     {
-        boss_alythessAI(Creature* creature) : ScriptedAI(creature)
+        boss_alythessAI(Creature* creature) : Scripted_NoMovementAI(creature)
         {
-            SetCombatMovement(false);
-
             instance = creature->GetInstanceScript();
             IntroStepCounter = 10;
         }
@@ -372,7 +368,7 @@ public:
         uint32 FlamesearTimer;
         uint32 EnrageTimer;
 
-        void Reset() override
+        void Reset()
         {
             Enraged = false;
 
@@ -387,7 +383,7 @@ public:
                 }
             }
 
-            if (!me->IsInCombat())
+            if (!me->isInCombat())
             {
                 ConflagrationTimer = 45000;
                 BlazeTimer = 100;
@@ -404,14 +400,14 @@ public:
                 instance->SetData(DATA_EREDAR_TWINS_EVENT, NOT_STARTED);
         }
 
-        void EnterCombat(Unit* who) override
+        void EnterCombat(Unit* who)
         {
             DoZoneInCombat();
 
             if (instance)
             {
                 Creature* temp = Unit::GetCreature(*me, instance->GetData64(DATA_SACROLASH));
-                if (temp && temp->IsAlive() && !temp->GetVictim())
+                if (temp && temp->isAlive() && !temp->GetVictim())
                     temp->AI()->AttackStart(who);
             }
 
@@ -419,24 +415,25 @@ public:
                 instance->SetData(DATA_EREDAR_TWINS_EVENT, IN_PROGRESS);
         }
 
-        void AttackStart(Unit* who) override
+        void AttackStart(Unit* who)
         {
-            if (!me->IsInCombat())
-                ScriptedAI::AttackStart(who);
+            if (!me->isInCombat())
+            {
+                Scripted_NoMovementAI::AttackStart(who);
+            }
         }
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
             if (!who || me->GetVictim())
                 return;
 
-            if (me->CanCreatureAttack(who))
+            if (me->canCreatureAttack(who))
             {
                 float attackRadius = me->GetAttackDistance(who);
                 if (me->IsWithinDistInMap(who, attackRadius) && me->GetDistanceZ(who) <= CREATURE_Z_ATTACK_RANGE && me->IsWithinLOSInMap(who))
                 {
-                    if (!me->IsInCombat())
+                    if (!me->isInCombat())
                     {
                         DoStartNoMovement(who);
                     }
@@ -448,7 +445,7 @@ public:
             }
         }
 
-        void KilledUnit(Unit* /*victim*/) override
+        void KilledUnit(Unit* /*victim*/)
         {
             if (rand()%4 == 0)
             {
@@ -456,7 +453,7 @@ public:
             }
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             if (SisterDeath)
             {
@@ -466,16 +463,15 @@ public:
                     instance->SetData(DATA_EREDAR_TWINS_EVENT, DONE);
             }
             else
-                me->RemoveFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+                me->RemoveFlag(UNIT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
         }
 
-        void SpellHitTarget(Unit* target, const SpellInfo* spell) override
+        void SpellHitTarget(Unit* target, const SpellInfo* spell)
         {
             switch (spell->Id)
             {
             case SPELL_BLAZE:
                 target->CastSpell(target, SPELL_BLAZE_SUMMON, true);
-                break;
             case SPELL_CONFLAGRATION:
             case SPELL_FLAME_SEAR:
                 HandleTouchedSpells(target, SPELL_FLAME_TOUCHED);
@@ -546,7 +542,7 @@ public:
             return 10000;
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (IntroStepCounter < 9)
             {
@@ -618,7 +614,7 @@ public:
                         if (!SisterDeath)
                         {
                             if (target)
-                                Talk(EMOTE_CONFLAGRATION, target);
+                                Talk(EMOTE_CONFLAGRATION, target->GetGUID());
                             Talk(YELL_CANFLAGRATION);
                         }
 
@@ -665,25 +661,25 @@ public:
     };
 };
 
-class npc_shadow_image : public CreatureScript
+class mob_shadow_image : public CreatureScript
 {
 public:
-    npc_shadow_image() : CreatureScript("npc_shadow_image") { }
+    mob_shadow_image() : CreatureScript("mob_shadow_image") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_shadow_imageAI(creature);
+        return new mob_shadow_imageAI (creature);
     };
 
-    struct npc_shadow_imageAI : public ScriptedAI
+    struct mob_shadow_imageAI : public ScriptedAI
     {
-        npc_shadow_imageAI(Creature* creature) : ScriptedAI(creature) { }
+        mob_shadow_imageAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 ShadowfuryTimer;
         uint32 KillTimer;
         uint32 DarkstrikeTimer;
 
-        void Reset() override
+        void Reset()
         {
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
             ShadowfuryTimer = 5000 + (rand()%15000);
@@ -691,9 +687,9 @@ public:
             KillTimer = 15000;
         }
 
-        void EnterCombat(Unit* /*who*/)override { }
+        void EnterCombat(Unit* /*who*/){}
 
-        void SpellHitTarget(Unit* target, const SpellInfo* spell) override
+        void SpellHitTarget(Unit* target, const SpellInfo* spell)
         {
             switch (spell->Id)
             {
@@ -711,7 +707,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!me->HasAura(SPELL_IMAGE_VISUAL))
                 DoCast(me, SPELL_IMAGE_VISUAL);
@@ -749,5 +745,5 @@ void AddSC_boss_eredar_twins()
 {
     new boss_sacrolash();
     new boss_alythess();
-    new npc_shadow_image();
+    new mob_shadow_image();
 }

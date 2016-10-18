@@ -1,20 +1,18 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2014 WoWSource 4.3.4
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
- * option) any later version.
+ * Do Not Share The SourceCode
+ * and read our WoWSource Terms
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
+/* ScriptData
+SDName: LFG
+SD%Complete: 100%
+SDComment: Fully Working
+SDCategory: LFG
+EndScriptData
+*/
 
 #ifndef _LFG_H
 #define _LFG_H
@@ -77,6 +75,7 @@ enum LfgState
 /// Instance lock types
 enum LfgLockStatusType
 {
+    LFG_LOCKSTATUS_NONE                          = 0,
     LFG_LOCKSTATUS_INSUFFICIENT_EXPANSION        = 1,
     LFG_LOCKSTATUS_TOO_LOW_LEVEL                 = 2,
     LFG_LOCKSTATUS_TOO_HIGH_LEVEL                = 3,
@@ -99,8 +98,18 @@ enum LfgAnswer
     LFG_ANSWER_AGREE                             = 1
 };
 
+struct LockData
+{
+    LfgLockStatusType locktyp;
+    uint32 neededItemlevel;
+    uint32 averageItemlevel;
+    
+    LockData(): locktyp(LFG_LOCKSTATUS_NONE), neededItemlevel(0), averageItemlevel(0) {};
+    LockData(LfgLockStatusType typ, uint32 nilevel,uint32 avlevel): locktyp(typ), neededItemlevel(nilevel), averageItemlevel(avlevel) {};
+};
+
 typedef std::set<uint32> LfgDungeonSet;
-typedef std::map<uint32, uint32> LfgLockMap;
+typedef std::map<uint32, LockData> LfgLockMap;
 typedef std::map<uint64, LfgLockMap> LfgLockPartyMap;
 typedef std::set<uint64> LfgGuidSet;
 typedef std::list<uint64> LfgGuidList;

@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -34,14 +32,14 @@ class instance_temple_of_ahnqiraj : public InstanceMapScript
     public:
         instance_temple_of_ahnqiraj() : InstanceMapScript("instance_temple_of_ahnqiraj", 531) { }
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const
         {
             return new instance_temple_of_ahnqiraj_InstanceMapScript(map);
         }
 
         struct instance_temple_of_ahnqiraj_InstanceMapScript : public InstanceScript
         {
-            instance_temple_of_ahnqiraj_InstanceMapScript(Map* map) : InstanceScript(map) { }
+            instance_temple_of_ahnqiraj_InstanceMapScript(Map* map) : InstanceScript(map) {}
 
             //If Vem is dead...
             bool IsBossDied[3];
@@ -58,7 +56,7 @@ class instance_temple_of_ahnqiraj : public InstanceMapScript
 
             uint32 CthunPhase;
 
-            void Initialize() override
+            void Initialize()
             {
                 IsBossDied[0] = false;
                 IsBossDied[1] = false;
@@ -76,7 +74,7 @@ class instance_temple_of_ahnqiraj : public InstanceMapScript
                 CthunPhase = 0;
             }
 
-            void OnCreatureCreate(Creature* creature) override
+            void OnCreatureCreate(Creature* creature)
             {
                 switch (creature->GetEntry())
                 {
@@ -101,13 +99,13 @@ class instance_temple_of_ahnqiraj : public InstanceMapScript
                 }
             }
 
-            bool IsEncounterInProgress() const override
+            bool IsEncounterInProgress() const
             {
                 //not active in AQ40
                 return false;
             }
 
-            uint32 GetData(uint32 type) const override
+            uint32 GetData(uint32 type) const
             {
                 switch (type)
                 {
@@ -135,7 +133,7 @@ class instance_temple_of_ahnqiraj : public InstanceMapScript
                 return 0;
             }
 
-            uint64 GetData64(uint32 identifier) const override
+            uint64 GetData64(uint32 identifier) const
             {
                 switch (identifier)
                 {
@@ -155,7 +153,7 @@ class instance_temple_of_ahnqiraj : public InstanceMapScript
                 return 0;
             }                                                       // end GetData64
 
-            void SetData(uint32 type, uint32 data) override
+            void SetData(uint32 type, uint32 data)
             {
                 switch (type)
                 {

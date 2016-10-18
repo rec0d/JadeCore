@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,21 +36,16 @@ void HmacHash::UpdateData(const std::string &str)
     HMAC_Update(&m_ctx, (uint8 const*)str.c_str(), str.length());
 }
 
-void HmacHash::UpdateData(const uint8* data, size_t len)
-{
-    HMAC_Update(&m_ctx, data, len);
-}
-
 void HmacHash::Finalize()
 {
     uint32 length = 0;
     HMAC_Final(&m_ctx, (uint8*)m_digest, &length);
-    ASSERT(length == SHA_DIGEST_LENGTH);
+    ASSERT(length == SHA_DIGEST_LENGTH)
 }
 
 uint8 *HmacHash::ComputeHash(BigNumber* bn)
 {
-    HMAC_Update(&m_ctx, bn->AsByteArray().get(), bn->GetNumBytes());
+    HMAC_Update(&m_ctx, bn->AsByteArray(), bn->GetNumBytes());
     Finalize();
     return (uint8*)m_digest;
 }

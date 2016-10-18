@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -59,12 +59,18 @@ void BattlegroundBE::StartingEventOpenDoors()
 
     for (uint32 i = BG_BE_OBJECT_BUFF_1; i <= BG_BE_OBJECT_BUFF_2; ++i)
         SpawnBGObject(i, 60);
+
+    for (uint32 i = BG_BE_OBJECT_READYMARKER_1; i <= BG_BE_OBJECT_READYMARKER_2; ++i)
+        DelObject(i);
 }
 
 void BattlegroundBE::AddPlayer(Player* player)
 {
     Battleground::AddPlayer(player);
-    PlayerScores[player->GetGUID()] = new BattlegroundScore;
+    BattlegroundScore* sc = new BattlegroundScore;
+    PlayerScores[player->GetGUID()] = sc;
+    sc->BgTeam = player->GetBGTeam();
+    sc->TalentTree = player->GetPrimaryTalentTree(player->GetActiveSpec());
     UpdateArenaWorldState();
 }
 
@@ -84,7 +90,7 @@ void BattlegroundBE::HandleKillPlayer(Player* player, Player* killer)
 
     if (!killer)
     {
-        TC_LOG_ERROR("bg.battleground", "Killer player not found");
+        sLog->outError(LOG_FILTER_BATTLEGROUND, "Killer player not found");
         return;
     }
 
@@ -92,6 +98,12 @@ void BattlegroundBE::HandleKillPlayer(Player* player, Player* killer)
 
     UpdateArenaWorldState();
     CheckArenaWinConditions();
+}
+
+bool BattlegroundBE::HandlePlayerUnderMap(Player* player)
+{
+    player->TeleportTo(GetMapId(), 6238.930176f, 262.963470f, 0.889519f, player->GetOrientation());
+    return true;
 }
 
 void BattlegroundBE::HandleAreaTrigger(Player* player, uint32 trigger)
@@ -110,9 +122,9 @@ void BattlegroundBE::HandleAreaTrigger(Player* player, uint32 trigger)
     }
 }
 
-void BattlegroundBE::FillInitialWorldStates(WorldStateBuilder& builder)
+void BattlegroundBE::FillInitialWorldStates(WorldPacket &data)
 {
-    builder.AppendState(0x9f3, 1);           // 9
+    data << uint32(0x9f3) << uint32(1);           // 9
     UpdateArenaWorldState();
 }
 
@@ -133,8 +145,15 @@ bool BattlegroundBE::SetupBattleground()
         || !AddObject(BG_BE_OBJECT_BUFF_1, BG_BE_OBJECT_TYPE_BUFF_1, 6249.042f, 275.3239f, 11.22033f, -1.448624f, 0, 0, 0.6626201f, -0.7489557f, 120)
         || !AddObject(BG_BE_OBJECT_BUFF_2, BG_BE_OBJECT_TYPE_BUFF_2, 6228.26f, 249.566f, 11.21812f, -0.06981307f, 0, 0, 0.03489945f, -0.9993908f, 120))
     {
-        TC_LOG_ERROR("sql.sql", "BatteGroundBE: Failed to spawn some object!");
+        sLog->outError(LOG_FILTER_SQL, "BatteGroundBE: Failed to spawn some object!");
         return false;
+    }
+
+    // readymarkers
+    if (sWorld->getBoolConfig(CONFIG_ARENA_READYMARK_ENABLED))
+    {
+        AddObject(BG_BE_OBJECT_READYMARKER_1, BG_BE_OBJECT_READYMARKER, 6288.124512f, 290.558502f, 5.484696f, 5.6f, 0, 0, 0, 0, RESPAWN_IMMEDIATELY);
+        AddObject(BG_BE_OBJECT_READYMARKER_2, BG_BE_OBJECT_READYMARKER, 6188.941406f, 233.555664f, 5.501983f, 2.5f, 0, 0, 0, 0, RESPAWN_IMMEDIATELY);
     }
 
     return true;
@@ -142,10 +161,27 @@ bool BattlegroundBE::SetupBattleground()
 
 void BattlegroundBE::UpdatePlayerScore(Player* Source, uint32 type, uint32 value, bool doAddHonor)
 {
+
     BattlegroundScoreMap::iterator itr = PlayerScores.find(Source->GetGUID());
     if (itr == PlayerScores.end())                         // player not found...
         return;
 
     //there is nothing special in this score
     Battleground::UpdatePlayerScore(Source, type, value, doAddHonor);
+
 }
+
+/*
+21:45:46 id:231310 [S2C] SMSG_INIT_WORLD_STATES (706 = 0x02C2) len: 86
+0000: 32 02 00 00 76 0e 00 00 00 00 00 00 09 00 f3 09  |  2...v...........
+0010: 00 00 01 00 00 00 f1 09 00 00 01 00 00 00 f0 09  |  ................
+0020: 00 00 02 00 00 00 d4 08 00 00 00 00 00 00 d8 08  |  ................
+0030: 00 00 00 00 00 00 d7 08 00 00 00 00 00 00 d6 08  |  ................
+0040: 00 00 00 00 00 00 d5 08 00 00 00 00 00 00 d3 08  |  ................
+0050: 00 00 00 00 00 00                                |  ......
+
+spell 32724 - Gold Team
+spell 32725 - Green Team
+35774 Gold Team
+35775 Green Team
+*/

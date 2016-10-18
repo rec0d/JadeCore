@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2010 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -41,7 +40,6 @@ namespace VMAP
         private:
             G3D::Matrix3 iRotation;
         public:
-            ModelPosition(): iScale(0.0f) { }
             G3D::Vector3 iPos;
             G3D::Vector3 iDir;
             float iScale;
@@ -76,8 +74,7 @@ namespace VMAP
         std::vector<G3D::Vector3> vertexArray;
         class WmoLiquid* liquid;
 
-        GroupModel_Raw() : mogpflags(0), GroupWMOID(0), liquidflags(0),
-            liquid(NULL) { }
+        GroupModel_Raw() : liquid(0) {}
         ~GroupModel_Raw();
 
         bool Read(FILE* f);

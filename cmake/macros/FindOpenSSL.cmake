@@ -1,20 +1,3 @@
-# Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
-# Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
-# Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
-#
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-# more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program. If not, see <http://www.gnu.org/licenses/>.
-
 # - Try to find the OpenSSL encryption library
 # Once done this will define
 #
@@ -188,57 +171,10 @@ ELSE(WIN32 AND NOT CYGWIN)
 
 ENDIF(WIN32 AND NOT CYGWIN)
 
-if (NOT OPENSSL_INCLUDE_DIR)
-  include(FindPackageHandleStandardArgs)
-  find_package_handle_standard_args(OpenSSL DEFAULT_MSG
-    OPENSSL_LIBRARIES
-    OPENSSL_INCLUDE_DIR
-  )
-endif()
-
-if (OPENSSL_INCLUDE_DIR)
-  message( STATUS "Found OpenSSL library: ${OPENSSL_LIBRARIES}")
-  message( STATUS "Found OpenSSL headers: ${OPENSSL_INCLUDE_DIR}")
-  if (_OPENSSL_VERSION)
-    set(OPENSSL_VERSION "${_OPENSSL_VERSION}")
-  else (_OPENSSL_VERSION)
-    file(STRINGS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h" openssl_version_str
-         REGEX "^# *define[\t ]+OPENSSL_VERSION_NUMBER[\t ]+0x[0-9][0-9][0-9][0-9][0-9][0-9].*")
-
-    # The version number is encoded as 0xMNNFFPPS: major minor fix patch status
-    # The status gives if this is a developer or prerelease and is ignored here.
-    # Major, minor, and fix directly translate into the version numbers shown in
-    # the string. The patch field translates to the single character suffix that
-    # indicates the bug fix state, which 00 -> nothing, 01 -> a, 02 -> b and so
-    # on.
-
-    string(REGEX REPLACE "^.*OPENSSL_VERSION_NUMBER[\t ]+0x([0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f]).*$"
-           "\\1;\\2;\\3;\\4;\\5" OPENSSL_VERSION_LIST "${openssl_version_str}")
-    list(GET OPENSSL_VERSION_LIST 0 OPENSSL_VERSION_MAJOR)
-    list(GET OPENSSL_VERSION_LIST 1 OPENSSL_VERSION_MINOR)
-    list(GET OPENSSL_VERSION_LIST 2 OPENSSL_VERSION_FIX)
-    list(GET OPENSSL_VERSION_LIST 3 OPENSSL_VERSION_PATCH)
-
-    string(REGEX REPLACE "^0(.)" "\\1" OPENSSL_VERSION_MINOR "${OPENSSL_VERSION_MINOR}")
-    string(REGEX REPLACE "^0(.)" "\\1" OPENSSL_VERSION_FIX "${OPENSSL_VERSION_FIX}")
-
-    if (NOT OPENSSL_VERSION_PATCH STREQUAL "00")
-      # 96 is the ASCII code of 'a' minus 1
-      math(EXPR OPENSSL_VERSION_PATCH_ASCII "${OPENSSL_VERSION_PATCH} + 96")
-      # Once anyone knows how OpenSSL would call the patch versions beyond 'z'
-      # this should be updated to handle that, too. This has not happened yet
-      # so it is simply ignored here for now.
-      string(ASCII "${OPENSSL_VERSION_PATCH_ASCII}" OPENSSL_VERSION_PATCH_STRING)
-    endif (NOT OPENSSL_VERSION_PATCH STREQUAL "00")
-
-    set(OPENSSL_VERSION "${OPENSSL_VERSION_MAJOR}.${OPENSSL_VERSION_MINOR}.${OPENSSL_VERSION_FIX}${OPENSSL_VERSION_PATCH_STRING}")
-  endif (_OPENSSL_VERSION)
-
-  include(EnsureVersion)
-  ENSURE_VERSION( "${OPENSSL_EXPECTED_VERSION}" "${OPENSSL_VERSION}" OPENSSL_VERSION_OK)
-  if (NOT OPENSSL_VERSION_OK)
-      message(FATAL_ERROR "TrinityCore needs OpenSSL version ${OPENSSL_EXPECTED_VERSION} but found version ${OPENSSL_VERSION}")
-  endif()
-endif (OPENSSL_INCLUDE_DIR)
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(OpenSSL DEFAULT_MSG
+  OPENSSL_LIBRARIES 
+  OPENSSL_INCLUDE_DIR
+)
 
 MARK_AS_ADVANCED(OPENSSL_INCLUDE_DIR OPENSSL_LIBRARIES)

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,20 +42,20 @@ enum CairneBloodhoof
 };
 
 #define GOSSIP_HCB "I know this is rather silly but a young ward who is a bit shy would like your hoofprint."
-/// @todo verify abilities/timers
+//TODO: verify abilities/timers
 class npc_cairne_bloodhoof : public CreatureScript
 {
 public:
     npc_cairne_bloodhoof() : CreatureScript("npc_cairne_bloodhoof") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_cairne_bloodhoofAI (creature);
     }
 
     struct npc_cairne_bloodhoofAI : public ScriptedAI
     {
-        npc_cairne_bloodhoofAI(Creature* creature) : ScriptedAI(creature) { }
+        npc_cairne_bloodhoofAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 BerserkerChargeTimer;
         uint32 CleaveTimer;
@@ -64,7 +63,7 @@ public:
         uint32 ThunderclapTimer;
         uint32 UppercutTimer;
 
-        void Reset() override
+        void Reset()
         {
             BerserkerChargeTimer = 30000;
             CleaveTimer = 5000;
@@ -73,16 +72,17 @@ public:
             UppercutTimer = 10000;
         }
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/) {}
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
 
             if (BerserkerChargeTimer <= diff)
             {
-                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
+                Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0);
+                if (target)
                     DoCast(target, SPELL_BERSERKER_CHARGE);
                 BerserkerChargeTimer = 25000;
             } else BerserkerChargeTimer -= diff;

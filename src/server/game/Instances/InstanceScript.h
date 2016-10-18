@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -22,13 +22,14 @@
 #include "ZoneScript.h"
 #include "World.h"
 #include "ObjectMgr.h"
-#include "WorldStateBuilder.h"
+//#include "GameObject.h"
+//#include "Map.h"
 
-#define OUT_SAVE_INST_DATA             TC_LOG_DEBUG("scripts", "Saving Instance Data for Instance %s (Map %d, Instance Id %d)", instance->GetMapName(), instance->GetId(), instance->GetInstanceId())
-#define OUT_SAVE_INST_DATA_COMPLETE    TC_LOG_DEBUG("scripts", "Saving Instance Data for Instance %s (Map %d, Instance Id %d) completed.", instance->GetMapName(), instance->GetId(), instance->GetInstanceId())
-#define OUT_LOAD_INST_DATA(a)          TC_LOG_DEBUG("scripts", "Loading Instance Data for Instance %s (Map %d, Instance Id %d). Input is '%s'", instance->GetMapName(), instance->GetId(), instance->GetInstanceId(), a)
-#define OUT_LOAD_INST_DATA_COMPLETE    TC_LOG_DEBUG("scripts", "Instance Data Load for Instance %s (Map %d, Instance Id: %d) is complete.", instance->GetMapName(), instance->GetId(), instance->GetInstanceId())
-#define OUT_LOAD_INST_DATA_FAIL        TC_LOG_ERROR("scripts", "Unable to load Instance Data for Instance %s (Map %d, Instance Id: %d).", instance->GetMapName(), instance->GetId(), instance->GetInstanceId())
+#define OUT_SAVE_INST_DATA             sLog->outDebug(LOG_FILTER_TSCR, "Saving Instance Data for Instance %s (Map %d, Instance Id %d)", instance->GetMapName(), instance->GetId(), instance->GetInstanceId())
+#define OUT_SAVE_INST_DATA_COMPLETE    sLog->outDebug(LOG_FILTER_TSCR, "Saving Instance Data for Instance %s (Map %d, Instance Id %d) completed.", instance->GetMapName(), instance->GetId(), instance->GetInstanceId())
+#define OUT_LOAD_INST_DATA(a)          sLog->outDebug(LOG_FILTER_TSCR, "Loading Instance Data for Instance %s (Map %d, Instance Id %d). Input is '%s'", instance->GetMapName(), instance->GetId(), instance->GetInstanceId(), a)
+#define OUT_LOAD_INST_DATA_COMPLETE    sLog->outDebug(LOG_FILTER_TSCR, "Instance Data Load for Instance %s (Map %d, Instance Id: %d) is complete.", instance->GetMapName(), instance->GetId(), instance->GetInstanceId())
+#define OUT_LOAD_INST_DATA_FAIL        sLog->outError(LOG_FILTER_TSCR, "Unable to load Instance Data for Instance %s (Map %d, Instance Id: %d).", instance->GetMapName(), instance->GetId(), instance->GetInstanceId())
 
 class Map;
 class Unit;
@@ -105,7 +106,7 @@ struct MinionData
 
 struct BossInfo
 {
-    BossInfo() : state(TO_BE_DECIDED) { }
+    BossInfo() : state(TO_BE_DECIDED) {}
     EncounterState state;
     DoorSet door[MAX_DOOR_TYPES];
     MinionSet minion;
@@ -115,7 +116,7 @@ struct BossInfo
 struct DoorInfo
 {
     explicit DoorInfo(BossInfo* _bossInfo, DoorType _type, BoundaryType _boundary)
-        : bossInfo(_bossInfo), type(_type), boundary(_boundary) { }
+        : bossInfo(_bossInfo), type(_type), boundary(_boundary) {}
     BossInfo* bossInfo;
     DoorType type;
     BoundaryType boundary;
@@ -123,26 +124,25 @@ struct DoorInfo
 
 struct MinionInfo
 {
-    explicit MinionInfo(BossInfo* _bossInfo) : bossInfo(_bossInfo) { }
+    explicit MinionInfo(BossInfo* _bossInfo) : bossInfo(_bossInfo) {}
     BossInfo* bossInfo;
 };
 
 typedef std::multimap<uint32 /*entry*/, DoorInfo> DoorInfoMap;
 typedef std::pair<DoorInfoMap::const_iterator, DoorInfoMap::const_iterator> DoorInfoMapBounds;
-
 typedef std::map<uint32 /*entry*/, MinionInfo> MinionInfoMap;
 
 class InstanceScript : public ZoneScript
 {
     public:
-        explicit InstanceScript(Map* map) : instance(map), completedEncounters(0) { }
+        explicit InstanceScript(Map* map) : instance(map), completedEncounters(0) {}
 
-        virtual ~InstanceScript() { }
+        virtual ~InstanceScript() {}
 
         Map* instance;
 
         //On creation, NOT load.
-        virtual void Initialize() { }
+        virtual void Initialize() {}
 
         //On load
         virtual void Load(char const* data) { LoadBossState(data); }
@@ -152,14 +152,17 @@ class InstanceScript : public ZoneScript
 
         void SaveToDB();
 
-        virtual void Update(uint32 /*diff*/) { }
+        virtual void Update(uint32 /*diff*/) {}
 
         //Used by the map's CanEnter function.
         //This is to prevent players from entering during boss encounters.
         virtual bool IsEncounterInProgress() const;
 
         //Called when a player successfully enters the instance.
-        virtual void OnPlayerEnter(Player* /*player*/) { }
+        virtual void OnPlayerEnter(Player* /*player*/) {}
+
+        //Called when a player leaves the instance.
+        virtual void OnPlayerLeave(Player* /*player*/) {}
 
         //Handle open / close objects
         //use HandleGameObject(0, boolen, GO); in OnObjectCreate in instance scripts
@@ -178,6 +181,9 @@ class InstanceScript : public ZoneScript
         // Send Notify to all players in instance
         void DoSendNotifyToInstance(char const* format, ...);
 
+        // Complete Achievement for all players in instance
+        void DoCompleteAchievement(uint32 achievement);
+
         // Update Achievement Criteria for all players in instance
         void DoUpdateAchievementCriteria(AchievementCriteriaTypes type, uint32 miscValue1 = 0, uint32 miscValue2 = 0, Unit* unit = NULL);
 
@@ -187,6 +193,10 @@ class InstanceScript : public ZoneScript
 
         // Remove Auras due to Spell on all players in instance
         void DoRemoveAurasDueToSpellOnPlayers(uint32 spell);
+
+
+		void NormaliseAltPower();
+		void DoAddAuraOnPlayers(uint32 spell);
 
         // Cast spell on all players in instance
         void DoCastSpellOnPlayers(uint32 spell);
@@ -215,11 +225,15 @@ class InstanceScript : public ZoneScript
         uint32 GetCompletedEncounterMask() const { return completedEncounters; }
 
         void SendEncounterUnit(uint32 type, Unit* unit = NULL, uint8 param1 = 0, uint8 param2 = 0);
-		virtual bool IsWipe();
-        virtual void FillInitialWorldStates(WorldStateBuilder& /*builder*/) { }
+
+        virtual void FillInitialWorldStates(WorldPacket& /*data*/) {}
 
         // ReCheck PhaseTemplate related conditions
         void UpdatePhasing();
+
+        void SendCinematicStartToPlayers(uint32 cinematicId);
+
+        bool IsInGuildGroup();
 
     protected:
         void SetBossNumber(uint32 number) { bosses.resize(number); }
@@ -252,4 +266,4 @@ AI* GetInstanceAI(T* obj, char const* scriptName)
     return NULL;
 }
 
-#endif // TRINITY_INSTANCE_DATA_H
+#endif

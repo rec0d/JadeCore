@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -20,6 +17,7 @@
 
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
+#include "forge_of_souls.h"
 #include "Player.h"
 #include "SpellInfo.h"
 #include "SpellAuraEffects.h"
@@ -27,7 +25,7 @@
 #include "forge_of_souls.h"
 
 /*
- * @todo
+ * TODO:
  * - Fix model id during unleash soul -> seems DB issue 36503 is missing (likewise 36504 is also missing).
  * - Fix outro npc movement
  */
@@ -78,7 +76,7 @@ enum Events
     EVENT_FACE_ANGER            = 7,
 };
 
-enum Models
+enum eEnum
 {
     DISPLAY_ANGER               = 30148,
     DISPLAY_SORROW              = 30149,
@@ -123,7 +121,6 @@ enum Misc
 {
     DATA_THREE_FACED                = 1
 };
-
 class boss_devourer_of_souls : public CreatureScript
 {
     public:
@@ -135,7 +132,7 @@ class boss_devourer_of_souls : public CreatureScript
             {
             }
 
-            void InitializeAI() override
+            void InitializeAI()
             {
                 if (!instance || static_cast<InstanceMap*>(me->GetMap())->GetScriptId() != sObjectMgr->GetScriptId(FoSScriptName))
                     me->IsAIEnabled = false;
@@ -143,7 +140,7 @@ class boss_devourer_of_souls : public CreatureScript
                     Reset();
             }
 
-            void Reset() override
+            void Reset()
             {
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE);
                 me->SetDisplayId(DISPLAY_ANGER);
@@ -157,7 +154,7 @@ class boss_devourer_of_souls : public CreatureScript
                 instance->SetData(DATA_DEVOURER_EVENT, NOT_STARTED);
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 Talk(SAY_FACE_AGGRO);
 
@@ -172,7 +169,8 @@ class boss_devourer_of_souls : public CreatureScript
                 instance->SetData(DATA_DEVOURER_EVENT, IN_PROGRESS);
             }
 
-            void KilledUnit(Unit* victim) override
+
+            void KilledUnit(Unit* victim)
             {
                 if (victim->GetTypeId() != TYPEID_PLAYER)
                     return;
@@ -197,7 +195,7 @@ class boss_devourer_of_souls : public CreatureScript
                     Talk(textId);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 summons.DespawnAll();
 
@@ -226,13 +224,13 @@ class boss_devourer_of_souls : public CreatureScript
                 }
             }
 
-            void SpellHitTarget(Unit* /*target*/, const SpellInfo* spell) override
+            void SpellHitTarget(Unit* /*target*/, const SpellInfo* spell)
             {
                 if (spell->Id == H_SPELL_PHANTOM_BLAST)
                     threeFaced = false;
             }
 
-            uint32 GetData(uint32 type) const override
+            uint32 GetData(uint32 type) const
             {
                 if (type == DATA_THREE_FACED)
                     return threeFaced;
@@ -240,7 +238,7 @@ class boss_devourer_of_souls : public CreatureScript
                 return 0;
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 // Return since we have no target
                 if (!UpdateVictim())
@@ -260,7 +258,7 @@ class boss_devourer_of_souls : public CreatureScript
                             events.ScheduleEvent(EVENT_PHANTOM_BLAST, 5000);
                             break;
                         case EVENT_MIRRORED_SOUL:
-                            DoCastAOE(SPELL_MIRRORED_SOUL_TARGET_SELECTOR);
+                             DoCastAOE(SPELL_MIRRORED_SOUL_TARGET_SELECTOR);
                             Talk(EMOTE_MIRRORED_SOUL);
                             events.ScheduleEvent(EVENT_MIRRORED_SOUL, urand(15000, 30000));
                             break;
@@ -346,7 +344,7 @@ class boss_devourer_of_souls : public CreatureScript
             int8 wailingSoulTick;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const 
         {
             return new boss_devourer_of_soulsAI(creature);
         }
@@ -362,7 +360,7 @@ class spell_devourer_of_souls_mirrored_soul : public SpellScriptLoader
         {
             PrepareSpellScript(spell_devourer_of_souls_mirrored_soul_SpellScript);
 
-            bool Validate(SpellInfo const* /*spellInfo*/) override
+            bool Validate(SpellInfo const* /*spellInfo*/) 
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_MIRRORED_SOUL_PROC_AURA))
                     return false;
@@ -375,13 +373,13 @@ class spell_devourer_of_souls_mirrored_soul : public SpellScriptLoader
                     target->CastSpell(GetCaster(), SPELL_MIRRORED_SOUL_PROC_AURA, true);
             }
 
-            void Register() override
+            void Register() 
             {
                 OnEffectHitTarget += SpellEffectFn(spell_devourer_of_souls_mirrored_soul_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const 
         {
             return new spell_devourer_of_souls_mirrored_soul_SpellScript();
         }
@@ -397,38 +395,43 @@ class spell_devourer_of_souls_mirrored_soul_proc : public SpellScriptLoader
         {
             PrepareAuraScript(spell_devourer_of_souls_mirrored_soul_proc_AuraScript);
 
-            bool Validate(SpellInfo const* /*spellInfo*/) override
+            bool Validate(SpellInfo const* /*spellInfo*/) 
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_MIRRORED_SOUL_DAMAGE))
                     return false;
                 return true;
             }
 
-            bool Load() override
+            bool Load() 
             {
+                _procTarget = NULL;
                 return true;
             }
 
             bool CheckProc(ProcEventInfo& /*eventInfo*/)
             {
-                return GetCaster() && GetCaster()->IsAlive();
+                _procTarget = GetCaster();
+                return _procTarget && _procTarget->isAlive();
             }
 
             void HandleProc(AuraEffect const* /*aurEff*/, ProcEventInfo& eventInfo)
             {
                 PreventDefaultAction();
                 int32 damage = int32(CalculatePct(eventInfo.GetDamageInfo()->GetDamage(), 45));
-                GetTarget()->CastCustomSpell(SPELL_MIRRORED_SOUL_DAMAGE, SPELLVALUE_BASE_POINT0, damage, GetCaster(), true);
+                GetTarget()->CastCustomSpell(SPELL_MIRRORED_SOUL_DAMAGE, SPELLVALUE_BASE_POINT0, damage, _procTarget, true);
             }
 
-            void Register() override
+            void Register() 
             {
                 DoCheckProc += AuraCheckProcFn(spell_devourer_of_souls_mirrored_soul_proc_AuraScript::CheckProc);
                 OnEffectProc += AuraEffectProcFn(spell_devourer_of_souls_mirrored_soul_proc_AuraScript::HandleProc, EFFECT_0, SPELL_AURA_PROC_TRIGGER_SPELL);
             }
+
+        private:
+            Unit* _procTarget;
         };
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const 
         {
             return new spell_devourer_of_souls_mirrored_soul_proc_AuraScript();
         }
@@ -444,7 +447,7 @@ class spell_devourer_of_souls_mirrored_soul_target_selector : public SpellScript
         {
             PrepareSpellScript(spell_devourer_of_souls_mirrored_soul_target_selector_SpellScript);
 
-            bool Validate(SpellInfo const* /*spellInfo*/) override
+            bool Validate(SpellInfo const* /*spellInfo*/) 
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_MIRRORED_SOUL_BUFF))
                     return false;
@@ -467,14 +470,14 @@ class spell_devourer_of_souls_mirrored_soul_target_selector : public SpellScript
                     GetCaster()->CastSpell(target, SPELL_MIRRORED_SOUL_BUFF, false);
             }
 
-            void Register() override
+            void Register() 
             {
                 OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_devourer_of_souls_mirrored_soul_target_selector_SpellScript::FilterTargets, EFFECT_0, TARGET_UNIT_SRC_AREA_ENTRY);
                 OnEffectHitTarget += SpellEffectFn(spell_devourer_of_souls_mirrored_soul_target_selector_SpellScript::HandleScript, EFFECT_0, SPELL_EFFECT_SCRIPT_EFFECT);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const 
         {
             return new spell_devourer_of_souls_mirrored_soul_target_selector_SpellScript();
         }
@@ -487,7 +490,7 @@ class achievement_three_faced : public AchievementCriteriaScript
         {
         }
 
-        bool OnCheck(Player* /*player*/, Unit* target) override
+        bool OnCheck(Player* /*player*/, Unit* target) 
         {
             if (!target)
                 return false;

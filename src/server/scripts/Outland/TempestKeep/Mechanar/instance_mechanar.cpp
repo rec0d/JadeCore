@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,6 +15,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 
 #include "ScriptMgr.h"
 #include "InstanceScript.h"
@@ -57,7 +57,7 @@ class instance_mechanar : public InstanceMapScript
                 }
             }
 
-            void OnGameObjectRemove(GameObject* gameObject) override
+            void OnGameObjectRemove(GameObject* gameObject)
             {
                 switch (gameObject->GetEntry())
                 {
@@ -71,7 +71,7 @@ class instance_mechanar : public InstanceMapScript
                 }
             }
 
-            bool SetBossState(uint32 type, EncounterState state) override
+            bool SetBossState(uint32 type, EncounterState state)
             {
                 if (!InstanceScript::SetBossState(type, state))
                     return false;
@@ -91,7 +91,7 @@ class instance_mechanar : public InstanceMapScript
                 return true;
             }
 
-            std::string GetSaveData() override
+            std::string GetSaveData()
             {
                 OUT_SAVE_INST_DATA;
 
@@ -102,7 +102,7 @@ class instance_mechanar : public InstanceMapScript
                 return saveStream.str();
             }
 
-            void Load(const char* str) override
+            void Load(const char* str)
             {
                 if (!str)
                 {
@@ -135,7 +135,7 @@ class instance_mechanar : public InstanceMapScript
             }
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const
         {
             return new instance_mechanar_InstanceMapScript(map);
         }

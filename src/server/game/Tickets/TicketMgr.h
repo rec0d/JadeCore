@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -28,12 +27,12 @@ class ChatHandler;
 
 enum ComplainType
 {
-    COMPLAIN_SPAM           = 0,
-    COMPLAIN_CHEATER        = 1,
-    COMPLAIN_PLAYER_NAME    = 3,
-    COMPLAIN_GUILD_NAME     = 6,
-    COMPLAIN_ARENA_NAME     = 9,
-    COMPLAIN_BAD_LANG       = 10,
+    COMPLAIN_SPAM         = 0,
+    COMPLAIN_CHEATER      = 1,
+    COMPLAIN_PLAYER_NAME  = 3,
+    COMPLAIN_GUILD_NAME   = 6,
+    COMPLAIN_ARENA_NAME   = 9,
+    COMPLAIN_BAD_LANG     = 10,
 };
 
 // from blizzard lua
@@ -93,7 +92,7 @@ class GmTicket
 {
 public:
     GmTicket();
-    GmTicket(Player* player, WorldPacket& recvData);
+    explicit GmTicket(Player* player, WorldPacket& recvData);
     ~GmTicket();
 
     bool IsClosed() const { return _closedBy; }
@@ -130,8 +129,7 @@ public:
         else if (_escalatedStatus == TICKET_UNASSIGNED)
             _escalatedStatus = TICKET_ASSIGNED;
     }
-    void SetClosedBy(int64 value) { _closedBy = value; }
-    void SetCompleted() { _completed = true; }
+    void SetClosedBy(const int64& value) { _closedBy = value; }
     void SetMessage(std::string const& message)
     {
         _message = message;
@@ -174,7 +172,7 @@ private:
     bool _completed;
     GMTicketEscalationStatus _escalatedStatus;
     bool _viewed;
-    bool _needResponse; /// @todo find out the use of this, and then store it in DB
+    bool _needResponse; // TODO: find out the use of this, and then store it in DB
     bool _haveTicket;
     std::string _response;
     std::string _chatLog; // No need to store in db, will be refreshed every session client side

@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -28,7 +25,7 @@ enum Spells
     H_SPELL_HATEFUL_STRIKE                      = 59192,
     SPELL_FRENZY                                = 28131,
     SPELL_BERSERK                               = 26662,
-    SPELL_SLIME_BOLT                            = 32309
+    SPELL_SLIME_BOLT                            = 32309,
 };
 
 enum Yells
@@ -48,9 +45,9 @@ enum Events
     EVENT_SLIME
 };
 
-enum Misc
+enum
 {
-    ACHIEV_MAKE_QUICK_WERK_OF_HIM_STARTING_EVENT  = 10286
+    ACHIEV_MAKE_QUICK_WERK_OF_HIM_STARTING_EVENT  = 10286,
 };
 
 class boss_patchwerk : public CreatureScript
@@ -58,18 +55,18 @@ class boss_patchwerk : public CreatureScript
 public:
     boss_patchwerk() : CreatureScript("boss_patchwerk") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_patchwerkAI(creature);
+        return new boss_patchwerkAI (creature);
     }
 
     struct boss_patchwerkAI : public BossAI
     {
-        boss_patchwerkAI(Creature* creature) : BossAI(creature, BOSS_PATCHWERK) { }
+        boss_patchwerkAI(Creature* creature) : BossAI(creature, BOSS_PATCHWERK) {}
 
         bool Enraged;
 
-        void Reset() override
+        void Reset()
         {
             _Reset();
 
@@ -77,19 +74,19 @@ public:
                 instance->DoStopTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_MAKE_QUICK_WERK_OF_HIM_STARTING_EVENT);
         }
 
-        void KilledUnit(Unit* /*Victim*/) override
+        void KilledUnit(Unit* /*Victim*/)
         {
             if (!(rand()%5))
                 Talk(SAY_SLAY);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             _JustDied();
             Talk(SAY_DEATH);
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             _EnterCombat();
             Enraged = false;
@@ -101,7 +98,7 @@ public:
                 instance->DoStartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_MAKE_QUICK_WERK_OF_HIM_STARTING_EVENT);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -122,7 +119,7 @@ public:
                         for (; i != me->getThreatManager().getThreatList().end(); ++i)
                         {
                             Unit* target = (*i)->getTarget();
-                            if (target->IsAlive() && target != me->GetVictim() && target->GetHealth() > MostHP && me->IsWithinMeleeRange(target))
+                            if (target->isAlive() && target != me->GetVictim() && target->GetHealth() > MostHP && me->IsWithinMeleeRange(target))
                             {
                                 MostHP = target->GetHealth();
                                 pMostHPTarget = target;

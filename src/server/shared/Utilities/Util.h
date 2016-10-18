@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -20,7 +20,6 @@
 #define _UTIL_H
 
 #include "Define.h"
-#include "Errors.h"
 
 #include <algorithm>
 #include <string>
@@ -67,6 +66,12 @@ private:
 };
 
 void stripLineInvisibleChars(std::string &src);
+
+inline uint32 secsToTimeBitFields(time_t secs)
+{
+    tm* lt = localtime(&secs);
+    return (lt->tm_year - 100) << 24 | lt->tm_mon  << 20 | (lt->tm_mday - 1) << 14 | lt->tm_wday << 11 | lt->tm_hour << 6 | lt->tm_min;
+}
 
 int64 MoneyStringToMoney(const std::string& moneyString);
 
@@ -116,6 +121,20 @@ inline void ApplyPercentModFloatVar(float& var, float val, bool apply)
     if (val == -100.0f)     // prevent set var to zero
         val = -99.99f;
     var *= (apply ? (100.0f + val) / 100.0f : 100.0f / (100.0f + val));
+}
+
+inline void ApplyPercentModFloatVarPrecise(float& var, float val, bool apply, float base)
+{
+    if (val == -100.0f)
+        val = -99.99f;
+
+    float oldpercent = ((base / var) - base) * -100.0f;
+    float newpercent = oldpercent + (apply ? val : -val);
+
+    if (newpercent == 100.0f)
+        newpercent = 99.9f;
+
+    var = base * 100.0f / (100.0f - newpercent);
 }
 
 // Percentage calculation
@@ -174,7 +193,7 @@ inline bool isExtendedLatinCharacter(wchar_t wchar)
         return true;
     if (wchar >= 0x00C0 && wchar <= 0x00D6)                  // LATIN CAPITAL LETTER A WITH GRAVE - LATIN CAPITAL LETTER O WITH DIAERESIS
         return true;
-    if (wchar >= 0x00D8 && wchar <= 0x00DE)                  // LATIN CAPITAL LETTER O WITH STROKE - LATIN CAPITAL LETTER THORN
+    if (wchar >= 0x00D8 && wchar <= 0x00DF)                  // LATIN CAPITAL LETTER O WITH STROKE - LATIN CAPITAL LETTER THORN
         return true;
     if (wchar == 0x00DF)                                     // LATIN SMALL LETTER SHARP S
         return true;
@@ -243,7 +262,7 @@ inline bool isNumericOrSpace(wchar_t wchar)
     return isNumeric(wchar) || wchar == L' ';
 }
 
-inline bool isBasicLatinString(const std::wstring &wstr, bool numericOrSpace)
+inline bool isBasicLatinString(std::wstring wstr, bool numericOrSpace)
 {
     for (size_t i = 0; i < wstr.size(); ++i)
         if (!isBasicLatinCharacter(wstr[i]) && (!numericOrSpace || !isNumericOrSpace(wstr[i])))
@@ -251,7 +270,7 @@ inline bool isBasicLatinString(const std::wstring &wstr, bool numericOrSpace)
     return true;
 }
 
-inline bool isExtendedLatinString(const std::wstring &wstr, bool numericOrSpace)
+inline bool isExtendedLatinString(std::wstring wstr, bool numericOrSpace)
 {
     for (size_t i = 0; i < wstr.size(); ++i)
         if (!isExtendedLatinCharacter(wstr[i]) && (!numericOrSpace || !isNumericOrSpace(wstr[i])))
@@ -259,7 +278,7 @@ inline bool isExtendedLatinString(const std::wstring &wstr, bool numericOrSpace)
     return true;
 }
 
-inline bool isCyrillicString(const std::wstring &wstr, bool numericOrSpace)
+inline bool isCyrillicString(std::wstring wstr, bool numericOrSpace)
 {
     for (size_t i = 0; i < wstr.size(); ++i)
         if (!isCyrillicCharacter(wstr[i]) && (!numericOrSpace || !isNumericOrSpace(wstr[i])))
@@ -267,7 +286,7 @@ inline bool isCyrillicString(const std::wstring &wstr, bool numericOrSpace)
     return true;
 }
 
-inline bool isEastAsianString(const std::wstring &wstr, bool numericOrSpace)
+inline bool isEastAsianString(std::wstring wstr, bool numericOrSpace)
 {
     for (size_t i = 0; i < wstr.size(); ++i)
         if (!isEastAsianCharacter(wstr[i]) && (!numericOrSpace || !isNumericOrSpace(wstr[i])))
@@ -391,154 +410,6 @@ class HookList
         {
             return m_list.end();
         }
-};
-
-class flag128
-{
-private:
-    uint32 part[4];
-
-public:
-    flag128(uint32 p1 = 0, uint32 p2 = 0, uint32 p3 = 0, uint32 p4 = 0)
-    {
-        part[0] = p1;
-        part[1] = p2;
-        part[2] = p3;
-        part[3] = p4;
-    }
-
-    flag128(uint64 p1, uint64 p2)
-    {
-        part[0] = (uint32)(p1 & UI64LIT(0x00000000FFFFFFFF));
-        part[1] = (uint32)((p1 >> 32) & UI64LIT(0x00000000FFFFFFFF));
-        part[0] = (uint32)(p2 & UI64LIT(0x00000000FFFFFFFF));
-        part[1] = (uint32)((p2 >> 32) & UI64LIT(0x00000000FFFFFFFF));
-    }
-
-    inline bool IsEqual(uint32 p1 = 0, uint32 p2 = 0, uint32 p3 = 0, uint32 p4 = 0) const
-    {
-        return (part[0] == p1 && part[1] == p2 && part[2] == p3 && part[3] == p4);
-    }
-
-    inline bool HasFlag(uint32 p1 = 0, uint32 p2 = 0, uint32 p3 = 0, uint32 p4 = 0) const
-    {
-        return (part[0] & p1 || part[1] & p2 || part[2] & p3 && part[3] & p4);
-    }
-
-    inline void Set(uint32 p1 = 0, uint32 p2 = 0, uint32 p3 = 0, uint32 p4 = 0)
-    {
-        part[0] = p1;
-        part[1] = p2;
-        part[2] = p3;
-        part[3] = p4;
-    }
-
-    inline bool operator <(const flag128 &right) const
-    {
-        for (uint8 i = 4; i > 0; --i)
-        {
-            if (part[i - 1] < right.part[i - 1])
-                return true;
-            else if (part[i - 1] > right.part[i - 1])
-                return false;
-        }
-        return false;
-    }
-
-    inline bool operator ==(const flag128 &right) const
-    {
-        return
-        (
-            part[0] == right.part[0] &&
-            part[1] == right.part[1] &&
-            part[2] == right.part[2] &&
-            part[3] == right.part[3]
-        );
-    }
-
-    inline bool operator !=(const flag128 &right) const
-    {
-        return !this->operator ==(right);
-    }
-
-    inline flag128 & operator =(const flag128 &right)
-    {
-        part[0] = right.part[0];
-        part[1] = right.part[1];
-        part[2] = right.part[2];
-        part[3] = right.part[3];
-        return *this;
-    }
-
-    inline flag128 operator &(const flag128 &right) const
-    {
-        return flag128(part[0] & right.part[0], part[1] & right.part[1],
-            part[2] & right.part[2], part[3] & right.part[3]);
-    }
-
-    inline flag128 & operator &=(const flag128 &right)
-    {
-        part[0] &= right.part[0];
-        part[1] &= right.part[1];
-        part[2] &= right.part[2];
-        part[3] &= right.part[3];
-        return *this;
-    }
-
-    inline flag128 operator |(const flag128 &right) const
-    {
-        return flag128(part[0] | right.part[0], part[1] | right.part[1],
-            part[2] | right.part[2], part[3] | right.part[3]);
-    }
-
-    inline flag128 & operator |=(const flag128 &right)
-    {
-        part[0] |= right.part[0];
-        part[1] |= right.part[1];
-        part[2] |= right.part[2];
-        part[3] |= right.part[3];
-        return *this;
-    }
-
-    inline flag128 operator ~() const
-    {
-        return flag128(~part[0], ~part[1], ~part[2], ~part[3]);
-    }
-
-    inline flag128 operator ^(const flag128 &right) const
-    {
-        return flag128(part[0] ^ right.part[0], part[1] ^ right.part[1],
-            part[2] ^ right.part[2], part[3] ^ right.part[3]);
-    }
-
-    inline flag128 & operator ^=(const flag128 &right)
-    {
-        part[0] ^= right.part[0];
-        part[1] ^= right.part[1];
-        part[2] ^= right.part[2];
-        part[3] ^= right.part[3];
-        return *this;
-    }
-
-    inline operator bool() const
-    {
-        return (part[0] != 0 || part[1] != 0 || part[2] != 0 || part[3] != 0);
-    }
-
-    inline bool operator !() const
-    {
-        return !this->operator bool();
-    }
-
-    inline uint32 & operator [](uint8 el)
-    {
-        return part[el];
-    }
-
-    inline const uint32 & operator [](uint8 el) const
-    {
-        return part[el];
-    }
 };
 
 class flag96
@@ -680,37 +551,5 @@ public:
         return part[el];
     }
 };
-
-enum ComparisionType
-{
-    COMP_TYPE_EQ = 0,
-    COMP_TYPE_HIGH,
-    COMP_TYPE_LOW,
-    COMP_TYPE_HIGH_EQ,
-    COMP_TYPE_LOW_EQ,
-    COMP_TYPE_MAX
-};
-
-template <class T>
-bool CompareValues(ComparisionType type, T val1, T val2)
-{
-    switch (type)
-    {
-        case COMP_TYPE_EQ:
-            return val1 == val2;
-        case COMP_TYPE_HIGH:
-            return val1 > val2;
-        case COMP_TYPE_LOW:
-            return val1 < val2;
-        case COMP_TYPE_HIGH_EQ:
-            return val1 >= val2;
-        case COMP_TYPE_LOW_EQ:
-            return val1 <= val2;
-        default:
-            // incorrect parameter
-            ASSERT(false);
-            return false;
-    }
-}
 
 #endif

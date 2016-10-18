@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,8 +25,8 @@ class WorldDatabaseConnection : public MySQLConnection
 {
     public:
         //- Constructors for sync and async connections
-        WorldDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo) { }
-        WorldDatabaseConnection(ACE_Activation_Queue* q, MySQLConnectionInfo& connInfo) : MySQLConnection(q, connInfo) { }
+        WorldDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo) {}
+        WorldDatabaseConnection(ACE_Activation_Queue* q, MySQLConnectionInfo& connInfo) : MySQLConnection(q, connInfo) {}
 
         //- Loads database type specific prepared statements
         void DoPrepareStatements();
@@ -97,9 +95,12 @@ enum WorldDatabaseStatements
     WORLD_UPD_WAYPOINT_SCRIPT_O,
     WORLD_SEL_WAYPOINT_SCRIPT_ID_BY_GUID,
     WORLD_DEL_CREATURE,
+    WORLD_INS_CREATURE_TRANSPORT,
+    WORLD_UPD_CREATURE_TRANSPORT_EMOTE,
     WORLD_SEL_COMMANDS,
     WORLD_SEL_CREATURE_TEMPLATE,
     WORLD_SEL_WAYPOINT_SCRIPT_BY_ID,
+    WORLD_SEL_IP2NATION_COUNTRY,
     WORLD_SEL_ITEM_TEMPLATE_BY_NAME,
     WORLD_SEL_CREATURE_BY_ID,
     WORLD_SEL_GAMEOBJECT_NEAREST,
@@ -112,8 +113,10 @@ enum WorldDatabaseStatements
     WORLD_SEL_DISABLES,
     WORLD_INS_DISABLES,
     WORLD_DEL_DISABLES,
+    WORLD_SEL_GUILD_CHALLENGES,
     WORLD_SEL_REQ_XP,
-    WORLD_SEL_BLACKMARKET_TEMPLATE,
+    WORLD_INS_SLOW_OPCODE,
+    WORLD_SEL_GRAVEYARDS,
 
     MAX_WORLDDATABASE_STATEMENTS
 };

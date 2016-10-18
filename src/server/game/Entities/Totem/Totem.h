@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -28,18 +28,15 @@ enum TotemType
     TOTEM_STATUE     = 2 // copied straight from MaNGOS, may need more implementation to work
 };
 // Some Totems cast spells that are not in creature DB
-enum TotemSpells
-{
-    // Totemic Wrath
-    SPELL_TOTEMIC_WRATH_TALENT  = 77746,
-    SPELL_TOTEMIC_WRATH         = 77747
-};
+#define SENTRY_TOTEM_SPELLID  6495
+
+#define SENTRY_TOTEM_ENTRY    3968
 
 class Totem : public Minion
 {
     public:
         Totem(SummonPropertiesEntry const* properties, Unit* owner);
-        virtual ~Totem() { }
+        virtual ~Totem() {}
         void Update(uint32 time);
         void InitStats(uint32 duration);
         void InitSummon();
@@ -51,14 +48,14 @@ class Totem : public Minion
 
         bool UpdateStats(Stats /*stat*/) { return true; }
         bool UpdateAllStats() { return true; }
-        void UpdateResistances(uint32 /*school*/) { }
-        void UpdateArmor() { }
-        void UpdateMaxHealth() { }
-        void UpdateMaxPower(Powers /*power*/) { }
-        void UpdateAttackPowerAndDamage(bool /*ranged*/) { }
-        void UpdateDamagePhysical(WeaponAttackType /*attType*/) { }
+        void UpdateResistances(uint32 /*school*/) {}
+        void UpdateArmor() {}
+        void UpdateMaxHealth() {}
+        void UpdateMaxPower(Powers /*power*/) {}
+        void UpdateAttackPowerAndDamage(bool /*ranged*/) {}
+        void UpdateDamagePhysical(WeaponAttackType /*attType*/) {}
 
-        bool IsImmunedToSpellEffect(SpellInfo const* spellInfo, uint32 index) const;
+        bool IsImmunedToSpellEffect(SpellInfo const* spellInfo, uint32 index, Unit* caster = NULL) const;
 
     protected:
         TotemType m_type;

@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -153,28 +151,28 @@ class instance_icecrown_citadel : public InstanceMapScript
                 BloodQuickeningMinutes = 0;
             }
 
-            void FillInitialWorldStates(WorldStateBuilder& builder) override
+            void FillInitialWorldStates(WorldPacket& data)
             {
-                builder.AppendState(WORLDSTATE_SHOW_TIMER,         BloodQuickeningState == IN_PROGRESS);
-                builder.AppendState(WORLDSTATE_EXECUTION_TIME,     BloodQuickeningMinutes);
-                builder.AppendState(WORLDSTATE_SHOW_ATTEMPTS,      instance->IsHeroic());
-                builder.AppendState(WORLDSTATE_ATTEMPTS_REMAINING, HeroicAttempts);
-                builder.AppendState(WORLDSTATE_ATTEMPTS_MAX,       MaxHeroicAttempts);
+                data << uint32(WORLDSTATE_SHOW_TIMER)         << uint32(BloodQuickeningState == IN_PROGRESS);
+                data << uint32(WORLDSTATE_EXECUTION_TIME)     << uint32(BloodQuickeningMinutes);
+                data << uint32(WORLDSTATE_SHOW_ATTEMPTS)      << uint32(instance->IsHeroic());
+                data << uint32(WORLDSTATE_ATTEMPTS_REMAINING) << uint32(HeroicAttempts);
+                data << uint32(WORLDSTATE_ATTEMPTS_MAX)       << uint32(MaxHeroicAttempts);
             }
 
-            void OnPlayerEnter(Player* player) override
+            void OnPlayerEnter(Player* player)
             {
                 if (!TeamInInstance)
                     TeamInInstance = player->GetTeam();
             }
 
-            void OnCreatureCreate(Creature* creature) override
+            void OnCreatureCreate(Creature* creature)
             {
                 if (!TeamInInstance)
                 {
                     Map::PlayerList const &players = instance->GetPlayers();
                     if (!players.isEmpty())
-                        if (Player* player = players.begin()->GetSource())
+                        if (Player* player = players.begin()->getSource())
                             TeamInInstance = player->GetTeam();
                 }
 
@@ -311,7 +309,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                 }
             }
 
-            void OnCreatureRemove(Creature* creature) override
+            void OnCreatureRemove(Creature* creature)
             {
                 if (creature->GetEntry() == NPC_SINDRAGOSA)
                     SindragosaGUID = 0;
@@ -350,7 +348,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                 return entry;
             }
 
-            void OnUnitDeath(Unit* unit) override
+            void OnUnitDeath(Unit* unit)
             {
                 Creature* creature = unit->ToCreature();
                 if (!creature)
@@ -408,7 +406,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                 }
             }
 
-            void OnGameObjectCreate(GameObject* go) override
+            void OnGameObjectCreate(GameObject* go)
             {
                 switch (go->GetEntry())
                 {
@@ -437,13 +435,16 @@ class instance_icecrown_citadel : public InstanceMapScript
                     // these 2 gates are functional only on 25man modes
                     case GO_DOODAD_ICECROWN_ROOSTPORTCULLIS_01:
                     case GO_DOODAD_ICECROWN_ROOSTPORTCULLIS_04:
-                        if (instance->Is25ManRaid())
+                        if (instance->GetSpawnMode() & 1)
                             AddDoor(go, true);
                         break;
                     case GO_LADY_DEATHWHISPER_ELEVATOR:
                         LadyDeathwisperElevatorGUID = go->GetGUID();
                         if (GetBossState(DATA_LADY_DEATHWHISPER) == DONE)
-                            go->SetTransportState(GO_STATE_TRANSPORT_ACTIVE);
+                        {
+                            go->SetUInt32Value(GAMEOBJECT_LEVEL, 0);
+                            go->SetGoState(GO_STATE_READY);
+                        }
                         break;
                     case GO_SAURFANG_S_DOOR:
                         DeathbringerSaurfangDoorGUID = go->GetGUID();
@@ -511,7 +512,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                     case GO_CACHE_OF_THE_DREAMWALKER_25H:
                         if (Creature* valithria = instance->GetCreature(ValithriaDreamwalkerGUID))
                             go->SetLootRecipient(valithria->GetLootRecipient());
-                        go->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_LOCKED | GO_FLAG_NOT_SELECTABLE | GO_FLAG_NODESPAWN);
+                        go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_LOCKED | GO_FLAG_NOT_SELECTABLE | GO_FLAG_NODESPAWN);
                         break;
                     case GO_SCOURGE_TRANSPORTER_LK:
                         TheLichKingTeleportGUID = go->GetGUID();
@@ -553,7 +554,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                 }
             }
 
-            void OnGameObjectRemove(GameObject* go) override
+            void OnGameObjectRemove(GameObject* go)
             {
                 switch (go->GetEntry())
                 {
@@ -587,7 +588,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                 }
             }
 
-            uint32 GetData(uint32 type) const override
+            uint32 GetData(uint32 type) const
             {
                 switch (type)
                 {
@@ -612,7 +613,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                 return 0;
             }
 
-            uint64 GetData64(uint32 type) const override
+            uint64 GetData64(uint32 type) const
             {
                 switch (type)
                 {
@@ -678,7 +679,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                 return 0;
             }
 
-            bool SetBossState(uint32 type, EncounterState state) override
+            bool SetBossState(uint32 type, EncounterState state)
             {
                 if (!InstanceScript::SetBossState(type, state))
                     return false;
@@ -690,7 +691,10 @@ class instance_icecrown_citadel : public InstanceMapScript
                         if (state == DONE)
                         {
                             if (GameObject* elevator = instance->GetGameObject(LadyDeathwisperElevatorGUID))
-                                elevator->SetTransportState(GO_STATE_TRANSPORT_ACTIVE);
+                            {
+                                elevator->SetUInt32Value(GAMEOBJECT_LEVEL, 0);
+                                elevator->SetGoState(GO_STATE_READY);
+                            }
                         }
                         break;
                     case DATA_DEATHBRINGER_SAURFANG:
@@ -701,14 +705,14 @@ class instance_icecrown_citadel : public InstanceMapScript
                                 {
                                     if (Creature* deathbringer = instance->GetCreature(DeathbringerSaurfangGUID))
                                         loot->SetLootRecipient(deathbringer->GetLootRecipient());
-                                    loot->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_LOCKED | GO_FLAG_NOT_SELECTABLE | GO_FLAG_NODESPAWN);
+                                    loot->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_LOCKED | GO_FLAG_NOT_SELECTABLE | GO_FLAG_NODESPAWN);
                                 }
                                 // no break
                             case NOT_STARTED:
                                 if (GameObject* teleporter = instance->GetGameObject(SaurfangTeleportGUID))
                                 {
                                     HandleGameObject(SaurfangTeleportGUID, true, teleporter);
-                                    teleporter->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_IN_USE);
+                                    teleporter->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE);
                                 }
                                 break;
                             default:
@@ -838,7 +842,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                  return true;
             }
 
-            void SetData(uint32 type, uint32 data) override
+            void SetData(uint32 type, uint32 data)
             {
                 switch (type)
                 {
@@ -904,7 +908,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                 }
             }
 
-            bool CheckAchievementCriteriaMeet(uint32 criteria_id, Player const* /*source*/, Unit const* /*target*/, uint32 /*miscvalue1*/) override
+            bool CheckAchievementCriteriaMeet(uint32 criteria_id, Player const* /*source*/, Unit const* /*target*/, uint32 /*miscvalue1*/)
             {
                 switch (criteria_id)
                 {
@@ -944,9 +948,9 @@ class instance_icecrown_citadel : public InstanceMapScript
                 return false;
             }
 
-            bool CheckRequiredBosses(uint32 bossId, Player const* player = NULL) const override
+            bool CheckRequiredBosses(uint32 bossId, Player const* player = NULL) const
             {
-                if (player && player->GetSession()->HasPermission(rbac::RBAC_PERM_SKIP_CHECK_INSTANCE_REQUIRED_BOSSES))
+                if (player && AccountMgr::IsGMAccount(player->GetSession()->GetSecurity()))
                     return true;
 
                 switch (bossId)
@@ -1099,7 +1103,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                 }
             }
 
-            std::string GetSaveData() override
+            std::string GetSaveData()
             {
                 OUT_SAVE_INST_DATA;
 
@@ -1111,7 +1115,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                 return saveStream.str();
             }
 
-            void Load(const char* str) override
+            void Load(const char* str)
             {
                 if (!str)
                 {
@@ -1153,7 +1157,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                 OUT_LOAD_INST_DATA_COMPLETE;
             }
 
-            void Update(uint32 diff) override
+            void Update(uint32 diff)
             {
                 if (BloodQuickeningState != IN_PROGRESS && GetBossState(DATA_THE_LICH_KING) != IN_PROGRESS)
                     return;
@@ -1211,7 +1215,7 @@ class instance_icecrown_citadel : public InstanceMapScript
                 }
             }
 
-            void ProcessEvent(WorldObject* /*source*/, uint32 eventId) override
+            void ProcessEvent(WorldObject* /*source*/, uint32 eventId)
             {
                 switch (eventId)
                 {
@@ -1306,7 +1310,7 @@ class instance_icecrown_citadel : public InstanceMapScript
             bool IsOrbWhispererEligible;
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const
         {
             return new instance_icecrown_citadel_InstanceMapScript(map);
         }

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -40,7 +39,7 @@ EndContentData */
 # item_only_for_flight
 #####*/
 
-enum OnlyForFlight
+enum eOnlyForFlight
 {
     SPELL_ARCANE_CHARGES    = 45072
 };
@@ -73,7 +72,7 @@ public:
         }
 
         // allow use in flight only
-        if (player->IsInFlight() && !disabled)
+        if (player->isInFlight() && !disabled)
             return false;
 
         // error
@@ -103,6 +102,87 @@ public:
         }
         return false;
     }
+};
+
+//item 71949
+class item_tome_of_burning_jewels : public ItemScript 
+{
+public:
+	item_tome_of_burning_jewels() : ItemScript("item_tome_of_burning_jewels") { }
+
+	bool OnUse(Player* player, Item* item, SpellCastTargets const& targets)
+	{
+		if (player->HasSkill(755) && ((int)player->GetSkillValue(755) == 525)){
+			uint32 count = 1;
+
+			int number = rand() % (71);
+
+			if (number >= 0 && number < 6){ //items from 71805 to 71810
+				player->AddItem(71805 + number, count);
+			}
+			else if (number == 6){ //item 71821
+				player->AddItem(71821, count);
+			}
+			else if (number > 6){ //items from 71884 to 71948
+				number -= 6;
+				player->AddItem(71884 + number, count);
+			}
+			player->DestroyItemCount(item, count, true);
+		}
+		return false;
+	}
+};
+
+class item_adventurers_journal : public ItemScript
+{
+public:
+	item_adventurers_journal() : ItemScript("item_adventurers_journal") { }
+
+	bool OnUse(Player* player, Item* item, SpellCastTargets const& targets)
+	{
+		if (player->getLevel() < 85){
+			int number = rand() % 10;
+			uint32 count = 1;
+
+			player->DestroyItemCount(item, count, true);
+			switch (number)
+			{
+			case 0:
+				player->CastSpell(player, 86972, true);
+				break;
+			case 1:
+				player->CastSpell(player, 86963, true);
+				break;
+			case 2:
+				player->CastSpell(player, 86988, true);
+				break;
+			case 3:
+				player->CastSpell(player, 86977, true);
+				break;
+			case 4:
+				player->CastSpell(player, 86992, true);
+				break;
+			case 5:
+				player->CastSpell(player, 86980, true);
+				break;
+			case 6:
+				player->CastSpell(player, 86975, true);
+				break;
+			case 7:
+				player->CastSpell(player, 86983, true);
+				break;
+			case 8:
+				player->CastSpell(player, 86976, true);
+				break;
+			case 9:
+				player->CastSpell(player, 86982, true);
+				break;
+			default:
+				break;
+			}
+		}
+		return false;
+	}
 };
 
 /*#####
@@ -173,7 +253,7 @@ public:
 class item_disgusting_jar : public ItemScript
 {
 public:
-    item_disgusting_jar() : ItemScript("item_disgusting_jar") { }
+    item_disgusting_jar() : ItemScript("item_disgusting_jar") {}
 
     bool OnExpire(Player* player, ItemTemplate const* /*pItemProto*/)
     {
@@ -190,7 +270,7 @@ public:
 # item_pile_fake_furs
 #####*/
 
-enum PileFakeFur
+enum ePileFakeFur
 {
     GO_CARIBOU_TRAP_1                                      = 187982,
     GO_CARIBOU_TRAP_2                                      = 187995,
@@ -257,7 +337,7 @@ public:
 # item_petrov_cluster_bombs
 #####*/
 
-enum PetrovClusterBombs
+enum ePetrovClusterBombs
 {
     SPELL_PETROV_BOMB           = 42406,
     AREA_ID_SHATTERED_STRAITS   = 4064,
@@ -290,7 +370,7 @@ public:
 # item_dehta_trap_smasher
 # For quest 11876, Help Those That Cannot Help Themselves
 ######*/
-enum HelpThemselves
+enum eHelpThemselves
 {
     QUEST_CANNOT_HELP_THEMSELVES                  =  11876,
     NPC_TRAPPED_MAMMOTH_CALF                      =  25850,
@@ -385,7 +465,7 @@ public:
     }
 };
 
-enum CapturedFrog
+enum eCapturedFrog
 {
     QUEST_THE_PERFECT_SPIES      = 25444,
     NPC_VANIRAS_SENTRY_TOTEM     = 40187
@@ -424,4 +504,6 @@ void AddSC_item_scripts()
     new item_dehta_trap_smasher();
     new item_trident_of_nazjan();
     new item_captured_frog();
+	new item_adventurers_journal();
+	new item_tome_of_burning_jewels();
 }

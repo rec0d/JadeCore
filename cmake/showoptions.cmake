@@ -1,25 +1,9 @@
-# Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
-# Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
-# Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
-#
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-# more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program. If not, see <http://www.gnu.org/licenses/>.
-
 # output generic information about the core and buildtype chosen
 message("")
-message("* JadeCore revision   : ${rev_hash} ${rev_date} (${rev_branch} branch)")
+message("* TrinityCore rev. hash  : ${rev_hash}")
+message("* TrinityCore rev. date  : ${rev_date}")
 if( UNIX )
-  message("* JadeCore buildtype  : ${CMAKE_BUILD_TYPE}")
+  message("* TrinityCore buildtype  : ${CMAKE_BUILD_TYPE}")
 endif()
 message("")
 
@@ -45,6 +29,7 @@ if( SCRIPTS )
   add_definitions(-DSCRIPTS)
 else()
   message("* Build with scripts     : No")
+  set(USE_SCRIPTPCH 0)
 endif()
 
 if( TOOLS )
@@ -89,11 +74,8 @@ endif( WIN32 )
 
 if ( NOJEM )
   message("")
-  message(" *** NOJEM - WARNING!")
-  message(" *** jemalloc linking has been disabled!")
-  message(" *** Please note that this is for DEBUGGING WITH VALGRIND only!")
-  message(" *** DO NOT DISABLE IT UNLESS YOU KNOW WHAT YOU'RE DOING!")
+  message("*** WARNING: jemalloc linking has been disabled!")
+  message("*** Please note that this is for DEBUGGING WITH VALGRIND only!")
+  message("*** DO NOT DISABLE IT UNLESS YOU KNOW WHAT YOU'RE DOING!")
 endif()
-
 message("")
-

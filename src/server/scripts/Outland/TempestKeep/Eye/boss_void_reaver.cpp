@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,16 +27,13 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "the_eye.h"
 
-enum Yells
+enum eEnums
 {
     SAY_AGGRO                   = 0,
     SAY_SLAY                    = 1,
     SAY_DEATH                   = 2,
-    SAY_POUNDING                = 3
-};
+    SAY_POUNDING                = 3,
 
-enum Spells
-{
     SPELL_POUNDING              = 34162,
     SPELL_ARCANE_ORB            = 34172,
     SPELL_KNOCK_AWAY            = 25778,
@@ -69,7 +65,7 @@ class boss_void_reaver : public CreatureScript
 
             bool Enraged;
 
-            void Reset() override
+            void Reset()
             {
                 Pounding_Timer = 15000;
                 ArcaneOrb_Timer = 3000;
@@ -78,16 +74,16 @@ class boss_void_reaver : public CreatureScript
 
                 Enraged = false;
 
-                if (instance && me->IsAlive())
+                if (instance && me->isAlive())
                     instance->SetData(DATA_VOIDREAVEREVENT, NOT_STARTED);
             }
 
-            void KilledUnit(Unit* /*victim*/) override
+            void KilledUnit(Unit* /*victim*/)
             {
                 Talk(SAY_SLAY);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 Talk(SAY_DEATH);
                 DoZoneInCombat();
@@ -96,7 +92,7 @@ class boss_void_reaver : public CreatureScript
                     instance->SetData(DATA_VOIDREAVEREVENT, DONE);
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 Talk(SAY_AGGRO);
 
@@ -104,7 +100,7 @@ class boss_void_reaver : public CreatureScript
                     instance->SetData(DATA_VOIDREAVEREVENT, IN_PROGRESS);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -129,7 +125,7 @@ class boss_void_reaver : public CreatureScript
                         if (!target)
                             continue;
                         // exclude pets & totems, 18 yard radius minimum
-                        if (target->GetTypeId() == TYPEID_PLAYER && target->IsAlive() && !target->IsWithinDist(me, 18, false))
+                        if (target->GetTypeId() == TYPEID_PLAYER && target->isAlive() && !target->IsWithinDist(me, 18, false))
                             target_list.push_back(target);
                         target = NULL;
                     }
@@ -171,7 +167,7 @@ class boss_void_reaver : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_void_reaverAI(creature);
         }

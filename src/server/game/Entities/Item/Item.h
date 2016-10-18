@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -167,14 +167,16 @@ enum EnchantmentSlot
     BONUS_ENCHANTMENT_SLOT          = 5,
     PRISMATIC_ENCHANTMENT_SLOT      = 6,                    // added at apply special permanent enchantment
     //TODO: 7,
-    MAX_INSPECTED_ENCHANTMENT_SLOT  = 8,
+    REFORGE_ENCHANTMENT_SLOT        = 8,
+    TRANSMOGRIFY_ENCHANTMENT_SLOT   = 9,
+    MAX_INSPECTED_ENCHANTMENT_SLOT  = 10,
 
-    PROP_ENCHANTMENT_SLOT_0         = 8,                   // used with RandomSuffix
-    PROP_ENCHANTMENT_SLOT_1         = 9,                   // used with RandomSuffix
-    PROP_ENCHANTMENT_SLOT_2         = 10,                   // used with RandomSuffix and RandomProperty
-    PROP_ENCHANTMENT_SLOT_3         = 11,                   // used with RandomProperty
-    PROP_ENCHANTMENT_SLOT_4         = 12,                   // used with RandomProperty
-    MAX_ENCHANTMENT_SLOT            = 13,
+    PROP_ENCHANTMENT_SLOT_0         = 10,                   // used with RandomSuffix
+    PROP_ENCHANTMENT_SLOT_1         = 11,                   // used with RandomSuffix
+    PROP_ENCHANTMENT_SLOT_2         = 12,                   // used with RandomSuffix and RandomProperty
+    PROP_ENCHANTMENT_SLOT_3         = 13,                   // used with RandomProperty
+    PROP_ENCHANTMENT_SLOT_4         = 14,                   // used with RandomProperty
+    MAX_ENCHANTMENT_SLOT            = 15
 };
 
 #define MAX_VISIBLE_ITEM_OFFSET       2                     // 2 fields per visible item (entry+enchantment)
@@ -213,16 +215,12 @@ bool ItemCanGoIntoBag(ItemTemplate const* proto, ItemTemplate const* pBagProto);
 class Item : public Object
 {
     public:
-        static Item* CreateItem(uint32 itemEntry, uint32 count, Player const* player = NULL);
-        static Item* CreateItem(uint32 itemEntry, uint32 count, uint64 playerGuid);
+        static Item* CreateItem(uint32 item, uint32 count, Player const* player = NULL);
         Item* CloneItem(uint32 count, Player const* player = NULL) const;
 
         Item();
 
         virtual bool Create(uint32 guidlow, uint32 itemid, Player const* owner);
-        virtual bool Create(uint32 guidlow, uint32 itemid, uint64 playerGuid);
-
-		virtual void InitializeDynamicUpdateFields();
 
         ItemTemplate const* GetTemplate() const;
 
@@ -230,8 +228,8 @@ class Item : public Object
         void SetOwnerGUID(uint64 guid) { SetUInt64Value(ITEM_FIELD_OWNER, guid); }
         Player* GetOwner()const;
 
-        void SetBinding(bool val) { ApplyModFlag(ITEM_FIELD_DYNAMIC_FLAGS, ITEM_FLAG_SOULBOUND, val); }
-        bool IsSoulBound() const { return HasFlag(ITEM_FIELD_DYNAMIC_FLAGS, ITEM_FLAG_SOULBOUND); }
+        void SetBinding(bool val) { ApplyModFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_SOULBOUND, val); }
+        bool IsSoulBound() const { return HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_SOULBOUND); }
         bool IsBoundAccountWide() const { return (GetTemplate()->Flags & ITEM_PROTO_FLAG_BIND_TO_ACCOUNT) != 0; }
         bool IsBindedNotWith(Player const* player) const;
         bool IsBoundByEnchant() const;
@@ -256,11 +254,11 @@ class Item : public Object
         Bag* ToBag() { if (IsBag()) return reinterpret_cast<Bag*>(this); else return NULL; }
         const Bag* ToBag() const { if (IsBag()) return reinterpret_cast<const Bag*>(this); else return NULL; }
 
-        bool IsLocked() const { return !HasFlag(ITEM_FIELD_DYNAMIC_FLAGS, ITEM_FLAG_UNLOCKED); }
+        bool IsLocked() const { return !HasFlag(ITEM_FIELD_FLAGS, ITEM_FLAG_UNLOCKED); }
         bool IsBag() const { return GetTemplate()->InventoryType == INVTYPE_BAG; }
         bool IsCurrencyToken() const { return GetTemplate()->IsCurrencyToken(); }
         bool IsNotEmptyBag() const;
-        bool IsBroken() const { return GetUInt32Value(ITEM_FIELD_MAX_DURABILITY) > 0 && GetUInt32Value(ITEM_FIELD_DURABILITY) == 0; }
+        bool IsBroken() const { return GetUInt32Value(ITEM_FIELD_MAXDURABILITY) > 0 && GetUInt32Value(ITEM_FIELD_DURABILITY) == 0; }
         bool CanBeTraded(bool mail = false, bool trade = false) const;
         void SetInTrade(bool b = true) { mb_in_trade = b; }
         bool IsInTrade() const { return mb_in_trade; }
@@ -301,15 +299,14 @@ class Item : public Object
         void SetEnchantmentDuration(EnchantmentSlot slot, uint32 duration, Player* owner);
         void SetEnchantmentCharges(EnchantmentSlot slot, uint32 charges);
         void ClearEnchantment(EnchantmentSlot slot);
-        uint32 GetEnchantmentId(EnchantmentSlot slot)       const { return GetUInt32Value(ITEM_FIELD_ENCHANTMENT + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_ID_OFFSET);}
-        uint32 GetEnchantmentDuration(EnchantmentSlot slot) const { return GetUInt32Value(ITEM_FIELD_ENCHANTMENT + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_DURATION_OFFSET);}
-        uint32 GetEnchantmentCharges(EnchantmentSlot slot)  const { return GetUInt32Value(ITEM_FIELD_ENCHANTMENT + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_CHARGES_OFFSET);}
+        uint32 GetEnchantmentId(EnchantmentSlot slot)       const { return GetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_ID_OFFSET);}
+        uint32 GetEnchantmentDuration(EnchantmentSlot slot) const { return GetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_DURATION_OFFSET);}
+        uint32 GetEnchantmentCharges(EnchantmentSlot slot)  const { return GetUInt32Value(ITEM_FIELD_ENCHANTMENT_1_1 + slot*MAX_ENCHANTMENT_OFFSET + ENCHANTMENT_CHARGES_OFFSET);}
 
         std::string const& GetText() const { return m_text; }
         void SetText(std::string const& text) { m_text = text; }
 
-        void SendUpdateSockets();
-
+        void SendUpdateSockets(); 
         void SendTimeUpdate(Player* owner);
         void UpdateDuration(Player* owner, uint32 diff);
 
@@ -345,17 +342,16 @@ class Item : public Object
         void SetRefundRecipient(uint32 pGuidLow) { m_refundRecipient = pGuidLow; }
         void SetPaidMoney(uint32 money) { m_paidMoney = money; }
         void SetPaidExtendedCost(uint32 iece) { m_paidExtendedCost = iece; }
-
-        uint32 GetRefundRecipient() const { return m_refundRecipient; }
-        uint32 GetPaidMoney() const { return m_paidMoney; }
-        uint32 GetPaidExtendedCost() const { return m_paidExtendedCost; }
+        uint32 GetRefundRecipient() { return m_refundRecipient; }
+        uint32 GetPaidMoney() { return m_paidMoney; }
+        uint32 GetPaidExtendedCost() { return m_paidExtendedCost; }
 
         void UpdatePlayedTime(Player* owner);
         uint32 GetPlayedTime();
         bool IsRefundExpired();
 
         // Soulbound trade system
-        void SetSoulboundTradeable(AllowedLooterSet const& allowedLooters);
+        void SetSoulboundTradeable(AllowedLooterSet& allowedLooters);
         void ClearSoulboundTradeable(Player* currentOwner);
         bool CheckSoulboundTradeExpire();
 
@@ -371,7 +367,7 @@ class Item : public Object
 
         uint32 GetVisibleEntry() const
         {
-            if (uint32 transmogrification = GetDynamicUInt32Value(ITEM_DYNAMIC_FIELD_MODIFIERS, 1))
+            if (uint32 transmogrification = GetEnchantmentId(TRANSMOGRIFY_ENCHANTMENT_SLOT))
                 return transmogrification;
             return GetEntry();
         }

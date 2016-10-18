@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -21,7 +21,6 @@
 
 #include "SharedDefines.h"
 #include "WorldSession.h"
-#include "RBAC.h"
 
 #include <vector>
 
@@ -39,7 +38,7 @@ class ChatCommand
 {
     public:
         const char *       Name;
-        uint32             Permission;                   // function pointer required correct align (use uint32)
+        uint32             SecurityLevel;                   // function pointer required correct align (use uint32)
         bool               AllowConsole;
         bool (*Handler)(ChatHandler*, const char* args);
         std::string        Help;
@@ -50,17 +49,20 @@ class ChatHandler
 {
     public:
         WorldSession* GetSession() { return m_session; }
-        explicit ChatHandler(WorldSession* session) : m_session(session), sentErrorMessage(false) { }
-        virtual ~ChatHandler() { }
+        explicit ChatHandler(WorldSession* session) : m_session(session), sentErrorMessage(false) {}
+        virtual ~ChatHandler() {}
 
-        // Builds chat packet and returns receiver guid position in the packet to substitute in whisper builders
-        static size_t BuildChatPacket(WorldPacket& data, ChatMsg chatType, Language language, ObjectGuid senderGUID, ObjectGuid receiverGUID, std::string const& message, uint8 chatTag,
-        std::string const& senderName = "", std::string const& receiverName = "",
-        uint32 achievementId = 0, bool gmMessage = false, std::string const& channelName = "", std::string const& addonPrefix = "");
+        static void FillMessageData(WorldPacket* data, WorldSession* session, uint8 type, uint32 language, const char *channelName, uint64 target_guid, const char *message, Unit* speaker, const char* addonPrefix = NULL);
 
-        // Builds chat packet and returns receiver guid position in the packet to substitute in whisper builders
-        static size_t BuildChatPacket(WorldPacket& data, ChatMsg chatType, Language language, WorldObject const* sender, WorldObject const* receiver, std::string const& message, uint32 achievementId = 0, std::string const& channelName = "", LocaleConstant locale = DEFAULT_LOCALE, std::string const& addonPrefix = "");
+        void FillMessageData(WorldPacket* data, uint8 type, uint32 language, uint64 target_guid, const char* message)
+        {
+            FillMessageData(data, m_session, type, language, NULL, target_guid, message, NULL);
+        }
 
+        void FillSystemMessageData(WorldPacket* data, const char* message)
+        {
+            FillMessageData(data, CHAT_MSG_SYSTEM, LANG_UNIVERSAL, 0, message);
+        }
 
         static char* LineFromMessage(char*& pos) { char* start = strtok(pos, "\n"); pos = NULL; return start; }
 
@@ -84,7 +86,6 @@ class ChatHandler
 
         // function with different implementation for chat/console
         virtual bool isAvailable(ChatCommand const& cmd) const;
-        virtual bool HasPermission(uint32 permission) const { return m_session->HasPermission(permission); }
         virtual std::string GetNameLink() const { return GetNameLink(m_session->GetPlayer()); }
         virtual bool needReportToTarget(Player* chr) const;
         virtual LocaleConstant GetSessionDbcLocale() const;
@@ -126,8 +127,8 @@ class ChatHandler
 
         bool ShowHelpForCommand(ChatCommand* table, const char* cmd);
     protected:
-        explicit ChatHandler() : m_session(NULL), sentErrorMessage(false) { }     // for CLI subclass
-        static bool SetDataForCommandInTable(ChatCommand* table, const char* text, uint32 permission, std::string const& help, std::string const& fullcommand);
+        explicit ChatHandler() : m_session(NULL), sentErrorMessage(false) {}      // for CLI subclass
+        static bool SetDataForCommandInTable(ChatCommand* table, const char* text, uint32 security, std::string const& help, std::string const& fullcommand);
         bool ExecuteCommandInTable(ChatCommand* table, const char* text, std::string const& fullcmd);
         bool ShowHelpForSubCommands(ChatCommand* table, char const* cmd, char const* subcmd);
 
@@ -143,12 +144,11 @@ class CliHandler : public ChatHandler
 {
     public:
         typedef void Print(void*, char const*);
-        explicit CliHandler(void* callbackArg, Print* zprint) : m_callbackArg(callbackArg), m_print(zprint) { }
+        explicit CliHandler(void* callbackArg, Print* zprint) : m_callbackArg(callbackArg), m_print(zprint) {}
 
         // overwrite functions
         const char *GetTrinityString(int32 entry) const;
         bool isAvailable(ChatCommand const& cmd) const;
-        bool HasPermission(uint32 /*permission*/) const { return true; }
         void SendSysMessage(const char *str);
         std::string GetNameLink() const;
         bool needReportToTarget(Player* chr) const;

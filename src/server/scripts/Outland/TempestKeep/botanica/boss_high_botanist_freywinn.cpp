@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,7 +27,7 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "the_botanica.h"
 
-enum Says
+enum eSays
 {
     SAY_AGGRO                  = 0,
     SAY_KILL                   = 1,
@@ -38,7 +37,7 @@ enum Says
     SAY_OOC_RANDOM             = 5
 };
 
-enum Spells
+enum eSpells
 {
     SPELL_TRANQUILITY          = 34550,
     SPELL_TREE_FORM            = 34551,
@@ -49,10 +48,7 @@ enum Spells
     SPELL_PLANT_RED            = 34763
 };
 
-enum Creatures
-{
-    NPC_FRAYER                 = 19953
-};
+#define ENTRY_FRAYER                19953
 
 class boss_high_botanist_freywinn : public CreatureScript
 {
@@ -75,7 +71,7 @@ class boss_high_botanist_freywinn : public CreatureScript
             uint32 DeadAddsCount;
             bool MoveFree;
 
-            void Reset() override
+            void Reset()
             {
                 Adds_List.clear();
 
@@ -86,14 +82,14 @@ class boss_high_botanist_freywinn : public CreatureScript
                 MoveFree = true;
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 Talk(SAY_AGGRO);
             }
 
-            void JustSummoned(Creature* summoned) override
+            void JustSummoned(Creature* summoned)
             {
-                if (summoned->GetEntry() == NPC_FRAYER)
+                if (summoned->GetEntry() == ENTRY_FRAYER)
                     Adds_List.push_back(summoned->GetGUID());
             }
 
@@ -108,17 +104,17 @@ class boss_high_botanist_freywinn : public CreatureScript
                 }
             }
 
-            void KilledUnit(Unit* /*victim*/) override
+            void KilledUnit(Unit* /*victim*/)
             {
                 Talk(SAY_KILL);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 Talk(SAY_DEATH);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -154,7 +150,7 @@ class boss_high_botanist_freywinn : public CreatureScript
                             {
                                 if (Unit* temp = Unit::GetUnit(*me, *itr))
                                 {
-                                    if (!temp->IsAlive())
+                                    if (!temp->isAlive())
                                     {
                                         Adds_List.erase(itr);
                                         ++DeadAddsCount;
@@ -201,7 +197,7 @@ class boss_high_botanist_freywinn : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_high_botanist_freywinnAI(creature);
         }

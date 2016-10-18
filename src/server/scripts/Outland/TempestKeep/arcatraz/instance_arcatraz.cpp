@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -30,7 +29,7 @@ EndScriptData */
 
 #define MAX_ENCOUNTER 9
 
-enum Units
+enum eUnits
 {
     CONTAINMENT_CORE_SECURITY_FIELD_ALPHA = 184318, //door opened when Wrath-Scryer Soccothrates dies
     CONTAINMENT_CORE_SECURITY_FIELD_BETA  = 184319, //door opened when Dalliah the Doomsayer dies
@@ -61,7 +60,7 @@ class instance_arcatraz : public InstanceMapScript
         }
         struct instance_arcatraz_InstanceMapScript : public InstanceScript
         {
-            instance_arcatraz_InstanceMapScript(Map* map) : InstanceScript(map) { }
+            instance_arcatraz_InstanceMapScript(Map* map) : InstanceScript(map) {}
 
             uint32 m_auiEncounter[MAX_ENCOUNTER];
 
@@ -76,7 +75,7 @@ class instance_arcatraz : public InstanceMapScript
             uint64 GoSphereGUID;
             uint64 MellicharGUID;
 
-            void Initialize() override
+            void Initialize()
             {
                 memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
 
@@ -92,7 +91,7 @@ class instance_arcatraz : public InstanceMapScript
                         MellicharGUID = 0;
             }
 
-            bool IsEncounterInProgress() const override
+            bool IsEncounterInProgress() const
             {
                 for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
                     if (m_auiEncounter[i] == IN_PROGRESS)
@@ -101,7 +100,7 @@ class instance_arcatraz : public InstanceMapScript
                 return false;
             }
 
-            void OnGameObjectCreate(GameObject* go) override
+            void OnGameObjectCreate(GameObject* go)
             {
                 switch (go->GetEntry())
                 {
@@ -143,13 +142,13 @@ class instance_arcatraz : public InstanceMapScript
                 }
             }
 
-            void OnCreatureCreate(Creature* creature) override
+            void OnCreatureCreate(Creature* creature)
             {
                 if (creature->GetEntry() == MELLICHAR)
                     MellicharGUID = creature->GetGUID();
             }
 
-            void SetData(uint32 type, uint32 data) override
+            void SetData(uint32 type, uint32 data)
             {
                 switch (type)
                 {
@@ -231,7 +230,7 @@ class instance_arcatraz : public InstanceMapScript
                 }
             }
 
-            uint32 GetData(uint32 type) const override
+            uint32 GetData(uint32 type) const
             {
                 switch (type)
                 {
@@ -245,7 +244,7 @@ class instance_arcatraz : public InstanceMapScript
                 return 0;
             }
 
-            uint64 GetData64(uint32 data) const override
+            uint64 GetData64(uint32 data) const
             {
                 switch (data)
                 {
@@ -256,7 +255,7 @@ class instance_arcatraz : public InstanceMapScript
             }
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const
         {
             return new instance_arcatraz_InstanceMapScript(map);
         }

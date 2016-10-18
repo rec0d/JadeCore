@@ -1,34 +1,23 @@
-# Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
-# Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
-# Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+# Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
 #
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.
+# This file is free software; as a special exception the author gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
 #
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-# more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program. If not, see <http://www.gnu.org/licenses/>.
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-if(CMAKE_COMPILER_IS_GNUCXX AND NOT MINGW)
+# Enforce compileparameters for corebuilds under GCC
+# This to stop a few silly crashes that could have been avoided IF people
+# weren't doing some -O3 psychooptimizations etc.
+
+if(CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-fno-delete-null-pointer-checks)
-  
-  execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-  if (GCC_VERSION VERSION_GREATER 4.7 OR GCC_VERSION VERSION_EQUAL 4.7)
-    message(STATUS "GCC: C++11 for server activated.")
-    add_definitions("-std=c++11")
-  else()
-    message(FATAL_ERROR "GCC: ${PROJECT_NAME} requires GCC 4.7 or greater.")
-  endif()
 endif()
 
 if( SERVERS )
-  set(sources_windows_Debugging
+  set(sources_Debugging
     ${CMAKE_SOURCE_DIR}/src/server/shared/Debugging/WheatyExceptionReport.cpp
     ${CMAKE_SOURCE_DIR}/src/server/shared/Debugging/WheatyExceptionReport.h
   )

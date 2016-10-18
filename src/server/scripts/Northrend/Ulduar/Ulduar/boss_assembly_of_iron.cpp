@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -125,11 +122,9 @@ enum AssemblyYells
     EMOTE_BRUNDIR_OVERLOAD                      = 7
 };
 
-enum Misc
+enum AssemblyNPCs
 {
-    NPC_WORLD_TRIGGER                            = 22515,
-
-    DATA_PHASE_3                                 = 1
+    NPC_WORLD_TRIGGER                            = 22515
 };
 
 #define FLOOR_Z                                  427.28f
@@ -146,14 +141,14 @@ class boss_steelbreaker : public CreatureScript
 
             uint32 phase;
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 phase = 0;
                 me->RemoveAllAuras();
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 _EnterCombat();
                 Talk(SAY_STEELBREAKER_AGGRO);
@@ -163,15 +158,7 @@ class boss_steelbreaker : public CreatureScript
                 events.ScheduleEvent(EVENT_FUSION_PUNCH, 15000);
             }
 
-            uint32 GetData(uint32 type) const override
-            {
-                if (type == DATA_PHASE_3)
-                    return (phase >= 3) ? 1 : 0;
-
-                return 0;
-            }
-
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 switch (action)
                 {
@@ -191,13 +178,13 @@ class boss_steelbreaker : public CreatureScript
                 }
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 _JustDied();
 
                 if (instance->GetBossState(BOSS_ASSEMBLY_OF_IRON) == DONE)
                 {
-                    DoCastAOE(SPELL_KILL_CREDIT, true);
+                    DoCastAOE(SPELL_KILL_CREDIT);
                     Talk(SAY_STEELBREAKER_ENCOUNTER_DEFEATED);
                 }
                 else
@@ -207,16 +194,16 @@ class boss_steelbreaker : public CreatureScript
                     //DoCastAOE(SPELL_SUPERCHARGE, true);
 
                     if (Creature* Brundir = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_BRUNDIR)))
-                        if (Brundir->IsAlive())
+                        if (Brundir->isAlive())
                             Brundir->AI()->DoAction(ACTION_SUPERCHARGE);
 
                     if (Creature* Molgeim = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_MOLGEIM)))
-                        if (Molgeim->IsAlive())
+                        if (Molgeim->isAlive())
                             Molgeim->AI()->DoAction(ACTION_SUPERCHARGE);
                 }
             }
 
-            void KilledUnit(Unit* who) override
+            void KilledUnit(Unit* who)
             {
                 if (who->GetTypeId() == TYPEID_PLAYER)
                     Talk(SAY_STEELBREAKER_SLAY);
@@ -225,7 +212,7 @@ class boss_steelbreaker : public CreatureScript
                     DoCast(me, SPELL_ELECTRICAL_CHARGE);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -266,7 +253,7 @@ class boss_steelbreaker : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<boss_steelbreakerAI>(creature);
         }
@@ -283,14 +270,14 @@ class boss_runemaster_molgeim : public CreatureScript
 
             uint32 phase;
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 phase = 0;
                 me->RemoveAllAuras();
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 _EnterCombat();
                 Talk(SAY_MOLGEIM_AGGRO);
@@ -300,15 +287,7 @@ class boss_runemaster_molgeim : public CreatureScript
                 events.ScheduleEvent(EVENT_RUNE_OF_POWER, 20000);
             }
 
-            uint32 GetData(uint32 type) const override
-            {
-                if (type == DATA_PHASE_3)
-                    return (phase >= 3) ? 1 : 0;
-
-                return 0;
-            }
-
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 switch (action)
                 {
@@ -328,13 +307,13 @@ class boss_runemaster_molgeim : public CreatureScript
                 }
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 _JustDied();
 
                 if (instance->GetBossState(BOSS_ASSEMBLY_OF_IRON) == DONE)
                 {
-                    DoCastAOE(SPELL_KILL_CREDIT, true);
+                    DoCastAOE(SPELL_KILL_CREDIT);
                     Talk(SAY_MOLGEIM_ENCOUNTER_DEFEATED);
                 }
                 else
@@ -344,22 +323,22 @@ class boss_runemaster_molgeim : public CreatureScript
                     //DoCastAOE(SPELL_SUPERCHARGE, true);
 
                     if (Creature* Brundir = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_BRUNDIR)))
-                        if (Brundir->IsAlive())
+                        if (Brundir->isAlive())
                             Brundir->AI()->DoAction(ACTION_SUPERCHARGE);
 
                     if (Creature* Steelbreaker = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_STEELBREAKER)))
-                        if (Steelbreaker->IsAlive())
+                        if (Steelbreaker->isAlive())
                             Steelbreaker->AI()->DoAction(ACTION_SUPERCHARGE);
                 }
             }
 
-            void KilledUnit(Unit* who) override
+            void KilledUnit(Unit* who)
             {
                 if (who->GetTypeId() == TYPEID_PLAYER)
                     Talk(SAY_MOLGEIM_SLAY);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -385,12 +364,12 @@ class boss_runemaster_molgeim : public CreatureScript
                             {
                                 case 1:
                                     if (Creature* Steelbreaker = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_STEELBREAKER)))
-                                        if (Steelbreaker->IsAlive())
+                                        if (Steelbreaker->isAlive())
                                             target = Steelbreaker;
                                     break;
                                 case 2:
                                     if (Creature* Brundir = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_STEELBREAKER)))
-                                        if (Brundir->IsAlive())
+                                        if (Brundir->isAlive())
                                             target = Brundir;
                                     break;
                                 default:
@@ -423,7 +402,7 @@ class boss_runemaster_molgeim : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<boss_runemaster_molgeimAI>(creature);
         }
@@ -440,7 +419,7 @@ class boss_stormcaller_brundir : public CreatureScript
 
             uint32 phase;
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 phase = 0;
@@ -450,15 +429,7 @@ class boss_stormcaller_brundir : public CreatureScript
                 me->ApplySpellImmune(0, IMMUNITY_MECHANIC, MECHANIC_STUN, false);       // Reset immumity, Brundir should be stunnable by default
             }
 
-            uint32 GetData(uint32 type) const override
-            {
-                if (type == DATA_PHASE_3)
-                    return (phase >= 3) ? 1 : 0;
-
-                return 0;
-            }
-
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 _EnterCombat();
                 Talk(SAY_BRUNDIR_AGGRO);
@@ -469,7 +440,7 @@ class boss_stormcaller_brundir : public CreatureScript
                 events.ScheduleEvent(EVENT_OVERLOAD, urand(60000, 120000));
             }
 
-            void DoAction(int32 action) override
+            void DoAction(int32 const action)
             {
                 switch (action)
                 {
@@ -493,13 +464,13 @@ class boss_stormcaller_brundir : public CreatureScript
                 }
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 _JustDied();
 
                 if (instance->GetBossState(BOSS_ASSEMBLY_OF_IRON) == DONE)
                 {
-                    DoCastAOE(SPELL_KILL_CREDIT, true);
+                    DoCastAOE(SPELL_KILL_CREDIT);
                     Talk(SAY_BRUNDIR_ENCOUNTER_DEFEATED);
                 }
                 else
@@ -509,11 +480,11 @@ class boss_stormcaller_brundir : public CreatureScript
                     //DoCastAOE(SPELL_SUPERCHARGE, true);
 
                     if (Creature* Molgeim = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_MOLGEIM)))
-                        if (Molgeim->IsAlive())
+                        if (Molgeim->isAlive())
                             Molgeim->AI()->DoAction(ACTION_SUPERCHARGE);
 
                     if (Creature* Steelbreaker = ObjectAccessor::GetCreature(*me, instance->GetData64(DATA_STEELBREAKER)))
-                        if (Steelbreaker->IsAlive())
+                        if (Steelbreaker->isAlive())
                             Steelbreaker->AI()->DoAction(ACTION_SUPERCHARGE);
                 }
 
@@ -522,13 +493,13 @@ class boss_stormcaller_brundir : public CreatureScript
                     me->GetMotionMaster()->MoveFall();
             }
 
-            void KilledUnit(Unit* who) override
+            void KilledUnit(Unit* who)
             {
                 if (who->GetTypeId() == TYPEID_PLAYER)
                     Talk(SAY_BRUNDIR_SLAY);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -623,7 +594,7 @@ class boss_stormcaller_brundir : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return GetUlduarAI<boss_stormcaller_brundirAI>(creature);
         }
@@ -645,13 +616,13 @@ class spell_shield_of_runes : public SpellScriptLoader
                         caster->CastSpell(caster, SPELL_SHIELD_OF_RUNES_BUFF, false);
             }
 
-            void Register() override
+            void Register()
             {
                  AfterEffectRemove += AuraEffectRemoveFn(spell_shield_of_runes_AuraScript::OnRemove, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL);
             }
         };
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const
         {
             return new spell_shield_of_runes_AuraScript();
         }
@@ -673,13 +644,13 @@ class spell_assembly_meltdown : public SpellScriptLoader
                         Steelbreaker->AI()->DoAction(ACTION_ADD_CHARGE);
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectHitTarget += SpellEffectFn(spell_assembly_meltdown_SpellScript::HandleInstaKill, EFFECT_1, SPELL_EFFECT_INSTAKILL);
             }
         };
 
-        SpellScript* GetSpellScript() const override
+        SpellScript* GetSpellScript() const
         {
             return new spell_assembly_meltdown_SpellScript();
         }
@@ -694,7 +665,7 @@ class spell_assembly_rune_of_summoning : public SpellScriptLoader
         {
             PrepareAuraScript(spell_assembly_rune_of_summoning_AuraScript);
 
-            bool Validate(SpellInfo const* /*spell*/) override
+            bool Validate(SpellInfo const* /*spell*/)
             {
                 if (!sSpellMgr->GetSpellInfo(SPELL_RUNE_OF_SUMMONING_SUMMON))
                     return false;
@@ -704,7 +675,7 @@ class spell_assembly_rune_of_summoning : public SpellScriptLoader
             void HandlePeriodic(AuraEffect const* aurEff)
             {
                 PreventDefaultAction();
-                GetTarget()->CastSpell(GetTarget(), SPELL_RUNE_OF_SUMMONING_SUMMON, true, NULL, aurEff, GetTarget()->IsSummon() ? GetTarget()->ToTempSummon()->GetSummonerGUID() : 0);
+                GetTarget()->CastSpell(GetTarget(), SPELL_RUNE_OF_SUMMONING_SUMMON, true, NULL, aurEff, GetTarget()->isSummon() ? GetTarget()->ToTempSummon()->GetSummonerGUID() : 0);
             }
 
             void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
@@ -713,27 +684,16 @@ class spell_assembly_rune_of_summoning : public SpellScriptLoader
                     summ->DespawnOrUnsummon(1);
             }
 
-            void Register() override
+            void Register()
             {
                 OnEffectPeriodic += AuraEffectPeriodicFn(spell_assembly_rune_of_summoning_AuraScript::HandlePeriodic, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY);
                 OnEffectRemove += AuraEffectRemoveFn(spell_assembly_rune_of_summoning_AuraScript::OnRemove, EFFECT_0, SPELL_AURA_PERIODIC_DUMMY, AURA_EFFECT_HANDLE_REAL);
             }
         };
 
-        AuraScript* GetAuraScript() const override
+        AuraScript* GetAuraScript() const
         {
             return new spell_assembly_rune_of_summoning_AuraScript();
-        }
-};
-
-class achievement_assembly_i_choose_you : public AchievementCriteriaScript
-{
-    public:
-        achievement_assembly_i_choose_you() : AchievementCriteriaScript("achievement_assembly_i_choose_you") { }
-
-        bool OnCheck(Player* /*player*/, Unit* target) override
-        {
-            return target && target->GetAI()->GetData(DATA_PHASE_3);
         }
 };
 
@@ -745,5 +705,4 @@ void AddSC_boss_assembly_of_iron()
     new spell_shield_of_runes();
     new spell_assembly_meltdown();
     new spell_assembly_rune_of_summoning();
-    new achievement_assembly_i_choose_you();
 }

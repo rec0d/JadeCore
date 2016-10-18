@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -70,7 +67,7 @@ class instance_ruby_sanctum : public InstanceMapScript
                 }
             }
 
-            void OnCreatureCreate(Creature* creature) override
+            void OnCreatureCreate(Creature* creature)
             {
                 switch (creature->GetEntry())
                 {
@@ -115,7 +112,7 @@ class instance_ruby_sanctum : public InstanceMapScript
                 }
             }
 
-            void OnGameObjectCreate(GameObject* go) override
+            void OnGameObjectCreate(GameObject* go)
             {
                 switch (go->GetEntry())
                 {
@@ -158,7 +155,7 @@ class instance_ruby_sanctum : public InstanceMapScript
                 }
             }
 
-            void OnGameObjectRemove(GameObject* go) override
+            void OnGameObjectRemove(GameObject* go)
             {
                 switch (go->GetEntry())
                 {
@@ -170,7 +167,7 @@ class instance_ruby_sanctum : public InstanceMapScript
                 }
             }
 
-            void OnUnitDeath(Unit* unit) override
+            void OnUnitDeath(Unit* unit)
             {
                 Creature* creature = unit->ToCreature();
                 if (!creature)
@@ -184,7 +181,7 @@ class instance_ruby_sanctum : public InstanceMapScript
                 }
             }
 
-            uint64 GetData64(uint32 type) const override
+            uint64 GetData64(uint32 type) const
             {
                 switch (type)
                 {
@@ -227,7 +224,7 @@ class instance_ruby_sanctum : public InstanceMapScript
                 return 0;
             }
 
-            bool SetBossState(uint32 type, EncounterState state) override
+            bool SetBossState(uint32 type, EncounterState state)
             {
                 if (!InstanceScript::SetBossState(type, state))
                     return false;
@@ -281,7 +278,7 @@ class instance_ruby_sanctum : public InstanceMapScript
                 return true;
             }
 
-            void SetData(uint32 type, uint32 data) override
+            void SetData(uint32 type, uint32 data)
             {
                 if (type != DATA_BALTHARUS_SHARED_HEALTH)
                     return;
@@ -289,7 +286,7 @@ class instance_ruby_sanctum : public InstanceMapScript
                 BaltharusSharedHealth = data;
             }
 
-            uint32 GetData(uint32 type) const override
+            uint32 GetData(uint32 type) const
             {
                 if (type != DATA_BALTHARUS_SHARED_HEALTH)
                     return 0;
@@ -297,7 +294,7 @@ class instance_ruby_sanctum : public InstanceMapScript
                 return BaltharusSharedHealth;
             }
 
-            std::string GetSaveData() override
+            std::string GetSaveData()
             {
                 OUT_SAVE_INST_DATA;
 
@@ -308,14 +305,14 @@ class instance_ruby_sanctum : public InstanceMapScript
                 return saveStream.str();
             }
 
-            void FillInitialWorldStates(WorldStateBuilder& builder) override
+            void FillInitialWorldStates(WorldPacket& data)
             {
-                builder.AppendState(WORLDSTATE_CORPOREALITY_MATERIAL, 50);
-                builder.AppendState(WORLDSTATE_CORPOREALITY_TWILIGHT, 50);
-                builder.AppendState(WORLDSTATE_CORPOREALITY_TOGGLE, 0);
+                data << uint32(WORLDSTATE_CORPOREALITY_MATERIAL) << uint32(50);
+                data << uint32(WORLDSTATE_CORPOREALITY_TWILIGHT) << uint32(50);
+                data << uint32(WORLDSTATE_CORPOREALITY_TOGGLE) << uint32(0);
             }
 
-            void Load(char const* str) override
+            void Load(char const* str)
             {
                 if (!str)
                 {
@@ -368,7 +365,7 @@ class instance_ruby_sanctum : public InstanceMapScript
             uint32 BaltharusSharedHealth;
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const
         {
             return new instance_ruby_sanctum_InstanceMapScript(map);
         }

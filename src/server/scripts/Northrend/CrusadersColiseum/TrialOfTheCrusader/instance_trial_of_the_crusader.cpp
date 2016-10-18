@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -31,9 +29,9 @@ class instance_trial_of_the_crusader : public InstanceMapScript
 
         struct instance_trial_of_the_crusader_InstanceMapScript : public InstanceScript
         {
-            instance_trial_of_the_crusader_InstanceMapScript(Map* map) : InstanceScript(map) { }
+            instance_trial_of_the_crusader_InstanceMapScript(Map* map) : InstanceScript(map) {}
 
-            void Initialize() override
+            void Initialize()
             {
                 SetBossNumber(MAX_ENCOUNTERS);
                 TrialCounter = 50;
@@ -71,7 +69,7 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                 FloorGUID = 0;
             }
 
-            bool IsEncounterInProgress() const override
+            bool IsEncounterInProgress() const
             {
                 for (uint8 i = 0; i < MAX_ENCOUNTERS; ++i)
                     if (GetBossState(i) == IN_PROGRESS)
@@ -84,7 +82,7 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                 return false;
             }
 
-            void OnPlayerEnter(Player* player) override
+            void OnPlayerEnter(Player* player)
             {
                 if (instance->IsHeroic())
                 {
@@ -124,7 +122,7 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                     go->SetGoState(GO_STATE_READY);
             }
 
-            void OnCreatureCreate(Creature* creature) override
+            void OnCreatureCreate(Creature* creature)
             {
                 switch (creature->GetEntry())
                 {
@@ -181,7 +179,7 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                 }
             }
 
-            void OnGameObjectCreate(GameObject* go) override
+            void OnGameObjectCreate(GameObject* go)
             {
                 switch (go->GetEntry())
                 {
@@ -229,7 +227,7 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                 }
             }
 
-            bool SetBossState(uint32 type, EncounterState state) override
+            bool SetBossState(uint32 type, EncounterState state)
             {
                 if (!InstanceScript::SetBossState(type, state))
                     return false;
@@ -265,8 +263,6 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                                 if (ResilienceWillFixItTimer > 0)
                                     DoUpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BE_SPELL_TARGET, SPELL_CHAMPIONS_KILLED_IN_MINUTE);
                                 DoRespawnGameObject(CrusadersCacheGUID, 7*DAY);
-                                if (GameObject* cache = instance->GetGameObject(CrusadersCacheGUID))
-                                    cache->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_NOT_SELECTABLE);
                                 EventStage = 3100;
                                 break;
                             default:
@@ -288,7 +284,7 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                                     state = DONE;
                                 break;
                             case DONE:
-                                if (instance->GetPlayers().getFirst()->GetSource()->GetTeam() == ALLIANCE)
+                                if (instance->GetPlayers().getFirst()->getSource()->GetTeam() == ALLIANCE)
                                     EventStage = 4020;
                                 else
                                     EventStage = 4030;
@@ -368,7 +364,7 @@ class instance_trial_of_the_crusader : public InstanceMapScript
 
                 if (type < MAX_ENCOUNTERS)
                 {
-                    TC_LOG_INFO("scripts", "[ToCr] BossState(type %u) %u = state %u;", type, GetBossState(type), state);
+                    sLog->outInfo(LOG_FILTER_TSCR, "[ToCr] BossState(type %u) %u = state %u;", type, GetBossState(type), state);
                     if (state == FAIL)
                     {
                         if (instance->IsHeroic())
@@ -377,7 +373,7 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                             // decrease attempt counter at wipe
                             Map::PlayerList const &PlayerList = instance->GetPlayers();
                             for (Map::PlayerList::const_iterator itr = PlayerList.begin(); itr != PlayerList.end(); ++itr)
-                                if (Player* player = itr->GetSource())
+                                if (Player* player = itr->getSource())
                                     player->SendUpdateWorldState(UPDATE_STATE_UI_COUNT, TrialCounter);
 
                             // if theres no more attemps allowed
@@ -398,14 +394,14 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                     if (state == DONE || NeedSave)
                     {
                         if (Unit* announcer = instance->GetCreature(GetData64(NPC_BARRENT)))
-                            announcer->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                            announcer->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                         Save();
                     }
                 }
                 return true;
             }
 
-            void SetData(uint32 type, uint32 data) override
+            void SetData(uint32 type, uint32 data)
             {
                 switch (type)
                 {
@@ -474,7 +470,7 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                 }
             }
 
-            uint64 GetData64(uint32 type) const override
+            uint64 GetData64(uint32 type) const
             {
                 switch (type)
                 {
@@ -525,7 +521,7 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                 return 0;
             }
 
-            uint32 GetData(uint32 type) const override
+            uint32 GetData(uint32 type) const
             {
                 switch (type)
                 {
@@ -631,7 +627,7 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                 return 0;
             }
 
-            void Update(uint32 diff) override
+            void Update(uint32 diff)
             {
                 if (GetData(TYPE_NORTHREND_BEASTS) == SNAKES_SPECIAL && NotOneButTwoJormungarsTimer)
                 {
@@ -667,12 +663,12 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                 NeedSave = false;
             }
 
-            std::string GetSaveData() override
+            std::string GetSaveData()
             {
                 return SaveDataBuffer;
             }
 
-            void Load(const char* strIn) override
+            void Load(const char* strIn)
             {
                 if (!strIn)
                 {
@@ -699,7 +695,7 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                 OUT_LOAD_INST_DATA_COMPLETE;
             }
 
-            bool CheckAchievementCriteriaMeet(uint32 criteria_id, Player const* /*source*/, Unit const* /*target*/, uint32 /*miscvalue1*/) override
+            bool CheckAchievementCriteriaMeet(uint32 criteria_id, Player const* /*source*/, Unit const* /*target*/, uint32 /*miscvalue1*/)
             {
                 switch (criteria_id)
                 {
@@ -776,7 +772,7 @@ class instance_trial_of_the_crusader : public InstanceMapScript
                 bool   TributeToImmortalityEligible;
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const
         {
             return new instance_trial_of_the_crusader_InstanceMapScript(map);
         }

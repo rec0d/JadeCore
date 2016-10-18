@@ -1,230 +1,164 @@
-/*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
- */
+ /*
+* Copyright (C) 2010-2011 Trinity <http://www.projecttrinity.org/>
+*
+* This program is free software; you can redistribute it and/or modify it
+* under the terms of the GNU General Public License as published by the
+* Free Software Foundation; either version 2 of the License, or (at your
+* option) any later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+* FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+* more details.
+*
+* You should have received a copy of the GNU General Public License along
+* with this program. If not, see <http://www.gnu.org/licenses/>.
+*/
 
-#include "ObjectMgr.h"
-#include "ScriptMgr.h"
-#include "InstanceScript.h"
-#include "ScriptedCreature.h"
-#include "Map.h"
-#include "PoolMgr.h"
-#include "AccountMgr.h"
+//#include"ScriptPCH.h"
 #include "halls_of_origination.h"
-#include "Player.h"
-#include "WorldPacket.h"
-#include "WorldSession.h"
+#include "InstanceScript.h"
+#include "ScriptMgr.h"
+#include "ScriptedCreature.h"
 
-DoorData const doorData[] =
+#define ENCOUNTERS 7
+
+/* Boss Encounters
+   Temple Guardian Anhuur
+   Earthrager Ptah
+   Anraphet
+   Isiset
+   Ammunae
+   Setesh
+   Rajh
+*/
+
+static const DoorData doorData[] =
 {
-    {GO_ANHUURS_DOOR,                 DATA_TEMPLE_GUARDIAN_ANHUUR, DOOR_TYPE_PASSAGE, BOUNDARY_NONE },
-    {GO_ANHUURS_BRIDGE,               DATA_TEMPLE_GUARDIAN_ANHUUR, DOOR_TYPE_PASSAGE, BOUNDARY_NONE },
-    {GO_DOODAD_ULDUM_ELEVATOR_COL01,  DATA_TEMPLE_GUARDIAN_ANHUUR, DOOR_TYPE_PASSAGE, BOUNDARY_NONE },
-    {GO_VAULT_OF_LIGHTS_DOOR,         DATA_VAULT_OF_LIGHTS,        DOOR_TYPE_PASSAGE, BOUNDARY_NONE },
-    {GO_DOODAD_ULDUM_LIGHTMACHINE_02, DATA_EARTH_WARDEN,           DOOR_TYPE_PASSAGE, BOUNDARY_NONE },
-    {GO_DOODAD_ULDUM_LASERBEAMS01,    DATA_EARTH_WARDEN,           DOOR_TYPE_PASSAGE, BOUNDARY_NONE },
-    {GO_DOODAD_ULDUM_LIGHTMACHINE_01, DATA_FIRE_WARDEN,            DOOR_TYPE_PASSAGE, BOUNDARY_NONE },
-    {GO_DOODAD_ULDUM_LASERBEAMS_01,   DATA_FIRE_WARDEN,            DOOR_TYPE_PASSAGE, BOUNDARY_NONE },
-    {GO_DOODAD_ULDUM_LIGHTMACHINE_03, DATA_WATER_WARDEN,           DOOR_TYPE_PASSAGE, BOUNDARY_NONE },
-    {GO_DOODAD_ULDUM_LASERBEAMS_03,   DATA_WATER_WARDEN,           DOOR_TYPE_PASSAGE, BOUNDARY_NONE },
-    {GO_DOODAD_ULDUM_LIGHTMACHINE_04, DATA_AIR_WARDEN,             DOOR_TYPE_PASSAGE, BOUNDARY_NONE },
-    {GO_DOODAD_ULDUM_LASERBEAMS_02,   DATA_AIR_WARDEN,             DOOR_TYPE_PASSAGE, BOUNDARY_NONE },
-    {0,                              0,                            DOOR_TYPE_ROOM,    BOUNDARY_NONE }
+    {GO_ULDUM_DOOR_14,                      DATA_TEMPLE_GUARDIAN_ANHUUR_EVENT,      DOOR_TYPE_ROOM,     BOUNDARY_E      },
+    {GO_ANHUURS_DOOR,                       DATA_TEMPLE_GUARDIAN_ANHUUR_EVENT,      DOOR_TYPE_PASSAGE,  BOUNDARY_W      },
+    {GO_ANHUURS_BRIDGE,                     DATA_TEMPLE_GUARDIAN_ANHUUR_EVENT,      DOOR_TYPE_PASSAGE,  BOUNDARY_NONE   },
+    {0,                                     0,                                      DOOR_TYPE_ROOM,     BOUNDARY_NONE} // END
 };
 
 class instance_halls_of_origination : public InstanceMapScript
 {
     public:
-        instance_halls_of_origination() : InstanceMapScript(HoOScriptName, 644) { }
+        instance_halls_of_origination() : InstanceMapScript("instance_halls_of_origination", 644) { }
 
         struct instance_halls_of_origination_InstanceMapScript : public InstanceScript
         {
             instance_halls_of_origination_InstanceMapScript(InstanceMap* map) : InstanceScript(map)
             {
-                SetBossNumber(EncounterCount);
+                SetBossNumber(ENCOUNTERS);
                 LoadDoorData(doorData);
-                TempleGuardianAnhuurGUID = 0;
-                AnhuursBridgeGUID = 0;
-                AnhuursDoorGUID = 0;
-                AnhuurRightBeaconGUID = 0;
-                AnhuurLeftBeaconGUID = 0;
-                BrannBronzebeardGUID = 0;
-                AnraphetGUID = 0;
-                AnraphetDoorGUID = 0;
-                SunMirrorGUID = 0;
-                _deadElementals = 0;
+                slainElementals = 0;
+                anraphetDoorGUID = 0;
+                anraphetGUID = 0;
+                brannGUID = 0;
             }
 
-            void OnGameObjectCreate(GameObject* go) override
-            {
-                switch (go->GetEntry())
-                {
-                    case GO_ANHUURS_BRIDGE:
-                        AnhuursBridgeGUID = go->GetGUID();
-                    case GO_DOODAD_ULDUM_ELEVATOR_COL01:
-                    case GO_VAULT_OF_LIGHTS_DOOR:
-                    case GO_DOODAD_ULDUM_LIGHTMACHINE_01:
-                    case GO_DOODAD_ULDUM_LIGHTMACHINE_02:
-                    case GO_DOODAD_ULDUM_LIGHTMACHINE_03:
-                    case GO_DOODAD_ULDUM_LIGHTMACHINE_04:
-                    case GO_DOODAD_ULDUM_LASERBEAMS01:
-                    case GO_DOODAD_ULDUM_LASERBEAMS_01:
-                    case GO_DOODAD_ULDUM_LASERBEAMS_02:
-                    case GO_DOODAD_ULDUM_LASERBEAMS_03:
-                        AddDoor(go, true);
-                        break;
-                    case GO_ANHUURS_DOOR:
-                        AnhuursDoorGUID = go->GetGUID();
-                        AddDoor(go, true);
-                        break;
-                    case GO_ANHUURS_RIGHT_BEACON:
-                        AnhuurRightBeaconGUID = go->GetGUID();
-                        break;
-                    case GO_ANHUURS_LEFT_BEACON:
-                        AnhuurLeftBeaconGUID = go->GetGUID();
-                        break;
-                    case GO_SUN_MIRROR:
-                        SunMirrorGUID = go->GetGUID();
-                        break;
-                    case GO_ANRAPHET_DOOR:
-                        AnraphetDoorGUID = go->GetGUID();
-                        break;
-                }
-            }
-
-            void OnGameObjectRemove(GameObject* go) override
-            {
-                switch (go->GetEntry())
-                {
-                    case GO_ANHUURS_BRIDGE:
-                    case GO_DOODAD_ULDUM_ELEVATOR_COL01:
-                    case GO_ANHUURS_DOOR:
-                    case GO_VAULT_OF_LIGHTS_DOOR:
-                    case GO_DOODAD_ULDUM_LIGHTMACHINE_01:
-                    case GO_DOODAD_ULDUM_LIGHTMACHINE_02:
-                    case GO_DOODAD_ULDUM_LIGHTMACHINE_03:
-                    case GO_DOODAD_ULDUM_LIGHTMACHINE_04:
-                    case GO_DOODAD_ULDUM_LASERBEAMS01:
-                    case GO_DOODAD_ULDUM_LASERBEAMS_01:
-                    case GO_DOODAD_ULDUM_LASERBEAMS_02:
-                    case GO_DOODAD_ULDUM_LASERBEAMS_03:
-                        AddDoor(go, false);
-                        break;
-                }
-            }
-
-            void OnCreatureCreate(Creature* creature) override
+            void OnCreatureCreate(Creature* creature)
             {
                 switch (creature->GetEntry())
                 {
-                    case BOSS_TEMPLE_GUARDIAN_ANHUUR:
-                        TempleGuardianAnhuurGUID = creature->GetGUID();
-                        break;
-                    case NPC_BRANN_BRONZEBEARD_0:
-                        BrannBronzebeardGUID = creature->GetGUID();
-                        break;
-                    case BOSS_ANRAPHET:
-                        AnraphetGUID = creature->GetGUID();
-                        break;
-                }
-            }
-
-            uint32 GetData(uint32 data) const override
-            {
-                switch (data)
-                {
-                    case DATA_DEAD_ELEMENTALS:
-                        return _deadElementals;
+                case BOSS_ANRAPHET:
+                    creature->setActive(true);
+                    anraphetGUID = creature->GetGUID();
+                    if(slainElementals < 4)
+                        creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                    break;
+                case NPC_BRANN_ANRAPHET:
+                    creature->setActive(true);
+                    brannGUID = creature->GetGUID();
+                    break;
                     default:
                         break;
                 }
-
-                return 0;
             }
 
-            uint64 GetData64(uint32 index) const override
+            void OnGameObjectCreate(GameObject* go)
             {
-                switch (index)
+                switch (go->GetEntry())
                 {
-                    case DATA_ANHUUR_BRIDGE:
-                        return AnhuursBridgeGUID;
-                    case DATA_ANHUUR_DOOR:
-                        return AnhuursDoorGUID;
-                    case DATA_ANHUUR_LEFT_BEACON:
-                        return AnhuurLeftBeaconGUID;
-                    case DATA_ANHUUR_RIGHT_BEACON:
-                        return AnhuurRightBeaconGUID;
-                    case DATA_ANHUUR_GUID:
-                        return TempleGuardianAnhuurGUID;
-                    case DATA_BRANN_0_GUID:
-                        return BrannBronzebeardGUID;
-                    case DATA_ANRAPHET_GUID:
-                        return AnraphetGUID;
-                }
-
-                return 0;
-            }
-
-            void IncreaseDeadElementals(uint32 inc)
-            {
-                _deadElementals += inc;
-                if (_deadElementals == 4)
-                {
-                    if (GameObject* mirror = instance->GetGameObject(SunMirrorGUID))
-                        mirror->SetGoState(GO_STATE_ACTIVE);
-                    if (GameObject* door = instance->GetGameObject(AnraphetDoorGUID))
-                        door->SetGoState(GO_STATE_ACTIVE);
-                }
-            }
-
-            void OnUnitDeath(Unit* unit) override
-            {
-                Creature* creature = unit->ToCreature();
-                if (!creature)
-                    return;
-
-                switch (creature->GetEntry())
-                {
-                    case NPC_FIRE_WARDEN:
-                    case NPC_EARTH_WARDEN:
-                    case NPC_WATER_WARDEN:
-                    case NPC_AIR_WARDEN:
-                        uint32 data = creature->GetEntry() - WARDEN_ENTRY_DATA_DELTA;
-                        SetBossState(data, IN_PROGRESS); // Needs to be set to IN_PROGRESS or else the gameobjects state won't be updated
-                        SetBossState(data, DONE);
-                        IncreaseDeadElementals(1);
-                        if (Creature* brann = instance->GetCreature(BrannBronzebeardGUID))
-                            brann->AI()->DoAction(ACTION_ELEMENTAL_DIED);
+                case GO_HOO_TELEPORTER:
+                    teleporterSet.insert(go->GetGUID());
+                    if (GetBossState(DATA_TEMPLE_GUARDIAN_ANHUUR) == DONE)
+                        go->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                    break;
+                case GO_ULDUM_DOOR_14:
+                case GO_ANHUURS_DOOR:
+                case GO_ANHUURS_BRIDGE:
+                    AddDoor(go, true);
+                    break;
+                case GO_VAULT_OF_LIGHTS_BOSS_DOOR:
+                    anraphetDoorGUID = go->GetGUID();
+                    if(slainElementals >= 4)
+                        HandleGameObject(0, true, go);
+                case GO_LIGHTMACHINE_1:
+                case GO_LIGHTMACHINE_2:
+                case GO_LIGHTMACHINE_3:
+                case GO_LIGHTMACHINE_4:
+                    go->setActive(true);
+                    break;
+                    default:
                         break;
                 }
             }
 
-            std::string GetSaveData() override
+            void SetData(uint32 type, uint32 /*data*/)
+            {
+                switch(type)
+                {
+                case DATA_WATER_WARDEN:
+                case DATA_EARTH_WARDEN:
+                case DATA_FLAME_WARDEN:
+                case DATA_AIR_WARDEN:
+                    ++slainElementals;
+                    if(Creature * brann = instance->GetCreature(brannGUID))
+                        brann->AI()->SetData(DATA_BRANN_ELEMENTALS, slainElementals);
+                    if(slainElementals >= 4)
+                    {
+                        DoUseDoorOrButton(anraphetDoorGUID);
+                        if(Creature * anraphet = instance->GetCreature(anraphetGUID))
+                        {
+                            anraphet->AI()->SetData(DATA_ANRAPHET_INTRO, 1);
+                            anraphet->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                        }
+                    }
+                    SaveToDB();
+                    break;
+                default:
+                    break;
+                }
+            }
+
+            bool SetBossState(uint32 type, EncounterState state)
+            {
+                if (!InstanceScript::SetBossState(type, state))
+                    return false;
+
+                if (type == DATA_TEMPLE_GUARDIAN_ANHUUR && state == DONE)
+                {
+                    for (std::set<uint64>::iterator itr = teleporterSet.begin(); itr != teleporterSet.end(); ++itr)
+                        if (GameObject* teleporter = instance->GetGameObject((*itr)))
+                            teleporter->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_NOT_SELECTABLE);
+                }
+                 return true;
+            }
+
+            std::string GetSaveData()
             {
                 OUT_SAVE_INST_DATA;
 
                 std::ostringstream saveStream;
-                saveStream << "H O " << GetBossSaveData() << _deadElementals;
+                saveStream << "H O " << GetBossSaveData() << slainElementals;
 
                 OUT_SAVE_INST_DATA_COMPLETE;
                 return saveStream.str();
             }
 
-            void Load(const char* str) override
+            void Load(char const* str)
             {
                 if (!str)
                 {
@@ -241,7 +175,7 @@ class instance_halls_of_origination : public InstanceMapScript
 
                 if (dataHead1 == 'H' && dataHead2 == 'O')
                 {
-                    for (uint32 i = 0; i < EncounterCount; ++i)
+                    for (uint8 i = 0; i < ENCOUNTERS; ++i)
                     {
                         uint32 tmpState;
                         loadStream >> tmpState;
@@ -249,30 +183,22 @@ class instance_halls_of_origination : public InstanceMapScript
                             tmpState = NOT_STARTED;
                         SetBossState(i, EncounterState(tmpState));
                     }
-                    uint32 tmp;
-                    loadStream >> tmp;
-                    IncreaseDeadElementals(tmp);
-                }
-                else
-                    OUT_LOAD_INST_DATA_FAIL;
+
+                    loadStream >> slainElementals;
+                } else OUT_LOAD_INST_DATA_FAIL;
 
                 OUT_LOAD_INST_DATA_COMPLETE;
             }
 
-        protected:
-            uint64 TempleGuardianAnhuurGUID;
-            uint64 AnhuursBridgeGUID;
-            uint64 AnhuursDoorGUID;
-            uint64 AnhuurRightBeaconGUID;
-            uint64 AnhuurLeftBeaconGUID;
-            uint64 BrannBronzebeardGUID;
-            uint64 AnraphetGUID;
-            uint64 AnraphetDoorGUID;
-            uint64 SunMirrorGUID;
-            uint32 _deadElementals;
+        private:
+            uint32 slainElementals;
+            uint64 anraphetDoorGUID;
+            uint64 brannGUID;
+            uint64 anraphetGUID;
+            std::set<uint64> teleporterSet; 
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const
         {
             return new instance_halls_of_origination_InstanceMapScript(map);
         }

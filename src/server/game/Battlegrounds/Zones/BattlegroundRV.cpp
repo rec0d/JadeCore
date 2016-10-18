@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -64,6 +64,8 @@ void BattlegroundRV::PostUpdateImpl(uint32 diff)
                 setState(BG_RV_STATE_SWITCH_PILLARS);
                 break;
             case BG_RV_STATE_SWITCH_PILLARS:
+                for (uint8 i = BG_RV_OBJECT_PILAR_1; i <= BG_RV_OBJECT_PULLEY_2; ++i)
+                    DoorOpen(i);
                 TogglePillarCollision();
                 setTimer(BG_RV_PILLAR_SWITCH_TIMER);
                 break;
@@ -73,7 +75,9 @@ void BattlegroundRV::PostUpdateImpl(uint32 diff)
         setTimer(getTimer() - diff);
 }
 
-void BattlegroundRV::StartingEventCloseDoors() { }
+void BattlegroundRV::StartingEventCloseDoors()
+{
+}
 
 void BattlegroundRV::StartingEventOpenDoors()
 {
@@ -95,7 +99,10 @@ void BattlegroundRV::StartingEventOpenDoors()
 void BattlegroundRV::AddPlayer(Player* player)
 {
     Battleground::AddPlayer(player);
-    PlayerScores[player->GetGUID()] = new BattlegroundScore;
+    BattlegroundScore* sc = new BattlegroundScore;
+    PlayerScores[player->GetGUID()] = sc;
+    sc->BgTeam = player->GetBGTeam();
+    sc->TalentTree = player->GetPrimaryTalentTree(player->GetActiveSpec());
 
     UpdateWorldState(BG_RV_WORLD_STATE_A, GetAlivePlayersCountByTeam(ALLIANCE));
     UpdateWorldState(BG_RV_WORLD_STATE_H, GetAlivePlayersCountByTeam(HORDE));
@@ -119,7 +126,7 @@ void BattlegroundRV::HandleKillPlayer(Player* player, Player* killer)
 
     if (!killer)
     {
-        TC_LOG_ERROR("bg.battleground", "BattlegroundRV: Killer player not found");
+        sLog->outError(LOG_FILTER_BATTLEGROUND, "BattlegroundRV: Killer player not found");
         return;
     }
 
@@ -129,6 +136,12 @@ void BattlegroundRV::HandleKillPlayer(Player* player, Player* killer)
     UpdateWorldState(BG_RV_WORLD_STATE_H, GetAlivePlayersCountByTeam(HORDE));
 
     CheckArenaWinConditions();
+}
+
+bool BattlegroundRV::HandlePlayerUnderMap(Player* player)
+{
+    player->TeleportTo(GetMapId(), 763.5f, -284, 28.276f, 2.422f);
+    return true;
 }
 
 void BattlegroundRV::HandleAreaTrigger(Player* player, uint32 trigger)
@@ -150,11 +163,11 @@ void BattlegroundRV::HandleAreaTrigger(Player* player, uint32 trigger)
     }
 }
 
-void BattlegroundRV::FillInitialWorldStates(WorldStateBuilder& builder)
+void BattlegroundRV::FillInitialWorldStates(WorldPacket &data)
 {
-    builder.AppendState(BG_RV_WORLD_STATE_A, GetAlivePlayersCountByTeam(ALLIANCE));
-    builder.AppendState(BG_RV_WORLD_STATE_H, GetAlivePlayersCountByTeam(HORDE));
-    builder.AppendState(BG_RV_WORLD_STATE, 1);
+    data << uint32(BG_RV_WORLD_STATE_A) << uint32(GetAlivePlayersCountByTeam(ALLIANCE));
+    data << uint32(BG_RV_WORLD_STATE_H) << uint32(GetAlivePlayersCountByTeam(HORDE));
+    data << uint32(BG_RV_WORLD_STATE) << uint32(1);
 }
 
 void BattlegroundRV::Reset()
@@ -196,7 +209,7 @@ bool BattlegroundRV::SetupBattleground()
 
 )
     {
-        TC_LOG_ERROR("sql.sql", "BatteGroundRV: Failed to spawn some object!");
+        sLog->outError(LOG_FILTER_SQL, "BatteGroundRV: Failed to spawn some object!");
         return false;
     }
     return true;
@@ -206,13 +219,6 @@ bool BattlegroundRV::SetupBattleground()
 void BattlegroundRV::TogglePillarCollision()
 {
     bool apply = GetPillarCollision();
-
-    // Toggle visual pillars, pulley, gear, and collision based on previous state
-    for (uint8 i = BG_RV_OBJECT_PILAR_1; i <= BG_RV_OBJECT_GEAR_2; ++i)
-        apply ? DoorOpen(i) : DoorClose(i);
-
-    for (uint8 i = BG_RV_OBJECT_PILAR_2; i <= BG_RV_OBJECT_PULLEY_2; ++i)
-        apply ? DoorClose(i) : DoorOpen(i);
 
     for (uint8 i = BG_RV_OBJECT_PILAR_1; i <= BG_RV_OBJECT_PILAR_COLLISION_4; ++i)
     {

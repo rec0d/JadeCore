@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -32,11 +30,9 @@ EndScriptData */
 #include "Player.h"
 #include "WorldSession.h"
 
-enum Spells
-{
-    SPELL_TRICK_OR_TREATED      = 24755,
-    SPELL_TREAT                 = 24715
-};
+#define HALLOWEEN_EVENTID       12
+#define SPELL_TRICK_OR_TREATED  24755
+#define SPELL_TREAT             24715
 
 #define LOCALE_TRICK_OR_TREAT_0 "Trick or Treat!"
 #define LOCALE_TRICK_OR_TREAT_2 "Des bonbons ou des blagues!"
@@ -53,7 +49,7 @@ public:
 
     bool OnGossipHello(Player* player, Creature* creature)
     {
-        if (IsHolidayActive(HOLIDAY_HALLOWS_END) && !player->HasAura(SPELL_TRICK_OR_TREATED))
+        if (IsEventActive(HALLOWEEN_EVENTID) && !player->HasAura(SPELL_TRICK_OR_TREATED))
         {
             const char* localizedEntry;
             switch (player->GetSession()->GetSessionDbcLocale())
@@ -63,7 +59,7 @@ public:
                 case LOCALE_esES: localizedEntry = LOCALE_TRICK_OR_TREAT_6; break;
                 case LOCALE_enUS: default: localizedEntry = LOCALE_TRICK_OR_TREAT_0;
             }
-            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, localizedEntry, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, localizedEntry, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+HALLOWEEN_EVENTID);
         }
 
         if (creature->IsQuestGiver())
@@ -91,7 +87,7 @@ public:
     bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
-        if (action == GOSSIP_ACTION_INFO_DEF + 1 && IsHolidayActive(HOLIDAY_HALLOWS_END) && !player->HasAura(SPELL_TRICK_OR_TREATED))
+        if (action == GOSSIP_ACTION_INFO_DEF+HALLOWEEN_EVENTID && IsEventActive(HALLOWEEN_EVENTID) && !player->HasAura(SPELL_TRICK_OR_TREATED))
         {
             player->CastSpell(player, SPELL_TRICK_OR_TREATED, true);
 

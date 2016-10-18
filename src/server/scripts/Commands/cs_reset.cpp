@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -41,20 +39,19 @@ public:
     {
         static ChatCommand resetCommandTable[] =
         {
-            { "achievements", rbac::RBAC_PERM_COMMAND_RESET_ACHIEVEMENTS, true, &HandleResetAchievementsCommand, "", NULL },
-            { "honor",        rbac::RBAC_PERM_COMMAND_RESET_HONOR,        true, &HandleResetHonorCommand,        "", NULL },
-            { "level",        rbac::RBAC_PERM_COMMAND_RESET_LEVEL,        true, &HandleResetLevelCommand,        "", NULL },
-            { "spells",       rbac::RBAC_PERM_COMMAND_RESET_SPELLS,       true, &HandleResetSpellsCommand,       "", NULL },
-            { "stats",        rbac::RBAC_PERM_COMMAND_RESET_STATS,        true, &HandleResetStatsCommand,        "", NULL },
-            { "talents",      rbac::RBAC_PERM_COMMAND_RESET_TALENTS,      true, &HandleResetTalentsCommand,      "", NULL },
-            { "spec",         rbac::RBAC_PERM_COMMAND_RESET_SPEC,         true, &HandleResetSpecCommand,         "", NULL },
-            { "all",          rbac::RBAC_PERM_COMMAND_RESET_ALL,          true, &HandleResetAllCommand,          "", NULL },
-            { NULL,           0,                                   false, NULL,                            "", NULL }
+            { "achievements",   SEC_ADMINISTRATOR,  true,  &HandleResetAchievementsCommand,     "", NULL },
+            { "honor",          SEC_ADMINISTRATOR,  true,  &HandleResetHonorCommand,            "", NULL },
+            { "level",          SEC_ADMINISTRATOR,  true,  &HandleResetLevelCommand,            "", NULL },
+            { "spells",         SEC_ADMINISTRATOR,  true,  &HandleResetSpellsCommand,           "", NULL },
+            { "stats",          SEC_ADMINISTRATOR,  true,  &HandleResetStatsCommand,            "", NULL },
+            { "talents",        SEC_ADMINISTRATOR,  true,  &HandleResetTalentsCommand,          "", NULL },
+            { "all",            SEC_ADMINISTRATOR,  true,  &HandleResetAllCommand,              "", NULL },
+            { NULL,             0,                  false, NULL,                                "", NULL }
         };
         static ChatCommand commandTable[] =
         {
-            { "reset", rbac::RBAC_PERM_COMMAND_RESET, true, NULL, "", resetCommandTable },
-            { NULL,    0,                      false, NULL, "", NULL }
+            { "reset",          SEC_ADMINISTRATOR,  true, NULL,                                 "", resetCommandTable },
+            { NULL,             0,                  false, NULL,                                "", NULL }
         };
         return commandTable;
     }
@@ -80,7 +77,7 @@ public:
         if (!handler->extractPlayerTarget((char*)args, &target))
             return false;
 
-        target->SetUInt32Value(PLAYER_FIELD_YESTERDAY_HONORABLE_KILLS, 0);
+        target->SetUInt32Value(PLAYER_FIELD_KILLS, 0);
         target->SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS, 0);
         target->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_EARN_HONORABLE_KILL);
 
@@ -92,7 +89,7 @@ public:
         ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(player->getClass());
         if (!classEntry)
         {
-            TC_LOG_ERROR("misc", "Class %u not found in DBC (Wrong DBC files?)", player->getClass());
+            sLog->outError(LOG_FILTER_GENERAL, "Class %u not found in DBC (Wrong DBC files?)", player->getClass());
             return false;
         }
 
@@ -104,22 +101,19 @@ public:
 
         player->setFactionForRace(player->getRace());
 
-        player->SetRace(player->getRace());
-        player->SetClass(player->getClass());
-        player->SetGender(player->getGender());
-
-        player->SetFieldPowerType(powerType);
+        player->SetUInt32Value(UNIT_FIELD_BYTES_0, ((player->getRace()) | (player->getClass() << 8) | (player->getGender() << 16) | (powerType << 24)));
 
         // reset only if player not in some form;
         if (player->GetShapeshiftForm() == FORM_NONE)
             player->InitDisplayIds();
 
-        player->SetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_PVP);
+        player->SetByteValue(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP);
 
         player->SetUInt32Value(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
 
         //-1 is default value
         player->SetUInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, uint32(-1));
+
         return true;
     }
 
@@ -146,7 +140,7 @@ public:
         target->InitTaxiNodesForLevel();
         target->InitGlyphsForLevel();
         target->InitTalentForLevel();
-        target->SetUInt32Value(PLAYER_FIELD_XP, 0);
+        target->SetUInt32Value(PLAYER_XP, 0);
 
         target->_ApplyAllLevelScaleItemMods(true);
 
@@ -213,6 +207,23 @@ public:
         std::string targetName;
         if (!handler->extractPlayerTarget((char*)args, &target, &targetGuid, &targetName))
         {
+            // Try reset talents as Hunter Pet
+            Creature* creature = handler->getSelectedCreature();
+            if (!*args && creature && creature->isPet())
+            {
+                Unit* owner = creature->GetOwner();
+                if (owner && owner->GetTypeId() == TYPEID_PLAYER && creature->ToPet()->IsPermanentPetFor(owner->ToPlayer()))
+                {
+                    creature->ToPet()->resetTalents();
+                    owner->ToPlayer()->SendTalentsInfoData(true);
+
+                    ChatHandler(owner->ToPlayer()->GetSession()).SendSysMessage(LANG_RESET_PET_TALENTS);
+                    if (!handler->GetSession() || handler->GetSession()->GetPlayer() != owner->ToPlayer())
+                        handler->PSendSysMessage(LANG_RESET_PET_TALENTS_ONLINE, handler->GetNameLink(owner->ToPlayer()).c_str());
+                }
+                return true;
+            }
+
             handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
             handler->SetSentErrorMessage(true);
             return false;
@@ -221,14 +232,15 @@ public:
         if (target)
         {
             target->ResetTalents(true);
-            target->SendTalentsInfoData();
+            target->SendTalentsInfoData(false);
             ChatHandler(target->GetSession()).SendSysMessage(LANG_RESET_TALENTS);
             if (!handler->GetSession() || handler->GetSession()->GetPlayer() != target)
                 handler->PSendSysMessage(LANG_RESET_TALENTS_ONLINE, handler->GetNameLink(target).c_str());
 
-            if (Pet* pet = target->GetPet())
+            Pet* pet = target->GetPet();
+            Pet::resetTalentsForAllPetsOf(target, pet);
+            if (pet)
                 target->SendTalentsInfoData(true);
-
             return true;
         }
         else if (targetGuid)
@@ -243,29 +255,6 @@ public:
             return true;
         }
 
-        handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
-        handler->SetSentErrorMessage(true);
-        return false;
-    }
-
-    static bool HandleResetSpecCommand(ChatHandler* handler, char const* args)
-    {
-        Player* target;
-        uint64 targetGuid;
-        std::string targetName;
-        if (!handler->extractPlayerTarget((char*)args, &target, &targetGuid, &targetName))
-        {
-            handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
-            handler->SetSentErrorMessage(true);
-            return false;
-        }
-
-        if (target)
-        {
-            target->ResetSpec();
-            target->SendTalentsInfoData();
-            return true;
-        }
         handler->SendSysMessage(LANG_NO_CHAR_SELECTED);
         handler->SetSentErrorMessage(true);
         return false;

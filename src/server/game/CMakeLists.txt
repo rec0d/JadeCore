@@ -1,30 +1,21 @@
-# Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
-# Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
-# Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+# Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
 #
-# This program is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License as published by the
-# Free Software Foundation; either version 2 of the License, or (at your
-# option) any later version.
+# This file is free software; as a special exception the author gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
 #
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-# more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program. If not, see <http://www.gnu.org/licenses/>.
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 file(GLOB_RECURSE sources_Accounts Accounts/*.cpp Accounts/*.h)
+file(GLOB_RECURSE sources_Anticheat Anticheat/*.cpp Anticheat/*.h)
 file(GLOB_RECURSE sources_Achievements Achievements/*.cpp Achievements/*.h)
 file(GLOB_RECURSE sources_Addons Addons/*.cpp Addons/*.h)
 file(GLOB_RECURSE sources_AI AI/*.cpp AI/*.h)
 file(GLOB_RECURSE sources_AuctionHouse AuctionHouse/*.cpp AuctionHouse/*.h)
 file(GLOB_RECURSE sources_Battlefield Battlefield/*.cpp Battlefield/*.h)
 file(GLOB_RECURSE sources_Battlegrounds Battlegrounds/*.cpp Battlegrounds/*.h)
-file(GLOB_RECURSE sources_BattlePet BattlePet/*.cpp BattlePet/*.h)
-file(GLOB_RECURSE sources_BattleShop BattleShop/*.cpp BattleShop/*.h)
-file(GLOB_RECURSE sources_BlackMarket BlackMarket/*.cpp BlackMarket/*.h)
 file(GLOB_RECURSE sources_Calendar Calendar/*.cpp Calendar/*.h)
 file(GLOB_RECURSE sources_Chat Chat/*.cpp Chat/*.h)
 file(GLOB_RECURSE sources_Combat Combat/*.cpp Combat/*.h)
@@ -45,14 +36,11 @@ file(GLOB_RECURSE sources_Maps Maps/*.cpp Maps/*.h)
 file(GLOB_RECURSE sources_Miscellaneous Miscellaneous/*.cpp Miscellaneous/*.h)
 file(GLOB_RECURSE sources_Movement Movement/*.cpp Movement/*.h)
 file(GLOB_RECURSE sources_OutdoorPvP OutdoorPvP/*.cpp OutdoorPvP/*.h)
-file(GLOB_RECURSE sources_OnlineShop OnlineShop/*.cpp OnlineShop/*.h)
 file(GLOB_RECURSE sources_Pools Pools/*.cpp Pools/*.h)
-file(GLOB_RECURSE sources_PrecompiledHeaders PrecompiledHeaders/*.cpp PrecompiledHeaders/*.h)
 file(GLOB_RECURSE sources_Quests Quests/*.cpp Quests/*.h)
 file(GLOB_RECURSE sources_Reputation Reputation/*.cpp Reputation/*.h)
 file(GLOB_RECURSE sources_Scripting Scripting/*.cpp Scripting/*.h)
 file(GLOB_RECURSE sources_Server Server/*.cpp Server/*.h)
-file(GLOB_RECURSE sources_SharedPtrs SharedPtrs/*.cpp SharedPtrs/*.h)
 file(GLOB_RECURSE sources_Skills Skills/*.cpp Skills/*.h)
 file(GLOB_RECURSE sources_Spells Spells/*.cpp Spells/*.h)
 file(GLOB_RECURSE sources_Texts Texts/*.cpp Texts/*.h)
@@ -62,52 +50,6 @@ file(GLOB_RECURSE sources_Warden Warden/*.cpp Warden/*.h)
 file(GLOB_RECURSE sources_Weather Weather/*.cpp Weather/*.h)
 file(GLOB_RECURSE sources_World World/*.cpp World/*.h)
 
-source_group(CMake FILES CMakeLists.txt)
-source_group(Accounts FILES ${sources_Accounts})
-source_group(Achievements FILES ${sources_Achievements})
-source_group(Addons FILES ${sources_Addons})
-source_group(AI FILES ${sources_AI})
-source_group(AuctionHouse FILES ${sources_AuctionHouse})
-source_group(Battlefield FILES ${sources_Battlefield})
-source_group(Battlegrounds FILES ${sources_Battlegrounds})
-source_group(BattlePet FILES ${sources_BattlePet})
-source_group(BattleShop FILES ${sources_BattleShop})
-source_group(BlackMarket FILES ${sources_BlackMarket})
-source_group(Calendar FILES ${sources_Calendar})
-source_group(Chat FILES ${sources_Chat})
-source_group(Combat FILES ${sources_Combat})
-source_group(Conditions FILES ${sources_Conditions})
-source_group(DataStores FILES ${sources_DataStores})
-source_group(DungeonFinding FILES ${sources_DungeonFinding})
-source_group(Entities FILES ${sources_Entities})
-source_group(Events FILES ${sources_Events})
-source_group(Globals FILES ${sources_Globals})
-source_group(Grids FILES ${sources_Grids})
-source_group(Groups FILES ${sources_Groups})
-source_group(Guilds FILES ${sources_Guilds})
-source_group(Handlers FILES ${sources_Handlers})
-source_group(Instances FILES ${sources_Instances})
-source_group(Loot FILES ${sources_Loot})
-source_group(Mails FILES ${sources_Mails})
-source_group(Maps FILES ${sources_Maps})
-source_group(Miscellaneous FILES ${sources_Miscellaneous})
-source_group(Movement FILES ${sources_Movement})
-source_group(OutdoorPvP FILES ${sources_OutdoorPvP})
-source_group(OnlineShop FILES ${sources_OnlineShop})
-source_group(Pools FILES ${sources_Pools})
-source_group(PrecompiledHeaders FILES ${sources_PrecompiledHeaders})
-source_group(Quests FILES ${sources_Quests})
-source_group(Reputation FILES ${sources_Reputation})
-source_group(Scripting FILES ${sources_Scripting})
-source_group(Server FILES ${sources_Server})
-source_group(Skills FILES ${sources_Skills})
-source_group(Spells FILES ${sources_Spells})
-source_group(Texts FILES ${sources_Texts})
-source_group(Tools FILES ${sources_Tools})
-source_group(Tickets FILES ${sources_Tickets})
-source_group(Warden FILES ${sources_Warden})
-source_group(Weather FILES ${sources_Weather})
-source_group(World FILES ${sources_World})
 # Create game-libary
 
 if (USE_COREPCH)
@@ -118,15 +60,13 @@ endif ()
 set(game_STAT_SRCS
   ${game_STAT_SRCS}
   ${sources_Accounts}
+  ${sources_Anticheat}
   ${sources_Achievements}
   ${sources_Addons}
   ${sources_AI}
   ${sources_AuctionHouse}
   ${sources_Battlefield}
   ${sources_Battlegrounds}
-  ${sources_BattlePet}
-  ${sources_BattleShop}
-  ${sources_BlackMarket}
   ${sources_Calendar}
   ${sources_Chat}
   ${sources_Combat}
@@ -147,7 +87,6 @@ set(game_STAT_SRCS
   ${sources_Miscellaneous}
   ${sources_Movement}
   ${sources_OutdoorPvP}
-  ${sources_OnlineShop}
   ${sources_Pools}
   ${sources_Quests}
   ${sources_Reputation}
@@ -189,6 +128,7 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/server/shared/Utilities
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/Accounts
+  ${CMAKE_CURRENT_SOURCE_DIR}/Anticheat
   ${CMAKE_CURRENT_SOURCE_DIR}/Achievements
   ${CMAKE_CURRENT_SOURCE_DIR}/Addons
   ${CMAKE_CURRENT_SOURCE_DIR}/AI
@@ -200,9 +140,6 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/Battlefield/Zones
   ${CMAKE_CURRENT_SOURCE_DIR}/Battlegrounds
   ${CMAKE_CURRENT_SOURCE_DIR}/Battlegrounds/Zones
-  ${CMAKE_CURRENT_SOURCE_DIR}/BattlePet
-  ${CMAKE_CURRENT_SOURCE_DIR}/BattleShop
-  ${CMAKE_CURRENT_SOURCE_DIR}/BlackMarket
   ${CMAKE_CURRENT_SOURCE_DIR}/Calendar
   ${CMAKE_CURRENT_SOURCE_DIR}/Chat
   ${CMAKE_CURRENT_SOURCE_DIR}/Chat/Channels
@@ -244,7 +181,6 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/Movement/MovementGenerators
   ${CMAKE_CURRENT_SOURCE_DIR}/Movement/Waypoints
   ${CMAKE_CURRENT_SOURCE_DIR}/OutdoorPvP
-  ${CMAKE_CURRENT_SOURCE_DIR}/OnlineShop
   ${CMAKE_CURRENT_SOURCE_DIR}/Pools
   ${CMAKE_CURRENT_SOURCE_DIR}/PrecompiledHeaders
   ${CMAKE_CURRENT_SOURCE_DIR}/Quests

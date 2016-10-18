@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -67,9 +66,9 @@ class boss_baron_rivendare : public CreatureScript
 public:
     boss_baron_rivendare() : CreatureScript("boss_baron_rivendare") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_baron_rivendareAI(creature);
+        return new boss_baron_rivendareAI (creature);
     }
 
     struct boss_baron_rivendareAI : public ScriptedAI
@@ -87,7 +86,7 @@ public:
         //    uint32 RaiseDead_Timer;
         uint32 SummonSkeletons_Timer;
 
-        void Reset() override
+        void Reset()
         {
             ShadowBolt_Timer = 5000;
             Cleave_Timer = 8000;
@@ -98,26 +97,26 @@ public:
                 instance->SetData(TYPE_BARON, NOT_STARTED);
         }
 
-        void AttackStart(Unit* who) override
+        void AttackStart(Unit* who)
         {
             if (instance)//can't use entercombat(), boss' dmg aura sets near players in combat, before entering the room's door
                 instance->SetData(TYPE_BARON, IN_PROGRESS);
             ScriptedAI::AttackStart(who);
         }
 
-        void JustSummoned(Creature* summoned) override
+        void JustSummoned(Creature* summoned)
         {
             if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
                 summoned->AI()->AttackStart(target);
         }
 
-         void JustDied(Unit* /*killer*/) override
+         void JustDied(Unit* /*killer*/)
          {
              if (instance)
                  instance->SetData(TYPE_BARON, DONE);
          }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;

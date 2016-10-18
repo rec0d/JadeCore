@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -39,7 +38,9 @@ template<class VISITOR, class TYPE_CONTAINER> void VisitorHelper(VISITOR &v, TYP
 }
 
 // terminate condition for container list
-template<class VISITOR> void VisitorHelper(VISITOR &/*v*/, ContainerList<TypeNull> &/*c*/) { }
+template<class VISITOR> void VisitorHelper(VISITOR &/*v*/, ContainerList<TypeNull> &/*c*/)
+{
+}
 
 template<class VISITOR, class T> void VisitorHelper(VISITOR &v, ContainerList<T> &c)
 {
@@ -54,7 +55,9 @@ template<class VISITOR, class H, class T> void VisitorHelper(VISITOR &v, Contain
 }
 
 // terminate condition container map list
-template<class VISITOR> void VisitorHelper(VISITOR &/*v*/, ContainerMapList<TypeNull> &/*c*/) { }
+template<class VISITOR> void VisitorHelper(VISITOR &/*v*/, ContainerMapList<TypeNull> &/*c*/)
+{
+}
 
 template<class VISITOR, class T> void VisitorHelper(VISITOR &v, ContainerMapList<T> &c)
 {
@@ -74,7 +77,9 @@ template<class VISITOR, class T> void VisitorHelper(VISITOR &v, ContainerArrayLi
     v.Visit(c._element);
 }
 
-template<class VISITOR> void VisitorHelper(VISITOR &/*v*/, ContainerArrayList<TypeNull> &/*c*/) { }
+template<class VISITOR> void VisitorHelper(VISITOR &/*v*/, ContainerArrayList<TypeNull> &/*c*/)
+{
+}
 
 // recursion
 template<class VISITOR, class H, class T> void VisitorHelper(VISITOR &v, ContainerArrayList<TypeList<H, T> > &c)
@@ -93,7 +98,7 @@ template<class VISITOR, class TYPE_CONTAINER>
 class TypeContainerVisitor
 {
     public:
-        TypeContainerVisitor(VISITOR &v) : i_visitor(v) { }
+        TypeContainerVisitor(VISITOR &v) : i_visitor(v) {}
 
         void Visit(TYPE_CONTAINER &c)
         {

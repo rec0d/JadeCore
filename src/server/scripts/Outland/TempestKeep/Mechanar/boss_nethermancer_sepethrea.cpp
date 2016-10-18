@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,7 +27,7 @@ EndScriptData */
 #include "ScriptedCreature.h"
 #include "mechanar.h"
 
-enum Says
+enum eSays
 {
     SAY_AGGRO                      = 0,
     SAY_SUMMON                     = 1,
@@ -53,22 +52,22 @@ enum Spells
 
 enum Events
 {
-    EVENT_FROST_ATTACK             = 1,
-    EVENT_ARCANE_BLAST             = 2,
-    EVENT_DRAGONS_BREATH           = 3,
-    EVENT_KNOCKBACK                = 4,
-    EVENT_SOLARBURN                = 5
+    EVENT_FROST_ATTACK             = 0,
+    EVENT_ARCANE_BLAST             = 1,
+    EVENT_DRAGONS_BREATH           = 2,
+    EVENT_KNOCKBACK                = 3,
+    EVENT_SOLARBURN                = 4
 };
 
 class boss_nethermancer_sepethrea : public CreatureScript
 {
-    public: boss_nethermancer_sepethrea(): CreatureScript("boss_nethermancer_sepethrea") { }
+    public: boss_nethermancer_sepethrea(): CreatureScript("boss_nethermancer_sepethrea") {}
 
         struct boss_nethermancer_sepethreaAI : public BossAI
         {
-            boss_nethermancer_sepethreaAI(Creature* creature) : BossAI(creature, DATA_NETHERMANCER_SEPRETHREA) { }
+            boss_nethermancer_sepethreaAI(Creature* creature) : BossAI(creature, DATA_NETHERMANCER_SEPRETHREA) {}
 
-            void EnterCombat(Unit* who) override
+            void EnterCombat(Unit* who)
             {
                 _EnterCombat();
                 events.ScheduleEvent(EVENT_FROST_ATTACK, urand(7000, 10000));
@@ -81,18 +80,18 @@ class boss_nethermancer_sepethrea : public CreatureScript
                 Talk(SAY_SUMMON);
             }
 
-            void KilledUnit(Unit* /*victim*/) override
+            void KilledUnit(Unit* /*victim*/)
             {
                 Talk(SAY_SLAY);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 _JustDied();
                 Talk(SAY_DEATH);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -137,20 +136,20 @@ class boss_nethermancer_sepethrea : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_nethermancer_sepethreaAI(creature);
         }
 };
 
-class npc_ragin_flames : public CreatureScript
+class mob_ragin_flames : public CreatureScript
 {
     public:
-        npc_ragin_flames() : CreatureScript("npc_ragin_flames") { }
+        mob_ragin_flames() : CreatureScript("mob_ragin_flames") { }
 
-            struct npc_ragin_flamesAI : public ScriptedAI
+            struct mob_ragin_flamesAI : public ScriptedAI
             {
-                npc_ragin_flamesAI(Creature* creature) : ScriptedAI(creature)
+                mob_ragin_flamesAI(Creature* creature) : ScriptedAI(creature)
                 {
                     instance = creature->GetInstanceScript();
                 }
@@ -163,7 +162,7 @@ class npc_ragin_flames : public CreatureScript
 
                 bool onlyonce;
 
-                void Reset() override
+                void Reset()
                 {
                     inferno_Timer = 10000;
                     flame_timer = 500;
@@ -174,11 +173,11 @@ class npc_ragin_flames : public CreatureScript
                     me->SetSpeed(MOVE_RUN, DUNGEON_MODE(0.5f, 0.7f));
                 }
 
-                void EnterCombat(Unit* /*who*/) override
+                void EnterCombat(Unit* /*who*/)
                 {
                 }
 
-                void UpdateAI(uint32 diff) override
+                void UpdateAI(const uint32 diff)
                 {
                     //Check_Timer
                     if (Check_Timer <= diff)
@@ -222,14 +221,14 @@ class npc_ragin_flames : public CreatureScript
                 }
 
             };
-            CreatureAI* GetAI(Creature* creature) const override
+            CreatureAI* GetAI(Creature* creature) const
             {
-                return new npc_ragin_flamesAI(creature);
+                return new mob_ragin_flamesAI(creature);
             }
 };
 
 void AddSC_boss_nethermancer_sepethrea()
 {
     new boss_nethermancer_sepethrea();
-    new npc_ragin_flames();
+    new mob_ragin_flames();
 }

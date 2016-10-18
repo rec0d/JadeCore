@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -77,7 +74,7 @@ Position CrystalCoordinates[NUM_CRYSTALS] =
 };
 
 float RoomRadius = 165.0f;
-uint8 const NUM_TORNADOS = 5; /// @todo This number is completly random!
+uint8 const NUM_TORNADOS = 5; // TODO: This number is completly random!
 uint8 const NUM_WEAKNESS = 5;
 uint32 const SpellWeakness[NUM_WEAKNESS] = { 25177, 25178, 25180, 25181, 25183 };
 Position const RoomCenter = { -9343.041992f, 1923.278198f, 85.555984f, 0.0 };
@@ -99,7 +96,7 @@ class boss_ossirian : public CreatureScript
             uint8 CrystalIterator;
             bool SaidIntro;
 
-            void Reset() override
+            void Reset()
             {
                 _Reset();
                 CrystalIterator = 0;
@@ -107,7 +104,7 @@ class boss_ossirian : public CreatureScript
                 CrystalGUID = 0;
             }
 
-            void SpellHit(Unit* caster, SpellInfo const* spell) override
+            void SpellHit(Unit* caster, SpellInfo const* spell)
             {
                 for (uint8 i = 0; i < NUM_WEAKNESS; ++i)
                 {
@@ -120,7 +117,7 @@ class boss_ossirian : public CreatureScript
                 }
             }
 
-            void DoAction(int32 action) override
+            void DoAction(const int32 action)
             {
                 if (action == ACTION_TRIGGER_WEAKNESS)
                     if (Creature* Trigger = me->GetMap()->GetCreature(TriggerGUID))
@@ -128,7 +125,7 @@ class boss_ossirian : public CreatureScript
                             Trigger->CastSpell(Trigger, SpellWeakness[urand(0, 4)], false);
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 _EnterCombat();
                 events.Reset();
@@ -161,19 +158,19 @@ class boss_ossirian : public CreatureScript
                 }
             }
 
-            void KilledUnit(Unit* /*victim*/) override
+            void KilledUnit(Unit* /*victim*/)
             {
                 Talk(SAY_SLAY);
             }
 
-            void EnterEvadeMode() override
+            void EnterEvadeMode()
             {
                 Cleanup();
                 summons.DespawnAll();
                 BossAI::EnterEvadeMode();
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 Cleanup();
                 _JustDied();
@@ -205,8 +202,7 @@ class boss_ossirian : public CreatureScript
                 }
             }
 
-            void MoveInLineOfSight(Unit* who) override
-
+            void MoveInLineOfSight(Unit* who)
             {
                 if (!SaidIntro)
                 {
@@ -216,7 +212,7 @@ class boss_ossirian : public CreatureScript
                 BossAI::MoveInLineOfSight(who);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -274,9 +270,9 @@ class boss_ossirian : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return new boss_ossirianAI(creature);
+            return new boss_ossirianAI (creature);
         }
 };
 
@@ -285,7 +281,7 @@ class go_ossirian_crystal : public GameObjectScript
     public:
         go_ossirian_crystal() : GameObjectScript("go_ossirian_crystal") { }
 
-        bool OnGossipHello(Player* player, GameObject* /*go*/) override
+        bool OnGossipHello(Player* player, GameObject* /*go*/)
         {
             InstanceScript* Instance = player->GetInstanceScript();
             if (!Instance)

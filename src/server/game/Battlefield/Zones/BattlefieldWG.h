@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -103,21 +102,21 @@ enum WintergraspData
 enum WintergraspAchievements
 {
     ACHIEVEMENTS_WIN_WG                          = 1717,
-    ACHIEVEMENTS_WIN_WG_100                      = 1718, /// @todo: Has to be implemented
-    ACHIEVEMENTS_WG_GNOMESLAUGHTER               = 1723, /// @todo: Has to be implemented
+    ACHIEVEMENTS_WIN_WG_100                      = 1718, // todo
+    ACHIEVEMENTS_WG_GNOMESLAUGHTER               = 1723, // todo
     ACHIEVEMENTS_WG_TOWER_DESTROY                = 1727,
-    ACHIEVEMENTS_DESTRUCTION_DERBY_A             = 1737, /// @todo: Has to be implemented
-    ACHIEVEMENTS_WG_TOWER_CANNON_KILL            = 1751, /// @todo: Has to be implemented
-    ACHIEVEMENTS_WG_MASTER_A                     = 1752, /// @todo: Has to be implemented
+    ACHIEVEMENTS_DESTRUCTION_DERBY_A             = 1737, // todo
+    ACHIEVEMENTS_WG_TOWER_CANNON_KILL            = 1751, // todo
+    ACHIEVEMENTS_WG_MASTER_A                     = 1752, // todo
     ACHIEVEMENTS_WIN_WG_TIMER_10                 = 1755,
-    ACHIEVEMENTS_STONE_KEEPER_50                 = 2085, /// @todo: Has to be implemented
-    ACHIEVEMENTS_STONE_KEEPER_100                = 2086, /// @todo: Has to be implemented
-    ACHIEVEMENTS_STONE_KEEPER_250                = 2087, /// @todo: Has to be implemented
-    ACHIEVEMENTS_STONE_KEEPER_500                = 2088, /// @todo: Has to be implemented
-    ACHIEVEMENTS_STONE_KEEPER_1000               = 2089, /// @todo: Has to be implemented
-    ACHIEVEMENTS_WG_RANGER                       = 2199, /// @todo: Has to be implemented
-    ACHIEVEMENTS_DESTRUCTION_DERBY_H             = 2476, /// @todo: Has to be implemented
-    ACHIEVEMENTS_WG_MASTER_H                     = 2776  /// @todo: Has to be implemented
+    ACHIEVEMENTS_STONE_KEEPER_50                 = 2085, // todo
+    ACHIEVEMENTS_STONE_KEEPER_100                = 2086, // todo
+    ACHIEVEMENTS_STONE_KEEPER_250                = 2087, // todo
+    ACHIEVEMENTS_STONE_KEEPER_500                = 2088, // todo
+    ACHIEVEMENTS_STONE_KEEPER_1000               = 2089, // todo
+    ACHIEVEMENTS_WG_RANGER                       = 2199, // todo
+    ACHIEVEMENTS_DESTRUCTION_DERBY_H             = 2476, // todo
+    ACHIEVEMENTS_WG_MASTER_H                     = 2776  // todo
 };
 
 enum WintergraspWorldStates
@@ -172,13 +171,13 @@ enum WGGraveyardId
 
 enum WGGossipText
 {
-    BATTLEFIELD_WG_GOSSIPTEXT_GY_NE              = 20071,
-    BATTLEFIELD_WG_GOSSIPTEXT_GY_NW              = 20072,
-    BATTLEFIELD_WG_GOSSIPTEXT_GY_SE              = 20074,
-    BATTLEFIELD_WG_GOSSIPTEXT_GY_SW              = 20073,
-    BATTLEFIELD_WG_GOSSIPTEXT_GY_KEEP            = 20070,
-    BATTLEFIELD_WG_GOSSIPTEXT_GY_HORDE           = 20075,
-    BATTLEFIELD_WG_GOSSIPTEXT_GY_ALLIANCE        = 20076
+    BATTLEFIELD_WG_GOSSIPTEXT_GY_NE              = -1850501,
+    BATTLEFIELD_WG_GOSSIPTEXT_GY_NW              = -1850502,
+    BATTLEFIELD_WG_GOSSIPTEXT_GY_SE              = -1850504,
+    BATTLEFIELD_WG_GOSSIPTEXT_GY_SW              = -1850503,
+    BATTLEFIELD_WG_GOSSIPTEXT_GY_KEEP            = -1850500,
+    BATTLEFIELD_WG_GOSSIPTEXT_GY_HORDE           = -1850505,
+    BATTLEFIELD_WG_GOSSIPTEXT_GY_ALLIANCE        = -1850506
 };
 
 enum WintergraspNpcs
@@ -209,6 +208,7 @@ enum WintergraspNpcs
 
     NPC_TAUNKA_SPIRIT_GUIDE                         = 31841, // Horde spirit guide for Wintergrasp
     NPC_DWARVEN_SPIRIT_GUIDE                        = 31842, // Alliance spirit guide for Wintergrasp
+    NPC_TOWER_CANNON                                = 28366,
 
     NPC_WINTERGRASP_SIEGE_ENGINE_ALLIANCE           = 28312,
     NPC_WINTERGRASP_SIEGE_ENGINE_HORDE              = 32627,
@@ -398,7 +398,7 @@ class BattlefieldWG : public Battlefield
 
         void SendInitWorldStatesTo(Player* player);
         void SendInitWorldStatesToAll();
-        void FillInitialWorldStates(WorldStateBuilder& builder);
+        void FillInitialWorldStates(WorldPacket& data);
 
         void HandleKill(Player* killer, Unit* victim);
         void OnUnitDeath(Unit* unit);
@@ -499,7 +499,7 @@ enum WintergraspTeamControl
     BATTLEFIELD_WG_TEAM_NEUTRAL
 };
 
-/// @todo: Can this be handled with creature_text or SmartAI ?
+// TODO: Handle this with creature_text ?
 enum WintergraspText
 {
     BATTLEFIELD_WG_TEXT_WORKSHOP_NAME_NE         = 12055,
@@ -562,7 +562,7 @@ struct WintergraspObjectPositionData
 };
 
 // *****************************************************
-// ************ Destructible (Wall, Tower..) ***********
+// ************ Destructible (Wall, Tower..) ************
 // *****************************************************
 
 struct WintergraspBuildingSpawnData
@@ -579,8 +579,8 @@ struct WintergraspBuildingSpawnData
 
 struct WintergraspRebuildableBuildingData
 {
-    uint64 Guid;
     uint32 entry;
+    uint64 Guid;
     uint32 WorldState;
     float x;
     float y;
@@ -755,7 +755,7 @@ const WintergraspTeleporterData WGPortalDefenderData[WG_MAX_TELEPORTER] =
 };
 
 // *********************************************************
-// **********Tower Element(GameObject, Creature)************
+// **********Tower Element(GameObject, Creature)*************
 // *********************************************************
 
 struct WintergraspTowerData
@@ -764,7 +764,7 @@ struct WintergraspTowerData
     uint8 nbObject;                     // Number of gameobjects spawned on this point
     WintergraspObjectPositionData GameObject[6];   // Gameobject position and entry (Horde/Alliance)
 
-    // Creature: Turrets and Guard /// @todo: Killed on Tower destruction ? Tower damage ? Requires confirming
+    // Creature : Turrets and Guard, TODO: check if killed on tower destruction? tower damage?
     uint8 nbCreatureBottom;
     WintergraspObjectPositionData CreatureBottom[9];
     uint8 nbCreatureTop;
@@ -1055,7 +1055,7 @@ const WGWorkshopData WorkshopsData[WG_MAX_WORKSHOP] =
 };
 
 // ********************************************************************
-// *         Structs using for Building, Graveyard, Workshop          *
+// *         Structs using for Building, Graveyard, Workshop            *
 // ********************************************************************
 // Structure for different buildings that can be destroyed during battle
 struct BfWGGameObjectBuilding
@@ -1127,14 +1127,14 @@ struct BfWGGameObjectBuilding
                 build->SetDestructibleState(GO_DESTRUCTIBLE_REBUILDING, NULL, true);
                 if (build->GetEntry() == GO_WINTERGRASP_VAULT_GATE)
                     if (GameObject* go = build->FindNearestGameObject(GO_WINTERGRASP_KEEP_COLLISION_WALL, 50.0f))
-                        go->SetGoState(GO_STATE_READY);
+                        go->EnableCollision(true);
 
                 // Update worldstate
                 m_State = BATTLEFIELD_WG_OBJECTSTATE_ALLIANCE_INTACT - (m_Team * 3);
                 m_WG->SendUpdateWorldState(m_WorldState, m_State);
             }
             UpdateCreatureAndGo();
-            build->SetUInt32Value(GAMEOBJECT_FIELD_FACTION_TEMPLATE, WintergraspFaction[m_Team]);
+            build->SetUInt32Value(GAMEOBJECT_FACTION, WintergraspFaction[m_Team]);
         }
     }
 
@@ -1183,13 +1183,13 @@ struct BfWGGameObjectBuilding
                 break;
             case BATTLEFIELD_WG_OBJECTTYPE_DOOR_LAST:
                 if (GameObject* build = m_WG->GetGameObject(m_BuildGUID))
-                    if (GameObject* go = build->FindNearestGameObject(GO_WINTERGRASP_KEEP_COLLISION_WALL, 50.0f))
-                        go->SetGoState(GO_STATE_ACTIVE);
+                    if (GameObject* go = build->FindNearestGameObject(GO_WINTERGRASP_KEEP_COLLISION_WALL, 10.0f))
+                        go->EnableCollision(false);
                 m_WG->SetRelicInteractible(true);
                 if (m_WG->GetRelic())
-                    m_WG->GetRelic()->RemoveFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_IN_USE);
+                    m_WG->GetRelic()->RemoveFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE);
                 else
-                    TC_LOG_ERROR("misc", "BattlefieldWG: Relic not found.");
+                    sLog->outError(LOG_FILTER_GENERAL, "BattlefieldWG: Relic not found.");
                 break;
         }
 
@@ -1338,7 +1338,7 @@ struct BfWGGameObjectBuilding
             {
                 Position towerCannonPos;
                 TowerCannon[towerid].TurretTop[i].GetPosition(&towerCannonPos);
-                if (Creature* turret = m_WG->SpawnCreature(NPC_WINTERGRASP_TOWER_CANNON, towerCannonPos, TeamId(0)))
+                if (Creature* turret = m_WG->SpawnCreature(28366, towerCannonPos, TeamId(0)))
                 {
                     m_TurretTopList.insert(turret->GetGUID());
                     switch (go->GetEntry())
@@ -1481,7 +1481,6 @@ struct WGWorkshop
 
         bf = _bf;
         workshopId = _workshopId;
-        teamControl = BATTLEFIELD_WG_TEAM_NEUTRAL;
     }
 
     void GiveControlTo(uint8 team, bool init /* for first call in setup*/)
@@ -1559,7 +1558,7 @@ struct WintergraspWorkshopData
     }
 
     // Spawning associate creature and store them
-    void AddCreature(const WintergraspObjectPositionData& obj)
+    void AddCreature(WintergraspObjectPositionData obj)
     {
         if (Creature* creature = m_WG->SpawnCreature(obj.entryHorde, obj.x, obj.y, obj.z, obj.o, TEAM_HORDE))
             m_CreatureOnPoint[TEAM_HORDE].insert(creature->GetGUID());
@@ -1569,7 +1568,7 @@ struct WintergraspWorkshopData
     }
 
     // Spawning Associate gameobject and store them
-    void AddGameObject(const WintergraspObjectPositionData& obj)
+    void AddGameObject(WintergraspObjectPositionData obj)
     {
         if (GameObject* gameobject = m_WG->SpawnGameObject(obj.entryHorde, obj.x, obj.y, obj.z, obj.o))
             m_GameObjectOnPoint[TEAM_HORDE].insert(gameobject->GetGUID());
@@ -1630,7 +1629,7 @@ struct WintergraspWorkshopData
 
                 // Found associate graveyard and update it
                 if (m_Type < BATTLEFIELD_WG_WORKSHOP_KEEP_WEST)
-                    if (m_WG->GetGraveyardById(m_Type))
+                    if (m_WG && m_WG->GetGraveyardById(m_Type))
                         m_WG->GetGraveyardById(m_Type)->GiveControlTo(TEAM_ALLIANCE);
 
                 m_TeamControl = team;
@@ -1668,7 +1667,7 @@ struct WintergraspWorkshopData
 
                 // Update graveyard control
                 if (m_Type < BATTLEFIELD_WG_WORKSHOP_KEEP_WEST)
-                    if (m_WG->GetGraveyardById(m_Type))
+                    if (m_WG && m_WG->GetGraveyardById(m_Type))
                         m_WG->GetGraveyardById(m_Type)->GiveControlTo(TEAM_HORDE);
 
                 m_TeamControl = team;

@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -23,7 +23,6 @@
 #include <map>
 
 struct AuctionEntry;
-struct BMAuctionEntry;
 struct CalendarEvent;
 class Item;
 class Object;
@@ -89,7 +88,6 @@ class MailSender
         MailSender(Object* sender, MailStationery stationery = MAIL_STATIONERY_DEFAULT);
         MailSender(CalendarEvent* sender);
         MailSender(AuctionEntry* sender);
-        MailSender(BMAuctionEntry* sender);
         MailSender(Player* sender);
     public:                                                 // Accessors
         MailMessageType GetMailMessageType() const { return m_messageType; }
@@ -104,7 +102,7 @@ class MailSender
 class MailReceiver
 {
     public:                                                 // Constructors
-        explicit MailReceiver(uint32 receiver_lowguid) : m_receiver(NULL), m_receiver_lowguid(receiver_lowguid) { }
+        explicit MailReceiver(uint32 receiver_lowguid) : m_receiver(NULL), m_receiver_lowguid(receiver_lowguid) {}
         MailReceiver(Player* receiver);
         MailReceiver(Player* receiver, uint32 receiver_lowguid);
     public:                                                 // Accessors
@@ -122,9 +120,9 @@ class MailDraft
     public:                                                 // Constructors
         explicit MailDraft(uint16 mailTemplateId, bool need_items = true)
             : m_mailTemplateId(mailTemplateId), m_mailTemplateItemsNeed(need_items), m_money(0), m_COD(0)
-        { }
+        {}
         MailDraft(std::string const& subject, std::string const& body)
-            : m_mailTemplateId(0), m_mailTemplateItemsNeed(false), m_subject(subject), m_body(body), m_money(0), m_COD(0) { }
+            : m_mailTemplateId(0), m_mailTemplateItemsNeed(false), m_subject(subject), m_body(body), m_money(0), m_COD(0) {}
     public:                                                 // Accessors
         uint16 GetMailTemplateId() const { return m_mailTemplateId; }
         std::string const& GetSubject() const { return m_subject; }

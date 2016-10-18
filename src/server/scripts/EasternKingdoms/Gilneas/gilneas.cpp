@@ -1,22 +1,3 @@
-/*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include "ScriptPCH.h"
 #include "Unit.h"
 #include "gilneas.h"
@@ -71,14 +52,14 @@ public:
 			{
 				if (!Move)
 				{
-					me->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE); // Change our emote state to allow flight
+					me->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE); // Change our emote state to allow flight
 					me->SetCanFly(true);
 					Move = true;
 				}
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (!Move)
 				return;
@@ -137,7 +118,7 @@ public:
 		{
 			bool isPlayer = who->GetTypeId() == TYPEID_PLAYER;
 
-			if (isPlayer || who->IsPet())
+			if (isPlayer || who->isPet())
 			{
 				me->getThreatManager().resetAllAggro();
 				if (isPlayer)
@@ -154,7 +135,7 @@ public:
 				++dmgCount;
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			//If creature has no target
 			if (!UpdateVictim())
@@ -162,7 +143,7 @@ public:
 				if (tSeek <= diff)
 				{
 					//Find worgen nearby
-					if (me->IsAlive() && !me->IsInCombat() && (me->GetDistance2d(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY()) <= 1.0f))
+					if (me->isAlive() && !me->isInCombat() && (me->GetDistance2d(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY()) <= 1.0f))
 					if (Creature* enemy = me->FindNearestCreature(NPC_RAMPAGING_WORGEN_1, 16.0f, true))
 						me->AI()->AttackStart(enemy);
 					tSeek = urand(1000, 2000);//optimize cpu load
@@ -200,7 +181,7 @@ public:
 				if (dmgCount < 2)
 					DoMeleeAttackIfReady();
 				else if (me->GetVictim()->GetTypeId() == TYPEID_PLAYER) dmgCount = 0;
-				else if (me->GetVictim()->IsPet()) dmgCount = 0;
+				else if (me->GetVictim()->isPet()) dmgCount = 0;
 				else
 				{
 					if (tAnimate <= diff)
@@ -357,7 +338,7 @@ public:
 				me->AI()->AttackStart(who);
 				dmgCount = 0;
 			}
-			else if (who->IsPet())
+			else if (who->isPet())
 			{
 				me->getThreatManager().resetAllAggro();
 				me->AddThreat(who, 1.0f);
@@ -372,11 +353,11 @@ public:
 				dmgCount++;
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (tSeek <= diff)
 			{
-				if ((me->IsAlive()) && (!me->IsInCombat() && (me->GetDistance2d(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY()) <= 1.0f)))
+				if ((me->isAlive()) && (!me->isInCombat() && (me->GetDistance2d(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY()) <= 1.0f)))
 				if (Creature* enemy = me->FindNearestCreature(NPC_RAMPAGING_WORGEN_1, 16.0f, true))
 					me->AI()->AttackStart(enemy);
 				tSeek = urand(1000, 2000);
@@ -401,7 +382,7 @@ public:
 			else
 			if (me->GetVictim()->GetTypeId() == TYPEID_PLAYER) dmgCount = 0;
 			else
-			if (me->GetVictim()->IsPet()) dmgCount = 0;
+			if (me->GetVictim()->isPet()) dmgCount = 0;
 			else
 			{
 				if (tAnimate <= diff)
@@ -473,7 +454,7 @@ public:
 				me->AI()->AttackStart(who);
 				dmgCount = 0;
 			}
-			else if (who->IsPet())
+			else if (who->isPet())
 			{
 				me->getThreatManager().resetAllAggro();
 				me->AddThreat(who, 1.0f);
@@ -482,7 +463,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (!UpdateVictim())
 				return;
@@ -517,7 +498,7 @@ public:
 			if (me->GetVictim()->GetTypeId() == TYPEID_PLAYER)
 				dmgCount = 0;
 			else
-			if (me->GetVictim()->IsPet())
+			if (me->GetVictim()->isPet())
 				dmgCount = 0;
 			else
 			{
@@ -564,11 +545,11 @@ public:
 				damage = 0;
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (tSeek <= diff)
 			{
-				if ((me->IsAlive()) && (!me->IsInCombat() && (me->GetDistance2d(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY()) <= 1.0f)))
+				if ((me->isAlive()) && (!me->isInCombat() && (me->GetDistance2d(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY()) <= 1.0f)))
 				if (Creature* enemy = me->FindNearestCreature(NPC_BLOODFANG_WORGEN, 5.0f, true))
 					me->AI()->AttackStart(enemy); // She should really only grab agro when npc Cleese is not there, so we will keep this range small
 				tSeek = urand(1000, 2000); // optimize cpu load, seeking only sometime between 1 and 2 seconds
@@ -614,7 +595,7 @@ public:
 			willCastEnrage = urand(0, 1);
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (tRun <= diff && onceRun)
 			{
@@ -687,7 +668,7 @@ public:
 				me->AI()->AttackStart(who);
 				dmgCount = 0;
 			}
-			else if (who->IsPet())
+			else if (who->isPet())
 			{
 				me->getThreatManager().resetAllAggro();
 				me->AddThreat(who, 1.0f);
@@ -702,11 +683,11 @@ public:
 				dmgCount++;
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (tSeek <= diff)
 			{
-				if ((me->IsAlive()) && (!me->IsInCombat() && (me->GetDistance2d(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY()) <= 1.0f)))
+				if ((me->isAlive()) && (!me->isInCombat() && (me->GetDistance2d(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY()) <= 1.0f)))
 				if (Creature* enemy = me->FindNearestCreature(NPC_BLOODFANG_WORGEN, 16.0f, true))
 					me->AI()->AttackStart(enemy);
 				tSeek = urand(1000, 2000);
@@ -731,7 +712,7 @@ public:
 			else
 			if (me->GetVictim()->GetTypeId() == TYPEID_PLAYER) dmgCount = 0;
 			else
-			if (me->GetVictim()->IsPet()) dmgCount = 0;
+			if (me->GetVictim()->isPet()) dmgCount = 0;
 			else
 			{
 				if (tAnimate <= diff)
@@ -789,7 +770,7 @@ public:
 				me->DespawnOrUnsummon();
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (!startPath)
 				return;
@@ -843,7 +824,7 @@ public:
 				me->AddThreat(who, 1.0f);
 				me->AI()->AttackStart(who);
 			}
-			else if (who->IsPet())
+			else if (who->isPet())
 			{
 				me->getThreatManager().resetAllAggro();
 				me->AddThreat(who, 1.0f);
@@ -853,11 +834,11 @@ public:
 				damage = 0;
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (tSeek <= diff)
 			{
-				if ((me->IsAlive()) && (!me->IsInCombat() && (me->GetDistance2d(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY()) <= 1.0f)))
+				if ((me->isAlive()) && (!me->isInCombat() && (me->GetDistance2d(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY()) <= 1.0f)))
 				if (Creature* enemy = me->FindNearestCreature(NPC_BLOODFANG_WORGEN, 10.0f, true))
 					me->AI()->AttackStart(enemy);
 				tSeek = urand(1000, 2000); // optimize cpu load, seeking only sometime between 1 and 2 seconds
@@ -948,7 +929,7 @@ class npc_lord_darius_crowley_c1 : public CreatureScript
 			summoned->AI()->SetData(0, summonPos);
 		}
 
-		void DoAction(int32 /*action*/)
+		void DoAction(const int32 /*action*/)
 		{
 			if (!EventInProgress)
 			{
@@ -987,9 +968,9 @@ class npc_lord_darius_crowley_c1 : public CreatureScript
 				DoCastVictim(spellId);
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
-			if (me->IsInCombat())
+			if (me->isInCombat())
 			if (Unit* victim = me->SelectVictim())
 				AttackStart(victim);
 
@@ -1141,7 +1122,7 @@ public:
 			willCastEnrage = urand(0, 1);
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (me->GetPositionX() == -1611.40f && me->GetPositionY() == 1498.49f) // I was spawned in location 1
 			{
@@ -1270,7 +1251,7 @@ public:
 			willCastEnrage = urand(0, 1);
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (me->GetPositionX() == -1732.81f && me->GetPositionY() == 1526.34f) // I was spawned in location 1
 			{
@@ -1399,7 +1380,7 @@ public:
 			willCastEnrage = urand(0, 1);
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (me->GetPositionX() == -1618.86f && me->GetPositionY() == 1505.68f) // I was spawned in location 1 on NW Rooftop
 			{
@@ -1528,7 +1509,7 @@ public:
 			willCastEnrage = urand(0, 1);
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (me->GetPositionX() == -1732.81f && me->GetPositionY() == 1526.34f) // I was just spawned
 			{
@@ -1643,7 +1624,7 @@ public:
 		}
 
 		//Timed events
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			//Out of combat
 			if (!me->GetVictim())
@@ -1715,7 +1696,7 @@ public:
 			tEvent = 0;
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			if (Creature* Lorna = me->FindNearestCreature(NPC_LORNA_CROWLEY_P4, 60.0f, true))
 			if (Creature* BadAvery = me->FindNearestCreature(NPC_JOSIAH_AVERY_P4, 80.0f, true))
@@ -1731,7 +1712,7 @@ public:
 					{
 					case (0) :
 					{
-								 me->AI()->Talk(SAY_JOSAIH_AVERY_TRIGGER); // Tell Player they have been bitten
+								 me->AI()->Talk(SAY_JOSAIH_AVERY_TRIGGER, PlayerGUID); // Tell Player they have been bitten
 								 tEvent = 200;
 								 Phase++;
 								 break;
@@ -1827,7 +1808,7 @@ public:
 			me->GetCharmInfo()->SetIsFollowing(true);
 		}
 
-		void UpdateAI(uint32 diff) /*diff*/
+		void UpdateAI(uint32 const diff) /*diff*/
 		{
 			Player* player = me->GetOwner()->ToPlayer();
 
@@ -1897,14 +1878,14 @@ public:
 			DoCast(me, SPELL_SHADOWSTALKER_STEALTH);
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			if (tSeek <= diff)
 			{
-				if ((me->IsAlive()) && (!me->IsInCombat() && (me->GetDistance2d(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY()) <= 2.0f)))
+				if ((me->isAlive()) && (!me->isInCombat() && (me->GetDistance2d(me->GetHomePosition().GetPositionX(), me->GetHomePosition().GetPositionY()) <= 2.0f)))
 				if (Player* player = me->SelectNearestPlayer(2.0f))
 				{
-					if (!player->IsInCombat())
+					if (!player->isInCombat())
 					{
 						me->AI()->AttackStart(player);
 						tSeek = urand(5000, 10000);
@@ -2008,7 +1989,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			if (tSay <= diff) // Time for next spawn wave
 			{
@@ -2089,7 +2070,7 @@ public:
 			switch (i)
 			{
 			case 5:
-				Talk(SAY_GREYMANE_HORSE);
+				Talk(SAY_GREYMANE_HORSE, player->GetGUID());
 				me->GetMotionMaster()->MoveJump(-1679.089f, 1348.42f, 15.31f, 25.0f, 15.0f);
 				if (me->GetVehicleKit()->HasEmptySeat(1))
 				{
@@ -2115,7 +2096,7 @@ public:
 		{
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			npc_escortAI::UpdateAI(diff);
 			Player* player = GetPlayerForEscort();
@@ -2133,7 +2114,7 @@ public:
 			{
 				if (Creature* krennan = me->FindNearestCreature(NPC_KRENNAN_ARANAS_TREE, 70.0f, true))
 				{
-					krennan->AI()->Talk(SAY_NPC_KRENNAN_ARANAS_TREE);
+					krennan->AI()->Talk(SAY_NPC_KRENNAN_ARANAS_TREE, player->GetGUID());
 					krennansay = urand(4000, 7000);//Repeat every 4 to 7 seconds
 				}
 			}
@@ -2177,7 +2158,7 @@ public:
 			SayTimer = 500;
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (Creature* krennan = me->FindNearestCreature(NPC_KRENNAN_ARANAS_TREE, 50.0f))
 			{
@@ -2250,7 +2231,7 @@ public:
 			EventStart = false;
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (!EventStart)
 				return;
@@ -2433,7 +2414,7 @@ public:
 		{
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			npc_escortAI::UpdateAI(diff);
 
@@ -2518,7 +2499,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (me->HasAura(SPELL_THROW_TORCH))
 				spellHit = true;
@@ -2550,7 +2531,7 @@ public:
 
 			if (me->GetVictim()->GetTypeId() == TYPEID_PLAYER)
 				Miss = false;
-			else if (me->GetVictim()->IsPet())
+			else if (me->GetVictim()->isPet())
 				Miss = false;
 			else if (me->GetVictim()->GetEntry() == NPC_NORTHGATE_REBEL_1)
 			if (me->GetVictim()->GetHealthPct() < 90)
@@ -2659,7 +2640,7 @@ public:
 			canStartEvent = false;
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (mui_refreshEvent <= diff)
 			{
@@ -2739,7 +2720,7 @@ public:
 			if (Creature *genn = me->SummonCreature(36332, -1844.29f, 2290.67f, 42.30f, 0.32f, TEMPSUMMON_MANUAL_DESPAWN))
 			{
 				gennGUID = genn->GetGUID();
-				genn->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+				genn->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
 			}
 			endEvent = false;
 			mui_timer_event = 12500;
@@ -2766,7 +2747,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (waitingForEndMovement)
 				return;
@@ -2818,7 +2799,7 @@ public:
 					step++;
 					break;
 				case 6:
-					genn->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
+					genn->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_QUESTGIVER);
 					mui_timer_event = 300000;
 					endEvent = true;
 					step++;
@@ -2954,7 +2935,7 @@ public:
 				AttackStart(target);
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			if (!UpdateVictim())
 				return;
@@ -2985,7 +2966,7 @@ public:
 				{
 					if (me->HasUnitState(UNIT_STATE_MELEE_ATTACKING))
 					{
-						me->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, 0);
+						me->SetUInt32Value(UNIT_NPC_EMOTESTATE, 0);
 						me->ClearUnitState(UNIT_STATE_MELEE_ATTACKING);
 						me->SendMeleeAttackStop(me->GetVictim());
 					}
@@ -3111,7 +3092,7 @@ public:
 			me->AddThreat(attacker, 10005000);
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			if (shoot)
 			{
@@ -3217,13 +3198,13 @@ public:
 		{
 			me->SetReactState(REACT_PASSIVE);
 
-			if (me->IsSummon())
+			if (me->isSummon())
 			if (Unit* summoner = me->ToTempSummon()->GetSummoner())
 			if (Player* player = summoner->ToPlayer())
 			{
 				StartFollow(player);
 				me->SetUInt64Value(UNIT_FIELD_CHANNEL_OBJECT, player->GetGUID());
-				me->SetUInt32Value(UNIT_FIELD_CHANNEL_SPELL, SPELL_ROPE_CHANNEL);
+				me->SetUInt32Value(UNIT_CHANNEL_SPELL, SPELL_ROPE_CHANNEL);
 
 				if (Creature* horse = player->GetVehicleCreatureBase())
 					horse->AI()->JustSummoned(me);
@@ -3303,7 +3284,7 @@ public:
 					{
 						player->KilledMonsterCredit(NPC_MOUNTAIN_HORSE_KILL_CREDIT, 0);
 						(*itr)->SetUInt64Value(UNIT_FIELD_CHANNEL_OBJECT, 0);
-						(*itr)->SetUInt32Value(UNIT_FIELD_CHANNEL_SPELL, 0);
+						(*itr)->SetUInt32Value(UNIT_CHANNEL_SPELL, 0);
 						(*itr)->DespawnOrUnsummon();
 					}
 
@@ -3329,7 +3310,7 @@ public:
 				lSummons.push_back(summoned);
 		}
 
-		void UpdateAI(uint32  diff)
+		void UpdateAI(uint32 const diff)
 		{
 			if (despawn)
 			{
@@ -3370,7 +3351,7 @@ public:
 	{
 		npc_forsaken_catapult_qtbsAI(Creature* creature) : ScriptedAI(creature)
 		{
-			me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+			me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
 			me->setActive(true);
 			speedXY = 10.0f;
 			speedZ = 10.0f;
@@ -3406,7 +3387,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 
 			if (respawn)
@@ -3495,7 +3476,7 @@ public:
 
 		void Reset()
 		{
-			me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+			me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
 
 		}
 
@@ -3518,7 +3499,7 @@ public:
 				door->UseDoorOrButton();
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			npc_escortAI::UpdateAI(diff);
 
@@ -3567,7 +3548,7 @@ public:
 
 		void Reset()
 		{
-			me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+			me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
 
 		}
 
@@ -3590,7 +3571,7 @@ public:
 				door->UseDoorOrButton();
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			npc_escortAI::UpdateAI(diff);
 
@@ -3639,7 +3620,7 @@ public:
 
 		void Reset()
 		{
-			me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+			me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
 
 		}
 
@@ -3662,7 +3643,7 @@ public:
 				door->UseDoorOrButton();
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			npc_escortAI::UpdateAI(diff);
 
@@ -3735,7 +3716,7 @@ public:
 			{
 				despawn = false;
 				uiDespawnTimer = 10000;
-				me->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+				me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
 				me->RemoveAura(SPELL_DROWNING);
 				me->EnterVehicle(caster);
 
@@ -3767,12 +3748,12 @@ public:
 				DoCast(SPELL_DROWNING);
 				me->SetVisible(true);
 				DoCast(SPELL_SUMMON_SPARKLES);
-				me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+				me->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
 				reset = false;
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			if (despawn)
 			{
@@ -3834,7 +3815,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			if (!UpdateVictim())
 				return;
@@ -3890,7 +3871,7 @@ public:
 		void WaypointReached(uint32 point)
 		{
 			if (point == 1)
-			if (me->IsSummon())
+			if (me->isSummon())
 			if (Unit* summoner = me->ToTempSummon()->GetSummoner())
 			{
 				me->SetDisplayId(NPC_WAHL_WORGEN);
@@ -3900,7 +3881,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			npc_escortAI::UpdateAI(diff);
 		}
@@ -3952,7 +3933,7 @@ public:
 			if (id == POINT_CATCH_CHANCE)
 			{
 				me->HandleEmoteCommand(EMOTE_ONESHOT_KNEEL);
-				if (me->IsSummon())
+				if (me->isSummon())
 				if (Unit* summoner = me->ToTempSummon()->GetSummoner())
 				if (Creature* chance = summoner->ToCreature())
 				{
@@ -3963,7 +3944,7 @@ public:
 			}
 		}
 
-		void DoAction(int32 action)
+		void DoAction(int32 const action)
 		{
 			if (action == ACTION_SUMMON_LUCIUS)
 			{
@@ -3972,7 +3953,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (Catch)
 			{
@@ -4055,7 +4036,7 @@ public:
 		uint32 uiDespawnTimer;
 		bool Despawn;
 
-		void DoAction(int32 action)
+		void DoAction(int32 const action)
 		{
 			if (action == ACTION_CHANCE_DESPAWN)
 				Despawn = true;
@@ -4065,7 +4046,7 @@ public:
 		{
 			if (spell->Id == SPELL_CATCH_CAT && caster->GetTypeId() == TYPEID_PLAYER)
 			{
-				me->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
+				me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
 
 				if (Creature* lucius = me->SummonCreature(NPC_LUCIUS_THE_CRUEL, -2111.533f, 2329.95f, 7.390349f))
 				{
@@ -4075,7 +4056,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (Despawn)
 			{
@@ -4158,7 +4139,7 @@ public:
 					go->UseDoorOrButton();
 				break;
 			case 13:
-				if (me->IsSummon())
+				if (me->isSummon())
 				if (Unit* summoner = me->ToTempSummon()->GetSummoner())
 				if (Player* player = summoner->ToPlayer())
 				{
@@ -4181,7 +4162,7 @@ public:
 		{
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			npc_escortAI::UpdateAI(diff);
 			Player* player = GetPlayerForEscort();
@@ -4337,7 +4318,7 @@ public:
 				damage = 0;
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			if (despawn)
 			{
@@ -4388,7 +4369,7 @@ public:
 		{
 			miss = false;
 
-			if (me->IsSummon())
+			if (me->isSummon())
 			if (Unit* summoner = me->ToTempSummon()->GetSummoner())
 			{
 				summoner->getThreatManager().resetAllAggro();
@@ -4418,7 +4399,7 @@ public:
 
 		void JustDied(Unit* /*who*/)
 		{
-			if (me->IsSummon())
+			if (me->isSummon())
 			if (Unit* summoner = me->ToTempSummon()->GetSummoner())
 			{
 
@@ -4427,7 +4408,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 /*diff*/)
+		void UpdateAI(uint32 const /*diff*/)
 		{
 			if (!UpdateVictim())
 				return;
@@ -4529,7 +4510,7 @@ public:
 			uiCleaveTimer = 250;
 			uiDemoralizingShoutTimer = 500;
 
-			if (me->IsSummon())
+			if (me->isSummon())
 			{
 				for (int i = 0; i < 14; ++i)
 					AddWaypoint(i, KorothWP[i][0], KorothWP[i][1], KorothWP[i][2]);
@@ -4544,7 +4525,7 @@ public:
 
 		void FinishEscort()
 		{
-			if (me->IsSummon())
+			if (me->isSummon())
 			if (Unit* summoner = me->ToTempSummon()->GetSummoner())
 			{
 				me->SetReactState(REACT_AGGRESSIVE);
@@ -4561,7 +4542,7 @@ public:
 		}
 		void WaypointReached(uint32 /*point*/) { }
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			npc_escortAI::UpdateAI(diff);
 
@@ -4609,7 +4590,7 @@ public:
 			me->SetReactState(REACT_PASSIVE);
 			me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
 
-			if (me->IsSummon())
+			if (me->isSummon())
 				StartEvent();
 		}
 
@@ -4633,7 +4614,7 @@ public:
 			}
 		}
 
-		void DoAction(int32 action)
+		void DoAction(int32 const action)
 		{
 			if (action == ACTION_KOROTH_ATTACK)
 			if (Creature* koroth = Unit::GetCreature(*me, uiKorothGUID))
@@ -4682,7 +4663,7 @@ public:
 			{
 				Creature* member = itr->soldier;
 
-				if (!member->IsAlive() || member->GetVictim())
+				if (!member->isAlive() || member->GetVictim())
 					continue;
 
 				float angle = itr->follow_angle;
@@ -4758,7 +4739,7 @@ public:
 				uiKorothGUID = koroth->GetGUID();
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			npc_escortAI::UpdateAI(diff);
 
@@ -4834,7 +4815,7 @@ public:
 			lPlayerList.push_back(new_player);
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			if (!lPlayerList.empty())
 			for (std::list<Psc_qiao>::iterator itr = lPlayerList.begin(); itr != lPlayerList.end();)
@@ -4917,7 +4898,7 @@ public:
 				me->GetMotionMaster()->MoveTargetedHome();
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			if (Event)
 			{
@@ -4974,7 +4955,7 @@ public:
 	{
 		npc_koroth_the_hillbreakerAI(Creature* creature) : ScriptedAI(creature){ }
 
-		void UpdateAI(uint32 /*diff*/)
+		void UpdateAI(const uint32 /*diff*/)
 		{
 			if (!UpdateVictim())
 				return;
@@ -5025,7 +5006,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			if (!allowSummon)
 				return;
@@ -5082,7 +5063,7 @@ public:
 		if (player->GetQuestStatus(QUEST_THE_BATTLE_FOR_GILNEAS_CITY) == QUEST_STATUS_INCOMPLETE)
 			player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "start battle !", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
 
-		if (player->IsGameMaster())
+		if (player->isGameMaster())
 			player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "(GM ONLY) RESET EVENT!", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 2);
 
 		player->SEND_GOSSIP_MENU(2474, creature->GetGUID());
@@ -5117,7 +5098,7 @@ public:
 				else
 				{
 					prince->AI()->DoAction(ACTION_START_EVENT);
-					Talk(0);
+					Talk(0, pl->GetGUID());
 				}
 			}
 			else
@@ -5127,7 +5108,7 @@ public:
 				{
 					princeGUID = newPrince->GetGUID();
 					prince->AI()->DoAction(ACTION_START_EVENT);
-					Talk(0);
+					Talk(0, pl->GetGUID());
 				}
 			}
 		}
@@ -5302,7 +5283,7 @@ public:    npc_prince_liam_greymane_gilneas() : CreatureScript("npc_prince_liam_
 				   }
 			   }
 
-			   void DoAction(int32 info)
+			   void DoAction(const int32 info)
 			   {
 				   switch (info)
 				   {
@@ -5314,7 +5295,7 @@ public:    npc_prince_liam_greymane_gilneas() : CreatureScript("npc_prince_liam_
 				   }
 			   }
 
-			   void UpdateAI(uint32 diff)
+			   void UpdateAI(const uint32 diff)
 			   {
 				   if (!startEvent)
 					   return;
@@ -5450,7 +5431,7 @@ public:
 			me->DespawnOrUnsummon(60000);
 		}
 
-		void DoAction(int32 info)
+		void DoAction(const int32 info)
 		{
 			switch (info)
 			{
@@ -5483,7 +5464,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (!eventInProgress)
 				return;
@@ -5587,7 +5568,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (!UpdateVictim())
 				return;
@@ -5670,7 +5651,7 @@ public:
 			Talk(0);
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (moveJumpBoss)
 			{
@@ -5727,7 +5708,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (!UpdateVictim())
 				return;
@@ -5773,7 +5754,7 @@ public:
 
 		}
 
-		void DoAction(int32 type)
+		void DoAction(const int32 type)
 		{
 			if (type == ACTION_START_EVENT)
 				outEvent = true;
@@ -5788,7 +5769,7 @@ public:
 			}
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			if (outEvent)
 			{
@@ -5971,7 +5952,7 @@ public:
 		{
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			npc_escortAI::UpdateAI(diff);
 		}
@@ -6123,7 +6104,7 @@ public:
 		}
 
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(const uint32 diff)
 		{
 			npc_escortAI::UpdateAI(diff);
 		}
@@ -6214,8 +6195,7 @@ public:
 			std::set<uint32> phaseId;
 			terrainswap.insert(655);
 			phaseId.insert(1);
-			std::set<uint32> worldMapArea;
-			player->GetSession()->SendSetPhaseShift(phaseId, terrainswap, worldMapArea);
+			player->GetSession()->SendSetPhaseShift(phaseId, terrainswap);
 			player->SaveToDB();
 		}
 
@@ -6255,12 +6235,12 @@ public:
 				return;
 
 			for (Map::PlayerList::const_iterator i = PlList.begin(); i != PlList.end(); ++i)
-			if (Player* player = i->GetSource())
+			if (Player* player = i->getSource())
 			if (uiPhase & player->GetPhaseMask())
 				player->CastSpell(player, uiSpellId, true);
 		}
 
-		void UpdateAI(uint32 diff)
+		void UpdateAI(uint32 const diff)
 		{
 			if (uiTremorTimerFirst <= diff)
 			{

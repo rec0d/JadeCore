@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,6 +15,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 /* ScriptData
 SDName: Nagrand
 SD%Complete: 90
@@ -34,8 +34,6 @@ EndContentData */
 #include "ScriptedEscortAI.h"
 #include "Player.h"
 #include "SpellInfo.h"
-#include "Pet.h"
-#include "SmartAI.h"
 
 /*######
 ## npc_greatmother_geyah
@@ -62,7 +60,7 @@ class npc_greatmother_geyah : public CreatureScript
 public:
     npc_greatmother_geyah() : CreatureScript("npc_greatmother_geyah") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         switch (action)
@@ -123,7 +121,7 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (creature->IsQuestGiver())
             player->PrepareQuestMenu(creature->GetGUID());
@@ -149,7 +147,7 @@ public:
 ## npc_maghar_captive
 #####*/
 
-enum MagharCaptive
+enum eMagharCaptive
 {
     SAY_MAG_START               = 0,
     SAY_MAG_NO_ESCAPE           = 0,
@@ -180,7 +178,7 @@ class npc_maghar_captive : public CreatureScript
 public:
     npc_maghar_captive() : CreatureScript("npc_maghar_captive") { }
 
-    bool OnQuestAccept(Player* player, Creature* creature, const Quest* quest) override
+    bool OnQuestAccept(Player* player, Creature* creature, const Quest* quest)
     {
         if (quest->GetQuestId() == QUEST_TOTEM_KARDASH_H)
         {
@@ -201,7 +199,7 @@ public:
         return true;
     }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_maghar_captiveAI(creature);
     }
@@ -214,19 +212,19 @@ public:
         uint32 m_uiHealTimer;
         uint32 m_uiFrostShockTimer;
 
-        void Reset() override
+        void Reset()
         {
             m_uiChainLightningTimer = 1000;
             m_uiHealTimer = 0;
             m_uiFrostShockTimer = 6000;
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             DoCast(me, SPELL_EARTHBIND_TOTEM, false);
         }
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId)
         {
             switch (waypointId)
             {
@@ -251,12 +249,12 @@ public:
             }
         }
 
-        void JustSummoned(Creature* summoned) override
+        void JustSummoned(Creature* summoned)
         {
             if (summoned->GetEntry() == NPC_MURK_BRUTE)
                 summoned->AI()->Talk(SAY_MAG_NO_ESCAPE);
 
-            if (summoned->IsTotem())
+            if (summoned->isTotem())
                 return;
 
             summoned->SetWalk(false);
@@ -265,7 +263,7 @@ public:
 
         }
 
-        void SpellHitTarget(Unit* /*target*/, const SpellInfo* pSpell) override
+        void SpellHitTarget(Unit* /*target*/, const SpellInfo* pSpell)
         {
             if (pSpell->Id == SPELL_CHAIN_LIGHTNING)
             {
@@ -276,7 +274,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 uiDiff) override
+        void UpdateAI(const uint32 uiDiff)
         {
             npc_escortAI::UpdateAI(uiDiff);
             if (!me->GetVictim())
@@ -323,34 +321,35 @@ class npc_creditmarker_visit_with_ancestors : public CreatureScript
 public:
     npc_creditmarker_visit_with_ancestors() : CreatureScript("npc_creditmarker_visit_with_ancestors") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_creditmarker_visit_with_ancestorsAI(creature);
+        return new npc_creditmarker_visit_with_ancestorsAI (creature);
     }
 
     struct npc_creditmarker_visit_with_ancestorsAI : public ScriptedAI
     {
-        npc_creditmarker_visit_with_ancestorsAI(Creature* creature) : ScriptedAI(creature) { }
+        npc_creditmarker_visit_with_ancestorsAI(Creature* creature) : ScriptedAI(creature) {}
 
-        void Reset() override { }
+        void Reset() {}
 
-        void EnterCombat(Unit* /*who*/) override { }
+        void EnterCombat(Unit* /*who*/) {}
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
             if (!who)
                 return;
 
-            Player* player = who->ToPlayer();
-            if (player && player->GetQuestStatus(10085) == QUEST_STATUS_INCOMPLETE)
+            if (who->GetTypeId() == TYPEID_PLAYER)
             {
-                uint32 creditMarkerId = me->GetEntry();
-                if (creditMarkerId >= 18840 && creditMarkerId <= 18843)
+                if (CAST_PLR(who)->GetQuestStatus(10085) == QUEST_STATUS_INCOMPLETE)
                 {
-                    // 18840: Sunspring, 18841: Laughing, 18842: Garadar, 18843: Bleeding
-                    if (!player->GetReqKillOrCastCurrentCount(10085, creditMarkerId))
-                        player->KilledMonsterCredit(creditMarkerId, me->GetGUID());
+                    uint32 creditMarkerId = me->GetEntry();
+                    if ((creditMarkerId >= 18840) && (creditMarkerId <= 18843))
+                    {
+                        // 18840: Sunspring, 18841: Laughing, 18842: Garadar, 18843: Bleeding
+                        if (!CAST_PLR(who)->GetReqKillOrCastCurrentCount(10085, creditMarkerId))
+                            CAST_PLR(who)->KilledMonsterCredit(creditMarkerId, me->GetGUID());
+                    }
                 }
             }
         }
@@ -387,7 +386,7 @@ class go_corkis_prison : public GameObjectScript
 public:
   go_corkis_prison() : GameObjectScript("go_corkis_prison") { }
 
-  bool OnGossipHello(Player* player, GameObject* go) override
+  bool OnGossipHello(Player* player, GameObject* go)
   {
       go->SetGoState(GO_STATE_READY);
       if (go->GetEntry() == GO_CORKIS_PRISON)
@@ -428,25 +427,25 @@ class npc_corki : public CreatureScript
 public:
   npc_corki() : CreatureScript("npc_corki") { }
 
-  CreatureAI* GetAI(Creature* creature) const override
+  CreatureAI* GetAI(Creature* creature) const
   {
       return new npc_corkiAI(creature);
   }
 
   struct npc_corkiAI : public ScriptedAI
   {
-      npc_corkiAI(Creature* creature) : ScriptedAI(creature) { }
+      npc_corkiAI(Creature* creature) : ScriptedAI(creature) {}
 
       uint32 Say_Timer;
       bool ReleasedFromCage;
 
-      void Reset() override
+      void Reset()
       {
           Say_Timer = 5000;
           ReleasedFromCage = false;
       }
 
-      void UpdateAI(uint32 diff) override
+      void UpdateAI(uint32 const diff)
       {
           if (ReleasedFromCage)
           {
@@ -460,7 +459,7 @@ public:
           }
       }
 
-      void MovementInform(uint32 type, uint32 id) override
+      void MovementInform(uint32 type, uint32 id)
       {
           if (type == POINT_MOTION_TYPE && id == 1)
           {
@@ -512,7 +511,7 @@ class npc_kurenai_captive : public CreatureScript
 public:
     npc_kurenai_captive() : CreatureScript("npc_kurenai_captive") { }
 
-    bool OnQuestAccept(Player* player, Creature* creature, const Quest* quest) override
+    bool OnQuestAccept(Player* player, Creature* creature, const Quest* quest)
     {
         if (quest->GetQuestId() == QUEST_TOTEM_KARDASH_A)
         {
@@ -530,7 +529,7 @@ public:
         return true;
     }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_kurenai_captiveAI(creature);
     }
@@ -543,19 +542,19 @@ public:
         uint32 HealTimer;
         uint32 FrostShockTimer;
 
-        void Reset() override
+        void Reset()
         {
             ChainLightningTimer = 1000;
             HealTimer = 0;
             FrostShockTimer = 6000;
         }
 
-        void EnterCombat(Unit* /*who*/) override
+        void EnterCombat(Unit* /*who*/)
         {
             DoCast(me, SPELL_KUR_EARTHBIND_TOTEM, false);
         }
 
-        void JustDied(Unit* /*killer*/) override
+        void JustDied(Unit* /*killer*/)
         {
             if (!HasEscortState(STATE_ESCORT_ESCORTING))
                 return;
@@ -567,7 +566,7 @@ public:
             }
         }
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId)
         {
             switch (waypointId)
             {
@@ -596,13 +595,13 @@ public:
             }
         }
 
-        void JustSummoned(Creature* summoned) override
+        void JustSummoned(Creature* summoned)
         {
             if (summoned->GetEntry() == NPC_KUR_MURK_BRUTE)
                 Talk(SAY_KUR_NO_ESCAPE);
 
             // This function is for when we summoned enemies to fight - so that does NOT mean we should make our totem count in this!
-            if (summoned->IsTotem())
+            if (summoned->isTotem())
                 return;
 
             summoned->SetWalk(false);
@@ -610,7 +609,7 @@ public:
             summoned->AI()->AttackStart(me);
         }
 
-        void SpellHitTarget(Unit* /*target*/, const SpellInfo* spell) override
+        void SpellHitTarget(Unit* /*target*/, const SpellInfo* spell)
         {
             if (spell->Id == SPELL_KUR_CHAIN_LIGHTNING)
             {
@@ -629,7 +628,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -680,7 +679,7 @@ class go_warmaul_prison : public GameObjectScript
     public:
         go_warmaul_prison() : GameObjectScript("go_warmaul_prison") { }
 
-        bool OnGossipHello(Player* player, GameObject* go) override
+        bool OnGossipHello(Player* player, GameObject* go)
         {
             go->UseDoorOrButton();
             if (player->GetQuestStatus(QUEST_FINDING_THE_SURVIVORS) != QUEST_STATUS_INCOMPLETE)
@@ -690,261 +689,11 @@ class go_warmaul_prison : public GameObjectScript
             {
                 player->KilledMonsterCredit(NPC_MAGHAR_PRISONER, 0);
 
-                prisoner->AI()->Talk(SAY_FREE, player);
+                prisoner->AI()->Talk(SAY_FREE, player->GetGUID());
                 prisoner->DespawnOrUnsummon(6000);
             }
             return true;
         }
-};
-
-/*######
-## npc_mogor
-######*/
-
-enum Mogor
-{
-    QUEST_THE_FINAL_CHALLENGE = 9977,
-
-    SAY_MOG_COMMENT = 1,
-    SAY_MOG_BETTER = 2,
-    SAY_MOG_CHALLENGE = 3,
-    SAY_MOG_FIGHT = 4,
-    SAY_MOG_REVIVE = 5,
-    SAY_MOG_UNPOSSIBLE = 6,
-
-    SPELL_MOG_CHAIN_LIGHTING = 16033,
-    SPELL_MOG_FLAME_SHOCK = 39529,
-    SPELL_MOG_FRENZY = 28747,
-    SPELL_MOG_HEALING_WAVE = 60012,
-    SPELL_MOG_REVIVE_SELF = 32343,
-    SPELL_MOG_SUMMON_ICE_TOTEM = 18975,
-    FACTION_HOSTILE = 14,
-    FACTION_FRIENDLY = 35,
-    NPC_ICE_TOTEM = 12141,
-};
-
-enum Events
-{
-    EVENT_CHAIN_LIGHTING = 1,
-    EVENT_FLAME_SHOCK,
-    EVENT_HEALING_WAVE,
-    EVENT_SUMMON_ICE_TOTEM,
-    EVENT_TALK,
-    EVENT_HOSTILE,
-};
-
-class ReviveMogor : public BasicEvent
-{
-public:
-    ReviveMogor(Creature* mogor, float x, float y, float z, float o) : _mogor(mogor), _x(x), _y(y), _z(z), _o(o) {};
-
-    bool Execute(uint64 /*e_time*/, uint32 /*p_time*/)
-    {
-        _mogor->CastSpell(_mogor, SPELL_MOG_REVIVE_SELF, true);
-        _mogor->Respawn(true);
-        _mogor->NearTeleportTo(_x, _y, _z, _o);
-        return true;
-    }
-
-private:
-    Creature* _mogor;
-    float _x, _y, _z, _o;
-};
-
-class RespawnMogor : public BasicEvent
-{
-public:
-    RespawnMogor(Creature* mogor) : _mogor(mogor) {};
-
-    bool Execute(uint64 /*e_time*/, uint32 /*p_time*/)
-    {
-        _mogor->RemoveCorpse();
-        _mogor->setFaction(FACTION_FRIENDLY);
-        _mogor->SetReactState(REACT_PASSIVE);
-        return true;
-    }
-
-private:
-    Creature* _mogor;
-};
-
-class npc_mogor : public CreatureScript
-{
-public:
-    npc_mogor() : CreatureScript("npc_mogor") {}
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_mogorAI(creature);
-    }
-
-    struct npc_mogorAI : public SmartAI
-    {
-        npc_mogorAI(Creature* creature) : SmartAI(creature) { }
-
-        bool healingwave = 0;
-        uint8 phase = 0;
-        EventMap events;
-        float x, y, z, o;
-
-        void UpdateAI(uint32 diff) override
-        {
-            events.Update(diff);
-            UpdatePath(diff);
-
-            if (!UpdateVictim())
-            {
-                while (uint32 eventID = events.ExecuteEvent())
-                {
-                    switch (eventID)
-                    {
-                        case EVENT_TALK:
-                            Talk(SAY_MOG_FIGHT);
-                            events.ScheduleEvent(EVENT_HOSTILE, 4000);
-                            break;
-
-                        case EVENT_HOSTILE:
-                            me->setFaction(FACTION_HOSTILE);
-                            me->SetReactState(REACT_AGGRESSIVE);
-                            break;
-                    }
-                }
-
-                return;
-            }
-
-            while (uint32 eventID = events.ExecuteEvent())
-            {
-                switch (eventID)
-                {
-                    case EVENT_FLAME_SHOCK:
-                        DoCastVictim(SPELL_MOG_FLAME_SHOCK);
-                        events.ScheduleEvent(EVENT_FLAME_SHOCK, 17000);
-                        break;
-
-                    case EVENT_CHAIN_LIGHTING:
-                        DoCastVictim(SPELL_MOG_CHAIN_LIGHTING);
-                        events.ScheduleEvent(EVENT_CHAIN_LIGHTING, 17000);
-                        break;
-
-                    case EVENT_SUMMON_ICE_TOTEM:
-                        if (!me->FindNearestCreature(NPC_ICE_TOTEM, 30, true))
-                        {
-                            DoCast(me, SPELL_MOG_SUMMON_ICE_TOTEM);
-                            events.ScheduleEvent(EVENT_SUMMON_ICE_TOTEM, 20000);
-                        }
-                        else
-                            events.ScheduleEvent(EVENT_SUMMON_ICE_TOTEM, 3000);
-                        break;
-
-                    case EVENT_HEALING_WAVE:
-                        DoCast(me, SPELL_MOG_HEALING_WAVE);
-                        events.ScheduleEvent(EVENT_HEALING_WAVE, 40000);
-                        break;
-                }
-            }
-
-            DoMeleeAttackIfReady();
-        }
-
-        void DamageTaken(Unit* /*attacker*/, uint32& /*damage*/) override
-        {
-            if ((me->GetHealthPct() < 40) && !healingwave)
-            {
-                events.ScheduleEvent(EVENT_HEALING_WAVE, 2000);
-                healingwave = true;
-            }
-        }
-
-        void JustRespawned() override { }
-
-        void JustReachedHome() override
-        {
-            me->setFaction(FACTION_FRIENDLY);
-            me->SetReactState(REACT_PASSIVE);
-            phase = 0;
-            events.Reset();
-
-            if (Creature* totem = me->FindNearestCreature(NPC_ICE_TOTEM, 50.0f))
-                totem->DespawnOrUnsummon();
-        }
-
-        void Reset() override
-        {
-            events.Reset();
-            healingwave = false;
-        }
-
-        void JustDied(Unit* killer)
-        {
-            if (phase == 1)
-            {
-                events.Reset();
-                me->GetPosition(x, y, z, o);
-                me->m_Events.AddEvent(new ReviveMogor(me, x, y, z, o), me->m_Events.CalculateTime(7000));
-            }
-
-            if (phase == 2)
-            {
-                events.Reset();
-                me->m_Events.AddEvent(new RespawnMogor(me), me->m_Events.CalculateTime(15000));
-                phase = 0;
-
-                if (Player* player = killer->ToPlayer())
-                    player->GroupEventHappens(QUEST_THE_FINAL_CHALLENGE, player);
-
-                else if (Pet* pet = killer->ToPet())
-                {
-                    Player* player = pet->GetOwner();
-                    player->GroupEventHappens(QUEST_THE_FINAL_CHALLENGE, player);
-                }
-            }
-
-        }
-
-        void EnterCombat(Unit* who) override
-        {
-            events.ScheduleEvent(EVENT_SUMMON_ICE_TOTEM, 2000);
-            events.ScheduleEvent(EVENT_FLAME_SHOCK, 5000);
-            events.ScheduleEvent(EVENT_CHAIN_LIGHTING, 10000);
-
-            if (phase == 0)
-                ++phase;
-
-            else if (phase == 1)
-            {
-                ++phase;
-                DoCast(me, SPELL_MOG_FRENZY);
-                Talk(SAY_MOG_REVIVE);
-            }
-
-        }
-
-        void SetData(uint32 type, uint32 data) override
-        {
-            if (type == 14 && data == 14)
-                Talk(SAY_MOG_UNPOSSIBLE);
-
-            if (type == 12 && data == 12)
-                Talk(SAY_MOG_COMMENT);
-
-            if (type == 13 && data == 13)
-                Talk(SAY_MOG_BETTER);
-
-            if (type == 1 && data == 1)
-            {
-                Talk(SAY_MOG_CHALLENGE);
-                StartPath(false, 18069, false, me);
-            }
-        }
-
-        void MovementInform(uint32 MovementType, uint32 Data) override
-        {
-            MovepointReached(Data);
-            if (MovementType == POINT_MOTION_TYPE && Data == 4)
-            events.ScheduleEvent(EVENT_TALK, 3000);
-        }
-    };
 };
 
 void AddSC_nagrand()
@@ -956,5 +705,4 @@ void AddSC_nagrand()
     new go_corkis_prison();
     new npc_kurenai_captive();
     new go_warmaul_prison();
-    new npc_mogor();
 }

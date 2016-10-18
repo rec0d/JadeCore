@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -76,46 +73,39 @@ public:
 
     struct instance_halls_of_reflection_InstanceMapScript : public InstanceScript
     {
-        instance_halls_of_reflection_InstanceMapScript(Map* map) : InstanceScript(map) { }
+        instance_halls_of_reflection_InstanceMapScript(Map* map) : InstanceScript(map) {}
 
-        void Initialize() override
+        void Initialize() 
         {
             SetBossNumber(MAX_ENCOUNTER);
             events.Reset();
-
             _falricGUID = 0;
             _marwynGUID = 0;
             _jainaOrSylvanasPart1GUID = 0;
-            _jainaOrSylvanasPart2GUID = 0;
-            _lichkingPart1GUID = 0;
             _frostwornGeneralGUID = 0;
-
             _frostmourneGUID = 0;
             _entranceDoorGUID = 0;
             _frostwornDoorGUID = 0;
             _arthasDoorGUID = 0;
-            _escapeDoorGUID = 0;
-            _caveGUID = 0;
-
             _teamInInstance = 0;
             _waveCount = 0;
+            _mobsaticewall = 0;
             _introEvent = NOT_STARTED;
             _frostwornGeneral = NOT_STARTED;
             _escapeevent = NOT_STARTED;
-            _mobsaticewall = 0;
         }
 
-        void OnPlayerEnter(Player* player) override
+        void OnPlayerEnter(Player* player) 
         {
             if (!_teamInInstance)
                 _teamInInstance = player->GetTeam();
         }
 
-        void OnCreatureCreate(Creature* creature) override
+        void OnCreatureCreate(Creature* creature) 
         {
             Map::PlayerList const& players = instance->GetPlayers();
             if (!players.isEmpty())
-                if (Player* player = players.begin()->GetSource())
+                if (Player* player = players.begin()->getSource())
                     _teamInInstance = player->GetTeam();
 
             switch (creature->GetEntry())
@@ -143,7 +133,7 @@ public:
             }
         }
 
-        void OnCreatureRemove(Creature* creature) override
+        void OnCreatureRemove(Creature* creature) 
         {
             switch (creature->GetEntry())
             {
@@ -160,25 +150,25 @@ public:
             }
         }
 
-        void OnGameObjectCreate(GameObject* go) override
+        void OnGameObjectCreate(GameObject* go) 
         {
             switch (go->GetEntry())
             {
                 case GO_FROSTMOURNE:
                     _frostmourneGUID = go->GetGUID();
-                    go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_INTERACT_COND);
+                    go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
                     HandleGameObject(0, false, go);
                     if (GetData(DATA_INTRO_EVENT) == DONE)
                         go->SetPhaseMask(2, true);
                     break;
                 case GO_ENTRANCE_DOOR:
                     _entranceDoorGUID = go->GetGUID();
-                    go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_INTERACT_COND);
+                    go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
                     HandleGameObject(0, true, go);
                     break;
                 case GO_FROSTWORN_DOOR:
                     _frostwornDoorGUID = go->GetGUID();
-                    go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_INTERACT_COND);
+                    go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
                     if (GetBossState(DATA_MARWYN_EVENT) == DONE)
                         HandleGameObject(0, true, go);
                     else
@@ -186,7 +176,7 @@ public:
                     break;
                 case GO_ARTHAS_DOOR:
                     _arthasDoorGUID = go->GetGUID();
-                    go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_INTERACT_COND);
+                    go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
                     if (GetBossState(DATA_FROSWORN_EVENT) == DONE)
                         HandleGameObject(0, true, go);
                     else
@@ -194,18 +184,18 @@ public:
                     break;
                 case GO_CAVE:
                     _caveGUID = go->GetGUID();
-                    go->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_INTERACT_COND);
+                    go->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_INTERACT_COND);
                     break;
             }
         }
 
-        void FillInitialWorldStates(WorldStateBuilder& builder) override
+        void FillInitialWorldStates(WorldPacket& data) 
         {
-            builder.AppendState(WORLD_STATE_HOR_WAVES_ENABLED, 0);
-            builder.AppendState(WORLD_STATE_HOR_WAVE_COUNT, 0);
+            data << uint32(WORLD_STATE_HOR_WAVES_ENABLED) << uint32(0);
+            data << uint32(WORLD_STATE_HOR_WAVE_COUNT) << uint32(0);
         }
 
-        bool SetBossState(uint32 type, EncounterState state) override
+        bool SetBossState(uint32 type, EncounterState state) 
         {
             if (!InstanceScript::SetBossState(type, state))
                 return false;
@@ -237,7 +227,7 @@ public:
             return true;
         }
 
-        void SetData(uint32 type, uint32 data) override
+        void SetData(uint32 type, uint32 data) 
         {
             switch (type)
             {
@@ -308,7 +298,7 @@ public:
 
 
         // wave scheduling,checked when wave npcs die
-        void OnUnitDeath(Unit* unit) override
+        void OnUnitDeath(Unit* unit) 
         {
             Creature* creature = unit->ToCreature();
             if (!creature)
@@ -327,10 +317,10 @@ public:
                     for (std::set<uint64>::const_iterator itr = waveGuidList[waveId].begin(); itr != waveGuidList[waveId].end(); ++itr)
                     {
                         Creature* npc = instance->GetCreature(*itr);
-                        if (!npc || !npc->IsAlive())
+                        if (!npc || !npc->isAlive())
                             ++deadNpcs;
                     }
-                    // because the current npc returns IsAlive when OnUnitDeath happens
+                    // because the current npc returns isAlive when OnUnitDeath happens
                     // we check if the number of dead npcs is equal to the list-1
                     if (deadNpcs == waveGuidList[waveId].size() - 1)
                     {
@@ -342,7 +332,7 @@ public:
             }
         }
 
-        void Update(uint32 diff) override
+        void Update(uint32 diff) 
         {
             if (!instance->HavePlayers())
                 return;
@@ -357,7 +347,7 @@ public:
             }
         }
 
-        void ProcessEvent(WorldObject* /*go*/, uint32 eventId) override
+        void ProcessEvent(WorldObject* /*go*/, uint32 eventId) 
         {
             switch (eventId)
             {
@@ -461,7 +451,7 @@ public:
             }
         }
 
-        uint32 GetData(uint32 type) const override
+        uint32 GetData(uint32 type) const 
         {
             switch (type)
             {
@@ -484,7 +474,7 @@ public:
             return 0;
         }
 
-        uint64 GetData64(uint32 type) const override
+        uint64 GetData64(uint32 type) const 
         {
             switch (type)
             {
@@ -509,7 +499,7 @@ public:
             return 0;
         }
 
-        std::string GetSaveData() override
+        std::string GetSaveData() 
         {
             OUT_SAVE_INST_DATA;
 
@@ -520,7 +510,7 @@ public:
             return saveStream.str();
         }
 
-        void Load(char const* in) override
+        void Load(char const* in)  
         {
             if (!in)
             {
@@ -599,7 +589,7 @@ public:
         std::set<uint64> waveGuidList[8];
     };
 
-    InstanceScript* GetInstanceScript(InstanceMap* map) const override
+    InstanceScript* GetInstanceScript(InstanceMap* map) const 
     {
         return new instance_halls_of_reflection_InstanceMapScript(map);
     }

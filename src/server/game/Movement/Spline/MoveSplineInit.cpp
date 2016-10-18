@@ -1,19 +1,19 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
- * option) any later version.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
 #include "MoveSplineInit.h"
@@ -29,7 +29,7 @@ namespace Movement
 {
     UnitMoveType SelectSpeedType(uint32 moveFlags)
     {
-        if (moveFlags & MOVEMENTFLAG_FLYING)
+		if (moveFlags & MOVEMENTFLAG_FLYING)
         {
             if (moveFlags & MOVEMENTFLAG_BACKWARD /*&& speed_obj.flight >= speed_obj.flight_back*/)
                 return MOVE_FLIGHT_BACK;
@@ -52,7 +52,7 @@ namespace Movement
             return MOVE_RUN_BACK;
 
         // Flying creatures use MOVEMENTFLAG_CAN_FLY or MOVEMENTFLAG_DISABLE_GRAVITY
-        // Run speed is their default flight speed.
+        // Run speed is their default flight speed.			
         return MOVE_RUN;
     }
 
@@ -86,12 +86,14 @@ namespace Movement
         move_spline.onTransport = (unit->GetTransGUID() != 0);
 
         uint32 moveFlags = unit->m_movementInfo.GetMovementFlags();
+
         moveFlags |= MOVEMENTFLAG_FORWARD;
 
         if (moveFlags & MOVEMENTFLAG_ROOT)
             moveFlags &= ~MOVEMENTFLAG_MASK_MOVING;
 
         if (!args.HasVelocity)
+
         {
             // If spline is initialized with SetWalk method it only means we need to select
             // walk move speed for it but not add walk flag to unit
@@ -111,7 +113,15 @@ namespace Movement
         move_spline.Initialize(args);
 
         WorldPacket data(SMSG_MONSTER_MOVE, 64);
-        PacketBuilder::WriteMonsterMove(move_spline, data, unit);
+        data.append(unit->GetPackGUID());
+        if (unit->GetTransGUID())
+        {
+            data.SetOpcode(SMSG_MONSTER_MOVE_TRANSPORT);
+            data.appendPackGUID(unit->GetTransGUID());
+            data << int8(unit->GetTransSeat());
+        }
+
+        PacketBuilder::WriteMonsterMove(move_spline, data);
         unit->SendMessageToSet(&data, true);
 
         return move_spline.Duration();
@@ -131,9 +141,27 @@ namespace Movement
         move_spline.Initialize(args);
 
         WorldPacket data(SMSG_MONSTER_MOVE, 64);
+        data.append(unit->GetPackGUID());
+        if (unit->GetTransGUID())
+        {
+            data.SetOpcode(SMSG_MONSTER_MOVE_TRANSPORT);
+            data.appendPackGUID(unit->GetTransGUID());
+            data << int8(unit->GetTransSeat());
+        }
 
-        PacketBuilder::WriteStopMovement(loc, args.splineId, data, unit);
+        PacketBuilder::WriteStopMovement(loc, args.splineId, data);
         unit->SendMessageToSet(&data, true);
+    }
+
+    void MoveSplineInit::ForceDone()
+    {
+        MoveSpline& move_spline = *unit->movespline;
+
+        if (!move_spline.Initialized())
+            return;
+
+        args.flags = MoveSplineFlag::Done;
+        move_spline.Initialize(args);
     }
 
     MoveSplineInit::MoveSplineInit(Unit* m) : unit(m)
@@ -173,7 +201,7 @@ namespace Movement
         {
             PathGenerator path(unit);
             bool result = path.CalculatePath(dest.x, dest.y, dest.z, forceDestination);
-            if (result && !(path.GetPathType() & PATHFIND_NOPATH))
+            if (result && path.GetPathType() & ~PATHFIND_NOPATH)
             {
                 MovebyPath(path.GetPath());
                 return;
@@ -195,8 +223,13 @@ namespace Movement
     Vector3 TransportPathTransform::operator()(Vector3 input)
     {
         if (_transformForTransport)
+        {
             if (TransportBase* transport = _owner->GetDirectTransport())
-                transport->CalculatePassengerOffset(input.x, input.y, input.z);
+            {
+                float unused = 0.0f; // need reference
+                transport->CalculatePassengerOffset(input.x, input.y, input.z, unused);
+            }
+        }
 
         return input;
     }

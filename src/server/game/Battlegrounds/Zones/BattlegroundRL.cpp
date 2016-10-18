@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -56,12 +56,18 @@ void BattlegroundRL::StartingEventOpenDoors()
 
     for (uint32 i = BG_RL_OBJECT_BUFF_1; i <= BG_RL_OBJECT_BUFF_2; ++i)
         SpawnBGObject(i, 60);
+
+    for (uint32 i = BG_RL_OBJECT_READYMARKER_1; i <= BG_RL_OBJECT_READYMARKER_2; ++i)
+        DelObject(i);
 }
 
 void BattlegroundRL::AddPlayer(Player* player)
 {
     Battleground::AddPlayer(player);
-    PlayerScores[player->GetGUID()] = new BattlegroundScore;
+    BattlegroundScore* sc = new BattlegroundScore;
+    PlayerScores[player->GetGUID()] = sc;
+    sc->BgTeam = player->GetBGTeam();
+    sc->TalentTree = player->GetPrimaryTalentTree(player->GetActiveSpec());
     UpdateArenaWorldState();
 }
 
@@ -81,7 +87,7 @@ void BattlegroundRL::HandleKillPlayer(Player* player, Player* killer)
 
     if (!killer)
     {
-        TC_LOG_ERROR("bg.battleground", "Killer player not found");
+        sLog->outError(LOG_FILTER_BATTLEGROUND, "Killer player not found");
         return;
     }
 
@@ -89,6 +95,12 @@ void BattlegroundRL::HandleKillPlayer(Player* player, Player* killer)
 
     UpdateArenaWorldState();
     CheckArenaWinConditions();
+}
+
+bool BattlegroundRL::HandlePlayerUnderMap(Player* player)
+{
+    player->TeleportTo(GetMapId(), 1285.810547f, 1667.896851f, 39.957642f, player->GetOrientation());
+    return true;
 }
 
 void BattlegroundRL::HandleAreaTrigger(Player* player, uint32 trigger)
@@ -107,9 +119,9 @@ void BattlegroundRL::HandleAreaTrigger(Player* player, uint32 trigger)
     }
 }
 
-void BattlegroundRL::FillInitialWorldStates(WorldStateBuilder& builder)
+void BattlegroundRL::FillInitialWorldStates(WorldPacket &data)
 {
-    builder.AppendState(0xbba, 1);           // 9
+    data << uint32(0xbba) << uint32(1);           // 9
     UpdateArenaWorldState();
 }
 
@@ -128,8 +140,15 @@ bool BattlegroundRL::SetupBattleground()
         || !AddObject(BG_RL_OBJECT_BUFF_1, BG_RL_OBJECT_TYPE_BUFF_1, 1328.719971f, 1632.719971f, 36.730400f, -1.448624f, 0, 0, 0.6626201f, -0.7489557f, 120)
         || !AddObject(BG_RL_OBJECT_BUFF_2, BG_RL_OBJECT_TYPE_BUFF_2, 1243.300049f, 1699.170044f, 34.872601f, -0.06981307f, 0, 0, 0.03489945f, -0.9993908f, 120))
     {
-        TC_LOG_ERROR("sql.sql", "BatteGroundRL: Failed to spawn some object!");
+        sLog->outError(LOG_FILTER_SQL, "BatteGroundRL: Failed to spawn some object!");
         return false;
+    }
+
+    // readymarkers
+    if (sWorld->getBoolConfig(CONFIG_ARENA_READYMARK_ENABLED))
+    {
+        AddObject(BG_RL_OBJECT_READYMARKER_1, BG_RL_OBJECT_READYMARKER, 1298.929007f, 1598.285156f, 31.614483f, 3.3f, 0, 0, 0, 0, RESPAWN_IMMEDIATELY);
+        AddObject(BG_RL_OBJECT_READYMARKER_2, BG_RL_OBJECT_READYMARKER, 1273.315552f, 1734.042358f, 31.603662f, 0.0f, 0, 0, 0, 0, RESPAWN_IMMEDIATELY);
     }
 
     return true;

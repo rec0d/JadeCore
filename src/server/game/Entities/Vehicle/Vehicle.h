@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -31,9 +31,24 @@ class VehicleJoinEvent;
 
 typedef std::set<uint64> GuidSet;
 
+enum EjectTargetDirectionTypes
+{
+    EJECT_DIR_NONE,
+    EJECT_DIR_FRONT,
+    EJECT_DIR_BACK,
+    EJECT_DIR_RIGHT,
+    EJECT_DIR_LEFT,
+    EJECT_DIR_FRONT_RIGHT,
+    EJECT_DIR_BACK_RIGHT,
+    EJECT_DIR_BACK_LEFT,
+    EJECT_DIR_FRONT_LEFT,
+    EJECT_DIR_RANDOM,
+    EJECT_DIR_ENTRY
+};
+
 class Vehicle : public TransportBase
 {
-    protected:
+     protected:
         friend bool Unit::CreateVehicleKit(uint32 id, uint32 creatureEntry);
         Vehicle(Unit* unit, VehicleEntry const* vehInfo, uint32 creatureEntry);
 
@@ -47,6 +62,7 @@ class Vehicle : public TransportBase
         void InstallAllAccessories(bool evading);
         void ApplyAllImmunities();
         void InstallAccessory(uint32 entry, int8 seatId, bool minion, uint8 type, uint32 summonTime);   //! May be called from scripts
+        void SetVehicleId(uint32 vehicleid);
 
         Unit* GetBase() const { return _me; }
         VehicleEntry const* GetVehicleInfo() const { return _vehicleInfo; }
@@ -58,17 +74,17 @@ class Vehicle : public TransportBase
         uint8 GetAvailableSeatCount() const;
 
         bool AddPassenger(Unit* passenger, int8 seatId = -1);
-        void EjectPassenger(Unit* passenger, Unit* controller);
-        Vehicle* RemovePassenger(Unit* passenger);
+        void EjectPassenger(int seatId, EjectTargetDirectionTypes dir = EJECT_DIR_RIGHT, float distance = 5.0f);
+        void EjectPassenger(Unit* passenger, EjectTargetDirectionTypes dir = EJECT_DIR_RIGHT, float distance = 5.0f);
+        void RemovePassenger(Unit* passenger);
         void RelocatePassengers();
         void RemoveAllPassengers();
+        void Dismiss();
+        void TeleportVehicle(float x, float y, float z, float o);
         bool IsVehicleInUse() const;
 
         void SetLastShootPos(Position const& pos) { _lastShootPos.Relocate(pos); }
         Position const& GetLastShootPos() const { return _lastShootPos; }
-
-		inline bool CanBeCastedByPassengers() const { return _canBeCastedByPassengers; }
-		void SetCanBeCastedByPassengers(bool canBeCastedByPassengers) { _canBeCastedByPassengers = canBeCastedByPassengers; }
 
         SeatMap Seats;                                      ///< The collection of all seats on the vehicle. Including vacant ones.
 
@@ -88,24 +104,20 @@ class Vehicle : public TransportBase
             STATUS_UNINSTALLING,
         };
 
+        struct PlayerSeatSave
+        {
+            Player* player;
+            int8 seatId;
+        };
+
         SeatMap::iterator GetSeatIteratorForPassenger(Unit* passenger);
         void InitMovementInfoForBase();
 
         /// This method transforms supplied transport offsets into global coordinates
-        void CalculatePassengerPosition(float& x, float& y, float& z, float* o /*= NULL*/) const
-        {
-            TransportBase::CalculatePassengerPosition(x, y, z, o,
-                GetBase()->GetPositionX(), GetBase()->GetPositionY(),
-                GetBase()->GetPositionZ(), GetBase()->GetOrientation());
-        }
+        void CalculatePassengerPosition(float& x, float& y, float& z, float& o);
 
         /// This method transforms supplied global coordinates into local offsets
-        void CalculatePassengerOffset(float& x, float& y, float& z, float* o /*= NULL*/) const
-        {
-            TransportBase::CalculatePassengerOffset(x, y, z, o,
-                GetBase()->GetPositionX(), GetBase()->GetPositionY(),
-                GetBase()->GetPositionZ(), GetBase()->GetOrientation());
-        }
+        void CalculatePassengerOffset(float& x, float& y, float& z, float& o);
 
         void RemovePendingEvent(VehicleJoinEvent* e);
         void RemovePendingEventsForSeat(int8 seatId);
@@ -118,7 +130,6 @@ class Vehicle : public TransportBase
         uint32 _creatureEntry;                              ///< Can be different than the entry of _me in case of players
         Status _status;                                     ///< Internal variable for sanity checks
         Position _lastShootPos;
-		bool _canBeCastedByPassengers;
 
         typedef std::list<VehicleJoinEvent*> PendingJoinEventContainer;
         PendingJoinEventContainer _pendingJoinEvents;       ///< Collection of delayed join events for prospective passengers
@@ -128,7 +139,7 @@ class VehicleJoinEvent : public BasicEvent
 {
     friend class Vehicle;
     protected:
-        VehicleJoinEvent(Vehicle* v, Unit* u) : Target(v), Passenger(u), Seat(Target->Seats.end()) { }
+        VehicleJoinEvent(Vehicle* v, Unit* u) : Target(v), Passenger(u), Seat(Target->Seats.end()) {}
         ~VehicleJoinEvent();
         bool Execute(uint64, uint32);
         void Abort(uint64);

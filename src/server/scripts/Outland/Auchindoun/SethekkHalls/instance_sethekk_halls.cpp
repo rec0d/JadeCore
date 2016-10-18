@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -40,7 +38,7 @@ class instance_sethekk_halls : public InstanceMapScript
                 LoadDoorData(doorData);
             }
 
-            void OnCreatureCreate(Creature* creature) override
+            void OnCreatureCreate(Creature* creature) 
             {
                 if (creature->GetEntry() == NPC_ANZU)
                 {
@@ -51,19 +49,19 @@ class instance_sethekk_halls : public InstanceMapScript
                 }
             }
 
-            void OnGameObjectCreate(GameObject* go) override
+            void OnGameObjectCreate(GameObject* go) 
             {
                  if (go->GetEntry() == GO_IKISS_DOOR)
                      AddDoor(go, true);
             }
 
-            void OnGameObjectRemove(GameObject* go) override
+            void OnGameObjectRemove(GameObject* go) 
             {
                  if (go->GetEntry() == GO_IKISS_DOOR)
                      AddDoor(go, false);
             }
 
-            std::string GetSaveData() override
+            std::string GetSaveData() 
             {
                 OUT_SAVE_INST_DATA;
 
@@ -74,7 +72,7 @@ class instance_sethekk_halls : public InstanceMapScript
                 return saveStream.str();
             }
 
-            void Load(char const* str) override
+            void Load(char const* str) 
             {
                 if (!str)
                 {
@@ -107,7 +105,7 @@ class instance_sethekk_halls : public InstanceMapScript
             }
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const 
         {
             return new instance_sethekk_halls_InstanceMapScript(map);
         }

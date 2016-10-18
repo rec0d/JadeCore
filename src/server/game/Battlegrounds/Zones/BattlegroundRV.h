@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU General Public License along
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
 #ifndef __BATTLEGROUNDRV_H
 #define __BATTLEGROUNDRV_H
 
@@ -103,12 +102,13 @@ class BattlegroundRV : public Battleground
         void StartingEventCloseDoors();
         void StartingEventOpenDoors();
         void Reset();
-        void FillInitialWorldStates(WorldStateBuilder& builder);
+        void FillInitialWorldStates(WorldPacket &d);
 
         void RemovePlayer(Player* player, uint64 guid, uint32 team);
         void HandleAreaTrigger(Player* Source, uint32 Trigger);
         bool SetupBattleground();
         void HandleKillPlayer(Player* player, Player* killer);
+        bool HandlePlayerUnderMap(Player* player);
 
     private:
         uint32 Timer;
@@ -118,11 +118,11 @@ class BattlegroundRV : public Battleground
         void PostUpdateImpl(uint32 diff);
 
     protected:
-        uint32 getTimer() { return Timer; }
-        void setTimer(uint32 timer) { Timer = timer; }
+        uint32 getTimer() { return Timer; };
+        void setTimer(uint32 timer) { Timer = timer; };
 
-        uint32 getState() { return State; }
-        void setState(uint32 state) { State = state; }
+        uint32 getState() { return State; };
+        void setState(uint32 state) { State = state; };
         void TogglePillarCollision();
         bool GetPillarCollision() { return PillarCollision; }
         void SetPillarCollision(bool apply) { PillarCollision = apply; }

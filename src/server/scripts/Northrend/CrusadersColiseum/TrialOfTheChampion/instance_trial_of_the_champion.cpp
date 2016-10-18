@@ -1,12 +1,9 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -37,14 +34,14 @@ class instance_trial_of_the_champion : public InstanceMapScript
 public:
     instance_trial_of_the_champion() : InstanceMapScript("instance_trial_of_the_champion", 650) { }
 
-    InstanceScript* GetInstanceScript(InstanceMap* map) const override
+    InstanceScript* GetInstanceScript(InstanceMap* map) const
     {
         return new instance_trial_of_the_champion_InstanceMapScript(map);
     }
 
     struct instance_trial_of_the_champion_InstanceMapScript : public InstanceScript
     {
-        instance_trial_of_the_champion_InstanceMapScript(Map* map) : InstanceScript(map) { }
+        instance_trial_of_the_champion_InstanceMapScript(Map* map) : InstanceScript(map) {}
 
         uint32 m_auiEncounter[MAX_ENCOUNTER];
 
@@ -69,7 +66,7 @@ public:
 
         bool bDone;
 
-        void Initialize() override
+        void Initialize()
         {
             uiMovementDone = 0;
             uiGrandChampionsDeaths = 0;
@@ -93,7 +90,7 @@ public:
             memset(&m_auiEncounter, 0, sizeof(m_auiEncounter));
         }
 
-        bool IsEncounterInProgress() const override
+        bool IsEncounterInProgress() const
         {
             for (uint8 i = 0; i < MAX_ENCOUNTER; ++i)
             {
@@ -104,14 +101,14 @@ public:
             return false;
         }
 
-        void OnCreatureCreate(Creature* creature) override
+        void OnCreatureCreate(Creature* creature)
         {
             Map::PlayerList const &players = instance->GetPlayers();
             uint32 TeamInInstance = 0;
 
             if (!players.isEmpty())
             {
-                if (Player* player = players.begin()->GetSource())
+                if (Player* player = players.begin()->getSource())
                     TeamInInstance = player->GetTeam();
             }
 
@@ -155,7 +152,7 @@ public:
             }
         }
 
-        void OnGameObjectCreate(GameObject* go) override
+        void OnGameObjectCreate(GameObject* go)
         {
             switch (go->GetEntry())
             {
@@ -169,7 +166,7 @@ public:
             }
         }
 
-        void SetData(uint32 uiType, uint32 uiData) override
+        void SetData(uint32 uiType, uint32 uiData)
         {
             switch (uiType)
             {
@@ -196,7 +193,7 @@ public:
                             if (Creature* pAnnouncer =  instance->GetCreature(uiAnnouncerGUID))
                             {
                                 pAnnouncer->GetMotionMaster()->MovePoint(0, 748.309f, 619.487f, 411.171f);
-                                pAnnouncer->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                                pAnnouncer->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                                 pAnnouncer->SummonGameObject(instance->IsHeroic()? GO_CHAMPIONS_LOOT_H : GO_CHAMPIONS_LOOT, 746.59f, 618.49f, 411.09f, 1.42f, 0, 0, 0, 0, 90000000);
                             }
                         }
@@ -219,7 +216,7 @@ public:
                     if (Creature* pAnnouncer = instance->GetCreature(uiAnnouncerGUID))
                     {
                         pAnnouncer->GetMotionMaster()->MovePoint(0, 748.309f, 619.487f, 411.171f);
-                        pAnnouncer->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                        pAnnouncer->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                         pAnnouncer->SummonGameObject(instance->IsHeroic()? GO_EADRIC_LOOT_H : GO_EADRIC_LOOT, 746.59f, 618.49f, 411.09f, 1.42f, 0, 0, 0, 0, 90000000);
                     }
                     break;
@@ -228,7 +225,7 @@ public:
                     if (Creature* pAnnouncer = instance->GetCreature(uiAnnouncerGUID))
                     {
                         pAnnouncer->GetMotionMaster()->MovePoint(0, 748.309f, 619.487f, 411.171f);
-                        pAnnouncer->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                        pAnnouncer->SetFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                         pAnnouncer->SummonGameObject(instance->IsHeroic()? GO_PALETRESS_LOOT_H : GO_PALETRESS_LOOT, 746.59f, 618.49f, 411.09f, 1.42f, 0, 0, 0, 0, 90000000);
                     }
                     break;
@@ -238,7 +235,7 @@ public:
                 SaveToDB();
         }
 
-        uint32 GetData(uint32 uiData) const override
+        uint32 GetData(uint32 uiData) const
         {
             switch (uiData)
             {
@@ -254,7 +251,7 @@ public:
             return 0;
         }
 
-        uint64 GetData64(uint32 uiData) const override
+        uint64 GetData64(uint32 uiData) const
         {
             switch (uiData)
             {
@@ -269,7 +266,7 @@ public:
             return 0;
         }
 
-        void SetData64(uint32 uiType, uint64 uiData) override
+        void SetData64(uint32 uiType, uint64 uiData)
         {
             switch (uiType)
             {
@@ -285,7 +282,7 @@ public:
             }
         }
 
-        std::string GetSaveData() override
+        std::string GetSaveData()
         {
             OUT_SAVE_INST_DATA;
 
@@ -304,7 +301,7 @@ public:
             return str_data;
         }
 
-        void Load(const char* in) override
+        void Load(const char* in)
         {
             if (!in)
             {

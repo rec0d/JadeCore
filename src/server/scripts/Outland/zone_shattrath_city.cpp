@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,7 +19,7 @@
 /* ScriptData
 SDName: Shattrath_City
 SD%Complete: 100
-SDComment: Quest support: 10004, 10009, 10211. Flask vendors, Teleport to Caverns of Time
+SDComment: Quest support: 10004, 10009, 10211, 10231. Flask vendors, Teleport to Caverns of Time
 SDCategory: Shattrath City
 EndScriptData */
 
@@ -30,6 +29,7 @@ npc_salsalabim
 npc_shattrathflaskvendors
 npc_zephyr
 npc_kservant
+npc_dirty_larry
 npc_ishanah
 npc_khadgar
 EndContentData */
@@ -47,7 +47,7 @@ EndContentData */
 
 #define GOSSIP_RALIQ            "You owe Sim'salabim money. Hand them over or die!"
 
-enum Raliq
+enum eRaliq
 {
     SPELL_UPPERCUT          = 10966,
     QUEST_CRACK_SKULLS      = 10009,
@@ -59,7 +59,7 @@ class npc_raliq_the_drunk : public CreatureScript
 public:
     npc_raliq_the_drunk() : CreatureScript("npc_raliq_the_drunk") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         if (action == GOSSIP_ACTION_INFO_DEF+1)
@@ -71,7 +71,7 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (player->GetQuestStatus(QUEST_CRACK_SKULLS) == QUEST_STATUS_INCOMPLETE)
             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_VENDOR, GOSSIP_RALIQ, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
@@ -80,9 +80,9 @@ public:
         return true;
     }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_raliq_the_drunkAI(creature);
+        return new npc_raliq_the_drunkAI (creature);
     }
 
     struct npc_raliq_the_drunkAI : public ScriptedAI
@@ -95,13 +95,13 @@ public:
         uint32 m_uiNormFaction;
         uint32 Uppercut_Timer;
 
-        void Reset() override
+        void Reset()
         {
             Uppercut_Timer = 5000;
             me->RestoreFaction();
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -121,26 +121,18 @@ public:
 # npc_salsalabim
 ######*/
 
-enum Salsalabim
-{
-    // Factions
-    FACTION_HOSTILE_SA             = 90,
-    FACTION_FRIENDLY_SA            = 35,
+#define FACTION_HOSTILE_SA              90
+#define FACTION_FRIENDLY_SA             35
+#define QUEST_10004                     10004
 
-    // Quests
-    QUEST_10004                    = 10004,
-
-    // Spells
-    SPELL_MAGNETIC_PULL            = 31705
-
-};
+#define SPELL_MAGNETIC_PULL             31705
 
 class npc_salsalabim : public CreatureScript
 {
 public:
     npc_salsalabim() : CreatureScript("npc_salsalabim") { }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (player->GetQuestStatus(QUEST_10004) == QUEST_STATUS_INCOMPLETE)
         {
@@ -156,34 +148,35 @@ public:
         return true;
     }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_salsalabimAI(creature);
+        return new npc_salsalabimAI (creature);
     }
 
     struct npc_salsalabimAI : public ScriptedAI
     {
-        npc_salsalabimAI(Creature* creature) : ScriptedAI(creature) { }
+        npc_salsalabimAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 MagneticPull_Timer;
 
-        void Reset() override
+        void Reset()
         {
             MagneticPull_Timer = 15000;
             me->RestoreFaction();
         }
 
-        void DamageTaken(Unit* done_by, uint32 &damage) override
+        void DamageTaken(Unit* done_by, uint32 &damage)
         {
-            if (done_by->GetTypeId() == TYPEID_PLAYER && me->HealthBelowPctDamaged(20, damage))
+            if (done_by->GetTypeId() == TYPEID_PLAYER)
+                if (me->HealthBelowPctDamaged(20, damage))
             {
-                done_by->ToPlayer()->GroupEventHappens(QUEST_10004, me);
+                CAST_PLR(done_by)->GroupEventHappens(QUEST_10004, me);
                 damage = 0;
                 EnterEvadeMode();
             }
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (!UpdateVictim())
                 return;
@@ -215,7 +208,7 @@ class npc_shattrathflaskvendors : public CreatureScript
 public:
     npc_shattrathflaskvendors() : CreatureScript("npc_shattrathflaskvendors") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         if (action == GOSSIP_ACTION_TRADE)
@@ -224,7 +217,7 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (creature->GetEntry() == 23484)
         {
@@ -269,7 +262,7 @@ class npc_zephyr : public CreatureScript
 public:
     npc_zephyr() : CreatureScript("npc_zephyr") { }
 
-    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* /*creature*/, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         if (action == GOSSIP_ACTION_INFO_DEF+1)
@@ -278,7 +271,7 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (player->GetReputationRank(989) >= REP_REVERED)
             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_HZ, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
@@ -324,7 +317,7 @@ class npc_kservant : public CreatureScript
 public:
     npc_kservant() : CreatureScript("npc_kservant") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_kservantAI(creature);
     }
@@ -332,9 +325,9 @@ public:
     struct npc_kservantAI : public npc_escortAI
     {
     public:
-        npc_kservantAI(Creature* creature) : npc_escortAI(creature) { }
+        npc_kservantAI(Creature* creature) : npc_escortAI(creature) {}
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId)
         {
             Player* player = GetPlayerForEscort();
             if (!player)
@@ -343,94 +336,290 @@ public:
             switch (waypointId)
             {
                 case 0:
-                    Talk(SAY1, player);
+                    Talk(SAY1, player->GetGUID());
                     break;
                 case 4:
-                    Talk(WHISP1, player);
+                    Talk(WHISP1, player->GetGUID());
                     break;
                 case 6:
-                    Talk(WHISP2, player);
+                    Talk(WHISP2, player->GetGUID());
                     break;
                 case 7:
-                    Talk(WHISP3, player);
+                    Talk(WHISP3, player->GetGUID());
                     break;
                 case 8:
-                    Talk(WHISP4, player);
+                    Talk(WHISP4, player->GetGUID());
                     break;
                 case 17:
-                    Talk(WHISP5, player);
+                    Talk(WHISP5, player->GetGUID());
                     break;
                 case 18:
-                    Talk(WHISP6, player);
+                    Talk(WHISP6, player->GetGUID());
                     break;
                 case 19:
-                    Talk(WHISP7, player);
+                    Talk(WHISP7, player->GetGUID());
                     break;
                 case 33:
-                    Talk(WHISP8, player);
+                    Talk(WHISP8, player->GetGUID());
                     break;
                 case 34:
-                    Talk(WHISP9, player);
+                    Talk(WHISP9, player->GetGUID());
                     break;
                 case 35:
-                    Talk(WHISP10, player);
+                    Talk(WHISP10, player->GetGUID());
                     break;
                 case 36:
-                    Talk(WHISP11, player);
+                    Talk(WHISP11, player->GetGUID());
                     break;
                 case 43:
-                    Talk(WHISP12, player);
+                    Talk(WHISP12, player->GetGUID());
                     break;
                 case 44:
-                    Talk(WHISP13, player);
+                    Talk(WHISP13, player->GetGUID());
                     break;
                 case 49:
-                    Talk(WHISP14, player);
+                    Talk(WHISP14, player->GetGUID());
                     break;
                 case 50:
-                    Talk(WHISP15, player);
+                    Talk(WHISP15, player->GetGUID());
                     break;
                 case 51:
-                    Talk(WHISP16, player);
+                    Talk(WHISP16, player->GetGUID());
                     break;
                 case 52:
-                    Talk(WHISP17, player);
+                    Talk(WHISP17, player->GetGUID());
                     break;
                 case 53:
-                    Talk(WHISP18, player);
+                    Talk(WHISP18, player->GetGUID());
                     break;
                 case 54:
-                    Talk(WHISP19, player);
+                    Talk(WHISP19, player->GetGUID());
                     break;
                 case 55:
-                    Talk(WHISP20, player);
+                    Talk(WHISP20, player->GetGUID());
                     break;
                 case 56:
-                    Talk(WHISP21, player);
+                    Talk(WHISP21, player->GetGUID());
                     player->GroupEventHappens(10211, me);
                     break;
             }
         }
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
             if (HasEscortState(STATE_ESCORT_ESCORTING))
                 return;
 
-            Player* player = who->ToPlayer();
-            if (player && player->GetQuestStatus(10211) == QUEST_STATUS_INCOMPLETE)
+            if (who->GetTypeId() == TYPEID_PLAYER)
             {
-                float Radius = 10.0f;
-                if (me->IsWithinDistInMap(who, Radius))
+                if (CAST_PLR(who)->GetQuestStatus(10211) == QUEST_STATUS_INCOMPLETE)
                 {
-                    Start(false, false, who->GetGUID());
+                    float Radius = 10.0f;
+                    if (me->IsWithinDistInMap(who, Radius))
+                    {
+                        Start(false, false, who->GetGUID());
+                    }
                 }
             }
         }
 
-        void Reset() override { }
+        void Reset() {}
     };
+};
+
+/*######
+# npc_dirty_larry
+######*/
+
+#define GOSSIP_BOOK "Ezekiel said that you might have a certain book..."
+
+enum DirtyLarry
+{
+    SAY_1           = 0,
+    SAY_2           = 1,
+    SAY_3           = 2,
+    SAY_4           = 3,
+    SAY_5           = 4,
+    SAY_GIVEUP      = 5,
+
+    QUEST_WBI       = 10231,
+    NPC_CREEPJACK   = 19726,
+    NPC_MALONE      = 19725
+};
+
+class npc_dirty_larry : public CreatureScript
+{
+public:
+    npc_dirty_larry() : CreatureScript("npc_dirty_larry") { }
+
+    struct npc_dirty_larryAI : public ScriptedAI
+    {
+        npc_dirty_larryAI(Creature* creature) : ScriptedAI(creature) {}
+
+        bool Event;
+        bool Attack;
+        bool Done;
+
+        uint64 PlayerGUID;
+
+        uint32 SayTimer;
+        uint32 Step;
+
+        void Reset()
+        {
+            Event = false;
+            Attack = false;
+            Done = false;
+
+            PlayerGUID = 0;
+            SayTimer = 0;
+            Step = 0;
+
+            me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+            me->setFaction(1194);
+            Unit* Creepjack = me->FindNearestCreature(NPC_CREEPJACK, 20);
+            if (Creepjack)
+            {
+                CAST_CRE(Creepjack)->AI()->EnterEvadeMode();
+                Creepjack->setFaction(1194);
+                Creepjack->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+            }
+            Unit* Malone = me->FindNearestCreature(NPC_MALONE, 20);
+            if (Malone)
+            {
+                CAST_CRE(Malone)->AI()->EnterEvadeMode();
+                Malone->setFaction(1194);
+                Malone->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+            }
+        }
+
+        uint32 NextStep(uint32 Step)
+        {
+            Player* player = Unit::GetPlayer(*me, PlayerGUID);
+
+            switch (Step)
+            {
+            case 0:{ me->SetInFront(player);
+                Unit* Creepjack = me->FindNearestCreature(NPC_CREEPJACK, 20);
+                if (Creepjack)
+                    Creepjack->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
+                Unit* Malone = me->FindNearestCreature(NPC_MALONE, 20);
+                if (Malone)
+                    Malone->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
+                me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP); }return 2000;
+            case 1: Talk(SAY_1, player->GetGUID()); return 3000;
+            case 2: Talk(SAY_2, player->GetGUID()); return 5000;
+            case 3: Talk(SAY_3, player->GetGUID()); return 2000;
+            case 4: Talk(SAY_4, player->GetGUID()); return 2000;
+            case 5: Talk(SAY_5, player->GetGUID()); return 2000;
+            case 6: Attack = true; return 2000;
+            default: return 0;
+            }
+        }
+
+        void EnterCombat(Unit* /*who*/){}
+
+        void UpdateAI(const uint32 diff)
+        {
+            if (SayTimer <= diff)
+            {
+                if (Event)
+                    SayTimer = NextStep(++Step);
+            } else SayTimer -= diff;
+
+            if (Attack)
+            {
+                Player* player = Unit::GetPlayer(*me, PlayerGUID);
+                me->setFaction(14);
+                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                if (player)
+                {
+                Unit* Creepjack = me->FindNearestCreature(NPC_CREEPJACK, 20);
+                if (Creepjack)
+                {
+                    Creepjack->Attack(player, true);
+                    Creepjack->setFaction(14);
+                    Creepjack->GetMotionMaster()->MoveChase(player);
+                    Creepjack->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                }
+                Unit* Malone = me->FindNearestCreature(NPC_MALONE, 20);
+                if (Malone)
+                {
+                    Malone->Attack(player, true);
+                    Malone->setFaction(14);
+                    Malone->GetMotionMaster()->MoveChase(player);
+                    Malone->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                }
+                    DoStartMovement(player);
+                    AttackStart(player);
+                }
+                Attack = false;
+            }
+
+            if (HealthBelowPct(5) && !Done)
+            {
+                me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                me->RemoveAllAuras();
+
+                Unit* Creepjack = me->FindNearestCreature(NPC_CREEPJACK, 20);
+                if (Creepjack)
+                {
+                    CAST_CRE(Creepjack)->AI()->EnterEvadeMode();
+                    Creepjack->setFaction(1194);
+                    Creepjack->GetMotionMaster()->MoveTargetedHome();
+                    Creepjack->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                }
+                Unit* Malone = me->FindNearestCreature(NPC_MALONE, 20);
+                if (Malone)
+                {
+                    CAST_CRE(Malone)->AI()->EnterEvadeMode();
+                    Malone->setFaction(1194);
+                    Malone->GetMotionMaster()->MoveTargetedHome();
+                    Malone->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
+                }
+                me->setFaction(1194);
+                Done = true;
+                Talk(SAY_GIVEUP);
+                me->DeleteThreatList();
+                me->CombatStop();
+                me->GetMotionMaster()->MoveTargetedHome();
+                Player* player = Unit::GetPlayer(*me, PlayerGUID);
+                if (player)
+                    CAST_PLR(player)->GroupEventHappens(QUEST_WBI, me);
+            }
+            DoMeleeAttackIfReady();
+        }
+    };
+
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
+    {
+        player->PlayerTalkClass->ClearMenus();
+        if (action == GOSSIP_ACTION_INFO_DEF+1)
+        {
+            CAST_AI(npc_dirty_larry::npc_dirty_larryAI, creature->AI())->Event = true;
+            CAST_AI(npc_dirty_larry::npc_dirty_larryAI, creature->AI())->PlayerGUID = player->GetGUID();
+            player->CLOSE_GOSSIP_MENU();
+        }
+
+        return true;
+    }
+
+    bool OnGossipHello(Player* player, Creature* creature)
+    {
+        if (creature->IsQuestGiver())
+            player->PrepareQuestMenu(creature->GetGUID());
+
+        if (player->GetQuestStatus(QUEST_WBI) == QUEST_STATUS_INCOMPLETE)
+            player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, GOSSIP_BOOK, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
+
+        player->SEND_GOSSIP_MENU(player->GetGossipTextId(creature), creature->GetGUID());
+        return true;
+    }
+
+    CreatureAI* GetAI(Creature* creature) const
+    {
+        return new npc_dirty_larryAI (creature);
+    }
 };
 
 /*######
@@ -445,7 +634,7 @@ class npc_ishanah : public CreatureScript
 public:
     npc_ishanah() : CreatureScript("npc_ishanah") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         if (action == GOSSIP_ACTION_INFO_DEF+1)
@@ -456,7 +645,7 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (creature->IsQuestGiver())
             player->PrepareQuestMenu(creature->GetGUID());
@@ -486,7 +675,7 @@ class npc_khadgar : public CreatureScript
 public:
     npc_khadgar() : CreatureScript("npc_khadgar") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         switch (action)
@@ -523,12 +712,12 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (creature->IsQuestGiver())
             player->PrepareQuestMenu(creature->GetGUID());
 
-        if (player->GetQuestStatus(10211) != QUEST_STATUS_INCOMPLETE)
+        if (!player->hasQuest(10211))
             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, KHADGAR_GOSSIP_1, GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF+1);
 
             player->SEND_GOSSIP_MENU(9243, creature->GetGUID());
@@ -544,6 +733,7 @@ void AddSC_shattrath_city()
     new npc_shattrathflaskvendors();
     new npc_zephyr();
     new npc_kservant();
+    new npc_dirty_larry();
     new npc_ishanah();
     new npc_khadgar();
 }

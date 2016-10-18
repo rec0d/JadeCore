@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -60,7 +59,7 @@ class boss_doomwalker : public CreatureScript
             {
             }
 
-            void Reset() override
+            void Reset()
             {
                 _events.Reset();
                 _events.ScheduleEvent(EVENT_ENRAGE, 0);
@@ -71,7 +70,7 @@ class boss_doomwalker : public CreatureScript
                 _inEnrage = false;
             }
 
-            void KilledUnit(Unit* victim) override
+            void KilledUnit(Unit* victim)
             {
                 victim->CastSpell(victim, SPELL_MARK_DEATH, 0);
 
@@ -81,25 +80,24 @@ class boss_doomwalker : public CreatureScript
                 Talk(SAY_SLAY);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 Talk(SAY_DEATH);
             }
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 Talk(SAY_AGGRO);
             }
 
-            void MoveInLineOfSight(Unit* who) override
-
+            void MoveInLineOfSight(Unit* who)
             {
                 if (who && who->GetTypeId() == TYPEID_PLAYER && me->IsValidAttackTarget(who))
                     if (who->HasAura(SPELL_MARK_DEATH, 0))
                         who->CastSpell(who, SPELL_AURA_DEATH, 1);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(const uint32 diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -160,9 +158,9 @@ class boss_doomwalker : public CreatureScript
                 bool _inEnrage;
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
-            return new boss_doomwalkerAI(creature);
+            return new boss_doomwalkerAI (creature);
         }
 };
 

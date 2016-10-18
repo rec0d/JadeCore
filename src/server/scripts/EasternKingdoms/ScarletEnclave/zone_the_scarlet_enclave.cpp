@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -41,20 +39,20 @@ class npc_valkyr_battle_maiden : public CreatureScript
 public:
     npc_valkyr_battle_maiden() : CreatureScript("npc_valkyr_battle_maiden") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_valkyr_battle_maidenAI(creature);
+        return new npc_valkyr_battle_maidenAI (creature);
     }
 
     struct npc_valkyr_battle_maidenAI : public PassiveAI
     {
-        npc_valkyr_battle_maidenAI(Creature* creature) : PassiveAI(creature) { }
+        npc_valkyr_battle_maidenAI(Creature* creature) : PassiveAI(creature) {}
 
         uint32 FlyBackTimer;
         float x, y, z;
         uint32 phase;
 
-        void Reset() override
+        void Reset()
         {
             me->setActive(true);
             me->SetVisible(false);
@@ -71,14 +69,15 @@ public:
             me->SetPosition(x, y, z, 0.0f);
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             if (FlyBackTimer <= diff)
             {
                 Player* player = NULL;
-                if (me->IsSummon())
+                if (me->isSummon())
                     if (Unit* summoner = me->ToTempSummon()->GetSummoner())
-                        player = summoner->ToPlayer();
+                        if (summoner->GetTypeId() == TYPEID_PLAYER)
+                            player = CAST_PLR(summoner);
 
                 if (!player)
                     phase = 3;
@@ -105,7 +104,7 @@ public:
                         {
                             me->HandleEmoteCommand(EMOTE_ONESHOT_CUSTOM_SPELL_01);
                             DoCast(player, SPELL_REVIVE, true);
-                            Talk(WHISPER_REVIVE, player);
+                            Talk(WHISPER_REVIVE, player->GetGUID());
                         }
                         FlyBackTimer = 5000;
                         break;

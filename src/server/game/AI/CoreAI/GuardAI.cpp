@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -25,13 +25,15 @@
 
 int GuardAI::Permissible(Creature const* creature)
 {
-    if (creature->IsGuard())
+    if (creature->isGuard())
         return PERMIT_BASE_SPECIAL;
 
     return PERMIT_BASE_NO;
 }
 
-GuardAI::GuardAI(Creature* creature) : ScriptedAI(creature) { }
+GuardAI::GuardAI(Creature* creature) : ScriptedAI(creature)
+{
+}
 
 bool GuardAI::CanSeeAlways(WorldObject const* obj)
 {
@@ -48,7 +50,7 @@ bool GuardAI::CanSeeAlways(WorldObject const* obj)
 
 void GuardAI::EnterEvadeMode()
 {
-    if (!me->IsAlive())
+    if (!me->isAlive())
     {
         me->GetMotionMaster()->MoveIdle();
         me->CombatStop(true);
@@ -56,7 +58,7 @@ void GuardAI::EnterEvadeMode()
         return;
     }
 
-    TC_LOG_DEBUG("entities.unit", "Guard entry: %u enters evade mode.", me->GetEntry());
+    sLog->outDebug(LOG_FILTER_UNITS, "Guard entry: %u enters evade mode.", me->GetEntry());
 
     me->RemoveAllAuras();
     me->DeleteThreatList();

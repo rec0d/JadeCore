@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,36 +19,13 @@
 #ifndef DEF_STEAM_VAULT_H
 #define DEF_STEAM_VAULT_H
 
-#define SteamVaultScriptName "instance_steam_vault"
+#define TYPE_HYDROMANCER_THESPIA        1
+#define TYPE_MEKGINEER_STEAMRIGGER      2
+#define TYPE_WARLORD_KALITHRESH         3
+#define TYPE_DISTILLER                  4
 
-uint32 const EncounterCount = 3;
-
-enum DataTypes
-{
-    DATA_HYDROMANCER_THESPIA        = 0,
-    DATA_MEKGINEER_STEAMRIGGER      = 1,
-    DATA_WARLORD_KALITHRESH         = 2,
-    DATA_DISTILLER                  = 3
-};
-
-enum CreatureIds
-{
-    NPC_HYDROMANCER_THESPIA         = 17797,
-    NPC_MEKGINEER_STEAMRIGGER       = 17796,
-    NPC_WARLORD_KALITHRESH          = 17798
-};
-
-enum GameObjectIds
-{
-    GO_MAIN_CHAMBERS_DOOR           = 183049,
-    GO_ACCESS_PANEL_HYDRO           = 184125,
-    GO_ACCESS_PANEL_MEK             = 184126
-};
-
-template<class AI>
-AI* GetSteamVaultAI(Creature* creature)
-{
-    return GetInstanceAI<AI>(creature, SteamVaultScriptName);
-}
-
+#define DATA_MEKGINEERSTEAMRIGGER       5
+#define DATA_KALITRESH                  6
+#define DATA_THESPIA                    7
 #endif
+

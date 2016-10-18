@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -22,9 +21,7 @@
 #include "SharedDefines.h"
 #include "Util.h"
 #include "DBCStructure.h"
-#include "Object.h"
 #include "SpellAuraDefines.h"
-#include "DB2Structure.h"
 
 class Unit;
 class Player;
@@ -149,7 +146,6 @@ enum SpellSpecificType
 {
     SPELL_SPECIFIC_NORMAL                        = 0,
     SPELL_SPECIFIC_SEAL                          = 1,
-    SPELL_SPECIFIC_BLESSING                      = 2,
     SPELL_SPECIFIC_AURA                          = 3,
     SPELL_SPECIFIC_STING                         = 4,
     SPELL_SPECIFIC_CURSE                         = 5,
@@ -161,7 +157,6 @@ enum SpellSpecificType
     SPELL_SPECIFIC_MAGE_POLYMORPH                = 11,
     SPELL_SPECIFIC_JUDGEMENT                     = 13,
     SPELL_SPECIFIC_WARLOCK_CORRUPTION            = 17,
-    SPELL_SPECIFIC_WELL_FED                      = 18,
     SPELL_SPECIFIC_FOOD                          = 19,
     SPELL_SPECIFIC_DRINK                         = 20,
     SPELL_SPECIFIC_FOOD_AND_DRINK                = 21,
@@ -174,7 +169,7 @@ enum SpellSpecificType
     SPELL_SPECIFIC_HAND                          = 28,
     SPELL_SPECIFIC_PHASE                         = 29,
     SPELL_SPECIFIC_BANE                          = 30,
-    SPELL_SPECIFIC_CHAKRA                        = 31,
+	SPELL_SPECIFIC_LIFEBLOOM                     = 31
 };
 
 enum SpellCustomAttributes
@@ -195,13 +190,8 @@ enum SpellCustomAttributes
     SPELL_ATTR0_CU_IGNORE_ARMOR                  = 0x00008000,
     SPELL_ATTR0_CU_REQ_TARGET_FACING_CASTER      = 0x00010000,
     SPELL_ATTR0_CU_REQ_CASTER_BEHIND_TARGET      = 0x00020000,
-    SPELL_ATTR0_CU_DONT_RESET_PERIODIC_TIMER     = 0x00080000,  // Periodic auras with this flag keep old periodic timer when refreshing
-    SPELL_ATTR0_CU_TRIGGERED_IGNORE_RESILENCE    = 0x00200000, // Some triggered damage spells have to ignore resilence because it's already calculated in trigger spell (example: paladin's hand of light)
-    // @todo: 4.3.4 core
-    //SPELL_ATTR0_CU_CAN_STACK_FROM_DIFF_CASTERS   = 0x00100000,  // Collect auras with diff casters in one stackable aura
-    //SPELL_ATTR0_CU_BINARY                        = 0x00400000,  // Binary spells can be fully resisted
 
-    SPELL_ATTR0_CU_NEGATIVE                      = SPELL_ATTR0_CU_NEGATIVE_EFF0 | SPELL_ATTR0_CU_NEGATIVE_EFF1 | SPELL_ATTR0_CU_NEGATIVE_EFF2,
+    SPELL_ATTR0_CU_NEGATIVE                      = SPELL_ATTR0_CU_NEGATIVE_EFF0 | SPELL_ATTR0_CU_NEGATIVE_EFF1 | SPELL_ATTR0_CU_NEGATIVE_EFF2
 };
 
 uint32 GetTargetFlagMask(SpellTargetObjectTypes objType);
@@ -211,7 +201,7 @@ class SpellImplicitTargetInfo
 private:
     Targets _target;
 public:
-    SpellImplicitTargetInfo() : _target(Targets(0)) { }
+    SpellImplicitTargetInfo() : _target(Targets(0)) {}
     SpellImplicitTargetInfo(uint32 target);
 
     bool IsArea() const;
@@ -242,7 +232,6 @@ class SpellEffectInfo
     SpellInfo const* _spellInfo;
     uint8 _effIndex;
 public:
-    uint32    EffectIndex;
     uint32    Effect;
     uint32    ApplyAuraName;
     uint32    Amplitude;
@@ -250,9 +239,9 @@ public:
     float     RealPointsPerLevel;
     int32     BasePoints;
     float     PointsPerComboPoint;
-    float     SpellPowerCoeff;
     float     ValueMultiplier;
     float     DamageMultiplier;
+    float     BonusMultiplier;
     int32     MiscValue;
     int32     MiscValueB;
     Mechanics Mechanic;
@@ -263,27 +252,26 @@ public:
     uint32    ChainTarget;
     uint32    ItemType;
     uint32    TriggerSpell;
-    flag128    SpellClassMask;
+    flag96    SpellClassMask;
     std::list<Condition*>* ImplicitTargetConditions;
     // SpellScalingEntry
     float     ScalingMultiplier;
     float     DeltaScalingMultiplier;
     float     ComboScalingMultiplier;
-    uint32    activatedByAura;
 
-    SpellEffectInfo() { }
+    SpellEffectInfo() {}
     SpellEffectInfo(SpellEntry const* spellEntry, SpellInfo const* spellInfo, uint8 effIndex, SpellEffectEntry const* effect);
 
     bool IsEffect() const;
     bool IsEffect(SpellEffects effectName) const;
     bool IsAura() const;
-	bool IsPersistenAura() const;
     bool IsAura(AuraType aura) const;
     bool IsTargetingArea() const;
     bool IsAreaAuraEffect() const;
     bool IsFarUnitTargetEffect() const;
     bool IsFarDestTargetEffect() const;
     bool IsUnitOwnedAuraEffect() const;
+    bool TriggeredNeedsLosChecks() const;
 
     int32 CalcValue(Unit const* caster = NULL, int32 const* basePoints = NULL, Unit const* target = NULL) const;
     int32 CalcBaseValue(int32 value) const;
@@ -313,7 +301,7 @@ class SpellInfo
 {
 public:
     uint32 Id;
-    SpellCategoryEntry const* CategoryEntry;
+    uint32 Category;
     uint32 Dispel;
     uint32 Mechanic;
     uint32 Attributes;
@@ -327,8 +315,6 @@ public:
     uint32 AttributesEx8;
     uint32 AttributesEx9;
     uint32 AttributesEx10;
-    uint32 AttributesEx11;
-    uint32 AttributesEx12;
     uint32 AttributesCu;
     uint32 Stances;
     uint32 StancesNot;
@@ -363,7 +349,7 @@ public:
     uint32 ManaCost;
     uint32 ManaCostPerlevel;
     uint32 ManaPerSecond;
-    float ManaCostPercentage;
+    uint32 ManaCostPercentage;
     uint32 RuneCostID;
     SpellRangeEntry const* RangeEntry;
     float  Speed;
@@ -383,12 +369,13 @@ public:
     uint32 MaxTargetLevel;
     uint32 MaxAffectedTargets;
     uint32 SpellFamilyName;
-    flag128 SpellFamilyFlags;
+    flag96 SpellFamilyFlags;
     uint32 DmgClass;
     uint32 PreventionType;
     int32  AreaGroupId;
     uint32 SchoolMask;
     uint32 SpellDifficultyId;
+    float SpellCoeff;
     uint32 SpellScalingId;
     uint32 SpellAuraOptionsId;
     uint32 SpellAuraRestrictionsId;
@@ -399,11 +386,11 @@ public:
     uint32 SpellEquippedItemsId;
     uint32 SpellInterruptsId;
     uint32 SpellLevelsId;
+    uint32 SpellPowerId;
     uint32 SpellReagentsId;
     uint32 SpellShapeshiftId;
     uint32 SpellTargetRestrictionsId;
     uint32 SpellTotemsId;
-    uint32 ResearchProjectId;
     // SpellScalingEntry
     int32  CastTimeMin;
     int32  CastTimeMax;
@@ -414,10 +401,6 @@ public:
     SpellEffectInfo Effects[MAX_SPELL_EFFECTS];
     uint32 ExplicitTargetMask;
     SpellChainNode const* ChainEntry;
-
-    // SpecializationSpellsEntry
-    std::list<uint32> SpecializationIdList;
-    std::list<uint32> OverrideSpellList;
 
     // struct access functions
     SpellTargetRestrictionsEntry const* GetSpellTargetRestrictions() const;
@@ -439,12 +422,9 @@ public:
     SpellInfo(SpellEntry const* spellEntry, SpellEffectEntry const** effects);
     ~SpellInfo();
 
-    uint32 GetCategory() const;
     bool HasEffect(SpellEffects effect) const;
     bool HasAura(AuraType aura) const;
     bool HasAreaAuraEffect() const;
-
-	bool HasPersistenAura() const;
 
     bool IsExplicitDiscovery() const;
     bool IsLootCrafting() const;
@@ -456,31 +436,30 @@ public:
     bool IsAbilityLearnedWithProfession() const;
     bool IsAbilityOfSkillType(uint32 skillType) const;
 
+    bool IsEffectAffectingOrTargetingArea() const;
     bool IsAffectingArea() const;
     bool IsTargetingArea() const;
     bool NeedsExplicitUnitTarget() const;
-    bool NeedsToBeTriggeredByCaster(SpellInfo const* triggeringSpell = NULL) const;
+    bool NeedsToBeTriggeredByCaster() const;
 
     bool IsPassive() const;
+    bool IsRaidMarker() const;
     bool IsAutocastable() const;
     bool IsStackableWithRanks() const;
     bool IsPassiveStackableWithRanks() const;
     bool IsMultiSlotAura() const;
-    bool IsStackableOnOneSlotWithDifferentCasters() const;
-    bool IsCooldownStartedOnEvent() const;
     bool IsDeathPersistent() const;
     bool IsRequiringDeadTarget() const;
     bool IsAllowingDeadTarget() const;
     bool CanBeUsedInCombat() const;
     bool IsPositive() const;
+    bool IsPositive(uint8 effectMask) const;
     bool IsPositiveEffect(uint8 effIndex) const;
     bool IsChanneled() const;
     bool NeedsComboPoints() const;
     bool IsBreakingStealth() const;
     bool IsRangedWeaponSpell() const;
     bool IsAutoRepeatRangedSpell() const;
-	bool CanBeDarkSimulacrum(Unit* m_caster) const;
-	bool CanBeDuplicated() const;
 
     bool IsAffectedBySpellMods() const;
     bool IsAffectedBySpellMod(SpellModifier const* mod) const;
@@ -489,21 +468,10 @@ public:
     bool CanDispelAura(SpellInfo const* aura) const;
 
     bool IsSingleTarget() const;
+    bool IsSingleTargetWith(SpellInfo const* spellInfo) const;
     bool IsAuraExclusiveBySpecificWith(SpellInfo const* spellInfo) const;
     bool IsAuraExclusiveBySpecificPerCasterWith(SpellInfo const* spellInfo) const;
-
-	inline bool HasAttribute(SpellAttr0 attribute) const { return Attributes & attribute; }
-    inline bool HasAttribute(SpellAttr1 attribute) const { return AttributesEx & attribute; }
-    inline bool HasAttribute(SpellAttr2 attribute) const { return AttributesEx2 & attribute; }
-    inline bool HasAttribute(SpellAttr3 attribute) const { return AttributesEx3 & attribute; }
-    inline bool HasAttribute(SpellAttr4 attribute) const { return AttributesEx4 & attribute; }
-    inline bool HasAttribute(SpellAttr5 attribute) const { return AttributesEx5 & attribute; }
-    inline bool HasAttribute(SpellAttr6 attribute) const { return AttributesEx6 & attribute; }
-    inline bool HasAttribute(SpellAttr7 attribute) const { return AttributesEx7 & attribute; }
-    inline bool HasAttribute(SpellAttr8 attribute) const { return AttributesEx8 & attribute; }
-	inline bool HasAttribute(SpellAttr9 attribute) const { return AttributesEx9 & attribute; }
-	inline bool HasAttribute(SpellAttr10 attribute) const { return AttributesEx10 & attribute; }
-	inline bool HasCustomAttribute(SpellCustomAttributes customAttribute) const { return AttributesCu & customAttribute; }
+    bool NeedsSpecialTreatment() const;
 
     SpellCastResult CheckShapeshift(uint32 form) const;
     SpellCastResult CheckLocation(uint32 map_id, uint32 zone_id, uint32 area_id, Player const* player = NULL) const;
@@ -533,10 +501,10 @@ public:
 
     uint32 GetMaxTicks() const;
 
-    uint32 CalcCastTime(uint8 level = 0, Spell* spell = NULL) const;
+    uint32 CalcCastTime(Unit* caster = NULL, Spell* spell = NULL) const;
     uint32 GetRecoveryTime() const;
 
-    int32 CalcPowerCost(Unit const* caster, SpellSchoolMask schoolMask) const;
+    int32 CalcPowerCost(Unit const* caster, SpellSchoolMask schoolMask, Spell* spell = NULL) const;
 
     bool IsRanked() const;
     uint8 GetRank() const;
@@ -548,37 +516,16 @@ public:
     bool IsRankOf(SpellInfo const* spellInfo) const;
     bool IsDifferentRankOf(SpellInfo const* spellInfo) const;
     bool IsHighRankOf(SpellInfo const* spellInfo) const;
-	bool IsAfflictionPeriodicDamage() const;
-	bool IsEmberstormGropSpells() const;
-	float GetGiftOfTheSerpentScaling(Unit* caster) const;
-	bool IsAllwaysStackModifers() const;
-
-	bool IsIgnoringCombat() const;
-	bool IsRemoveLossControlEffects() const;
-	bool DoesIgnoreGlobalCooldown(Unit* caster) const;
-	int32 GetCustomCoefficientForStormlash() const;
-
-	// helpers for breaking by damage spells
-    bool IsBreakingCamouflage() const;
-    bool CanBreaksCamouflage() const;
-    bool IsReducingCastTime() const;
-    bool CanTriggerBladeFlurry() const;
-    bool IsCustomCharged(SpellInfo const* procSpell) const;
-    bool IsCustomCastCanceled(Unit* caster) const;
-    bool IsWrongPrecastSpell(SpellInfo const* m_preCastSpell) const;
-    bool IsPoisonOrBleedSpell() const;
-    bool IsAffectedByResilience() const;
-    bool IsLethalPoison() const;
-    bool CanTriggerHotStreak() const;
 
     // loading helpers
     void _InitializeExplicitTargetMask();
     bool _IsPositiveEffect(uint8 effIndex, bool deep) const;
     bool _IsPositiveSpell() const;
     static bool _IsPositiveTarget(uint32 targetA, uint32 targetB);
-	bool _IsCrowdControl(uint8 effMask, bool nodamage) const;
-	bool _IsNeedDelay() const;
-    bool IsCustomCheckedForHolyPower() const;
+
+    void SetDurationIndex(uint32 index);
+    void SetRangeIndex(uint32 index);
+    void SetCastTimeIndex(uint32 index);
 
     // unloading helpers
     void _UnloadImplicitTargetConditionLists();

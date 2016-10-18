@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2014 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2011 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,8 +20,6 @@
 #define LOAD_LIB_H
 
 #include "StormLib.h"
-#include <map>
-#include <string>
 
 #ifdef _WIN32
 typedef __int64            int64;
@@ -73,37 +70,20 @@ struct file_MVER
     uint32 ver;
 };
 
-class FileChunk
-{
-public:
-    ~FileChunk();
 
-    uint8* data;
-    uint32 size;
-
-    template<class T>
-    T* As() { return (T*)data; }
-    void parseSubChunks();
-    std::multimap<std::string, FileChunk*> subchunks;
-    FileChunk* GetSubChunk(std::string const& name);
-};
-
-class ChunkedFile{
-public:
+class FileLoader{
     uint8  *data;
     uint32  data_size;
+public:
+    virtual bool prepareLoadedData();
     uint8 *GetData()     {return data;}
     uint32 GetDataSize() {return data_size;}
 
-    ChunkedFile();
-    virtual ~ChunkedFile();
-    bool prepareLoadedData();
+    file_MVER *version;
+    FileLoader();
+    ~FileLoader();
     bool loadFile(HANDLE mpq, char *filename, bool log = true);
-    void free();
-
-    void parseChunks();
-    std::multimap<std::string, FileChunk*> chunks;
-    FileChunk* GetChunk(std::string const& name);
+    virtual void free();
 };
 
 #pragma pack(pop)

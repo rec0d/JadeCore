@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -38,19 +37,11 @@ EndContentData */
 ## npc_kalecgos
 ######*/
 
-enum Spells
+enum eEnums
 {
     SPELL_TRANSFORM_TO_KAEL     = 44670,
-    SPELL_ORB_KILL_CREDIT       = 46307
-};
-
-enum Creatures
-{
-    NPC_KAEL                    = 24848 //human form entry
-};
-
-enum Misc
-{
+    SPELL_ORB_KILL_CREDIT       = 46307,
+    NPC_KAEL                    = 24848,                    //human form entry
     POINT_ID_LAND               = 1
 };
 
@@ -69,7 +60,7 @@ class npc_kalecgos : public CreatureScript
 public:
     npc_kalecgos() : CreatureScript("npc_kalecgos") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         switch (action)
@@ -98,7 +89,7 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (creature->IsQuestGiver())
             player->PrepareQuestMenu(creature->GetGUID());
@@ -109,18 +100,18 @@ public:
         return true;
     }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_kalecgosAI(creature);
     }
 
     struct npc_kalecgosAI : public ScriptedAI
     {
-        npc_kalecgosAI(Creature* creature) : ScriptedAI(creature) { }
+        npc_kalecgosAI(Creature* creature) : ScriptedAI(creature) {}
 
         uint32 m_uiTransformTimer;
 
-        void Reset() override
+        void Reset()
         {
             m_uiTransformTimer = 0;
 
@@ -129,7 +120,7 @@ public:
                 me->GetMotionMaster()->MovePoint(POINT_ID_LAND, afKaelLandPoint[0], afKaelLandPoint[1], afKaelLandPoint[2]);
         }
 
-        void MovementInform(uint32 uiType, uint32 uiPointId) override
+        void MovementInform(uint32 uiType, uint32 uiPointId)
         {
             if (uiType != POINT_MOTION_TYPE)
                 return;
@@ -155,7 +146,7 @@ public:
 
             for (Map::PlayerList::const_iterator i = lList.begin(); i != lList.end(); ++i)
             {
-                if (Player* player = i->GetSource())
+                if (Player* player = i->getSource())
                 {
                     if (spell && spell->Effects[0].MiscValue)
                         player->KilledMonsterCredit(spell->Effects[0].MiscValue, 0);
@@ -163,7 +154,7 @@ public:
             }
         }
 
-        void UpdateAI(uint32 uiDiff) override
+        void UpdateAI(const uint32 uiDiff)
         {
             if (m_uiTransformTimer)
             {

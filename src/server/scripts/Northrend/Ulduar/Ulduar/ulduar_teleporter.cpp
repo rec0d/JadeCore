@@ -1,12 +1,10 @@
 /*
- * Copyright (C) 2011-2015 Project SkyFire <http://www.projectskyfire.org/>
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2015 MaNGOS <http://getmangos.com/>
- * Copyright (C) 2006-2014 ScriptDev2 <https://github.com/scriptdev2/scriptdev2/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -20,9 +18,9 @@
 
 #include "ScriptMgr.h"
 #include "ScriptedGossip.h"
+#include "ulduar.h"
 #include "InstanceScript.h"
 #include "Player.h"
-#include "ulduar.h"
 
 /*
 The teleporter appears to be active and stable.
@@ -45,6 +43,8 @@ enum UlduarTeleporter
     ANTECHAMBER                                  = 204,
     WALKWAY                                      = 205,
     CONSERVATORY                                 = 206,
+    SPARK                                        = 207,
+    MADNESS                                      = 208,
 };
 
 class ulduar_teleporter : public GameObjectScript
@@ -52,7 +52,7 @@ class ulduar_teleporter : public GameObjectScript
     public:
         ulduar_teleporter() : GameObjectScript("ulduar_teleporter") { }
 
-        bool OnGossipSelect(Player* player, GameObject* /*gameObject*/, uint32 sender, uint32 action) override
+        bool OnGossipSelect(Player* player, GameObject* /*gameObject*/, uint32 sender, uint32 action)
         {
             player->PlayerTalkClass->ClearMenus();
             if (sender != GOSSIP_SENDER_MAIN)
@@ -90,12 +90,20 @@ class ulduar_teleporter : public GameObjectScript
                     player->TeleportTo(603, 2086.27f, -24.3134f, 421.239f, 0.0f);
                     player->CLOSE_GOSSIP_MENU();
                     break;
+                case SPARK:
+                    player->TeleportTo(603, 2518.13f, 2569.34f, 421.382f, 0.0f);
+                    player->CLOSE_GOSSIP_MENU();
+                    break;
+                case MADNESS:
+                    player->TeleportTo(603, 1855.03f, -11.629f, 334.58f, 0.0f);
+                    player->CLOSE_GOSSIP_MENU();
+                    break;
             }
 
             return true;
         }
 
-        bool OnGossipHello(Player* player, GameObject* gameObject) override
+        bool OnGossipHello(Player* player, GameObject* gameObject)
         {
             player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Teleport to the Expedition Base Camp", GOSSIP_SENDER_MAIN, BASE_CAMP);
             if (InstanceScript* instance = gameObject->GetInstanceScript())
@@ -113,6 +121,10 @@ class ulduar_teleporter : public GameObjectScript
                     player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Teleport to the Shattered Walkway", GOSSIP_SENDER_MAIN, WALKWAY);
                 if (instance->GetBossState(BOSS_AURIAYA) == DONE)
                     player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Teleport to the Conservatory of Life", GOSSIP_SENDER_MAIN, CONSERVATORY);
+                if (instance->GetBossState(BOSS_FREYA) == DONE)
+                    player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Teleport to the Spark of Imagination", GOSSIP_SENDER_MAIN, SPARK);
+                if (instance->GetBossState(BOSS_VEZAX) == DONE)
+                    player->ADD_GOSSIP_ITEM(GOSSIP_ICON_CHAT, "Teleport to Descent into Madness", GOSSIP_SENDER_MAIN, MADNESS);
             }
 
             player->SEND_GOSSIP_MENU(gameObject->GetGOInfo()->GetGossipMenuId(), gameObject->GetGUID());

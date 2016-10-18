@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -46,7 +44,7 @@ class instance_shadow_labyrinth : public InstanceMapScript
                 FelOverseerCount      = 0;
             }
 
-            void OnCreatureCreate(Creature* creature) override
+            void OnCreatureCreate(Creature* creature) 
             {
                 switch (creature->GetEntry())
                 {
@@ -57,7 +55,7 @@ class instance_shadow_labyrinth : public InstanceMapScript
                         GrandmasterVorpilGUID = creature->GetGUID();
                         break;
                     case NPC_FEL_OVERSEER:
-                        if (creature->IsAlive())
+                        if (creature->isAlive())
                         {
                             ++FelOverseerCount;
                             if (Creature* hellmaw = instance->GetCreature(AmbassadorHellmawGUID))
@@ -69,7 +67,7 @@ class instance_shadow_labyrinth : public InstanceMapScript
                 }
             }
 
-            void OnGameObjectCreate(GameObject* go) override
+            void OnGameObjectCreate(GameObject* go) 
             {
                 switch (go->GetEntry())
                 {
@@ -82,7 +80,7 @@ class instance_shadow_labyrinth : public InstanceMapScript
                 }
             }
 
-            void OnGameObjectRemove(GameObject* go) override
+            void OnGameObjectRemove(GameObject* go) 
             {
                 switch (go->GetEntry())
                 {
@@ -112,7 +110,7 @@ class instance_shadow_labyrinth : public InstanceMapScript
                 }
             }
 
-            uint32 GetData(uint32 type) const override
+            uint32 GetData(uint32 type) const 
             {
                 switch (type)
                 {
@@ -124,7 +122,7 @@ class instance_shadow_labyrinth : public InstanceMapScript
                 return 0;
             }
 
-            uint64 GetData64(uint32 type) const override
+            uint64 GetData64(uint32 type) const 
             {
                 switch (type)
                 {
@@ -136,7 +134,7 @@ class instance_shadow_labyrinth : public InstanceMapScript
                 return 0;
             }
 
-            std::string GetSaveData() override
+            std::string GetSaveData() 
             {
                 OUT_SAVE_INST_DATA;
 
@@ -147,7 +145,7 @@ class instance_shadow_labyrinth : public InstanceMapScript
                 return saveStream.str();
             }
 
-            void Load(char const* str) override
+            void Load(char const* str) 
             {
                 if (!str)
                 {
@@ -185,7 +183,7 @@ class instance_shadow_labyrinth : public InstanceMapScript
             uint32 FelOverseerCount;
         };
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+        InstanceScript* GetInstanceScript(InstanceMap* map) const 
         {
             return new instance_shadow_labyrinth_InstanceMapScript(map);
         }

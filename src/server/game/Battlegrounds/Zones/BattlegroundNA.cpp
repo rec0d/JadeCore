@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -25,6 +25,8 @@
 
 BattlegroundNA::BattlegroundNA()
 {
+    doordelete = 0;
+
     BgObjects.resize(BG_NA_OBJECT_MAX);
 
     StartDelayTimes[BG_STARTING_EVENT_FIRST]  = BG_START_DELAY_1M;
@@ -54,14 +56,22 @@ void BattlegroundNA::StartingEventOpenDoors()
     for (uint32 i = BG_NA_OBJECT_DOOR_1; i <= BG_NA_OBJECT_DOOR_2; ++i)
         DoorOpen(i);
 
+    doordelete = 2 * IN_MILLISECONDS;
+
     for (uint32 i = BG_NA_OBJECT_BUFF_1; i <= BG_NA_OBJECT_BUFF_2; ++i)
         SpawnBGObject(i, 60);
+
+    for (uint32 i = BG_NA_OBJECT_READYMARKER_1; i <= BG_NA_OBJECT_READYMARKER_2; ++i)
+        DelObject(i);
 }
 
 void BattlegroundNA::AddPlayer(Player* player)
 {
     Battleground::AddPlayer(player);
-    PlayerScores[player->GetGUID()] = new BattlegroundScore;
+    BattlegroundScore* sc = new BattlegroundScore;
+    PlayerScores[player->GetGUID()] = sc;
+    sc->BgTeam = player->GetBGTeam();
+    sc->TalentTree = player->GetPrimaryTalentTree(player->GetActiveSpec());
     UpdateArenaWorldState();
 }
 
@@ -74,6 +84,22 @@ void BattlegroundNA::RemovePlayer(Player* /*player*/, uint64 /*guid*/, uint32 /*
     CheckArenaWinConditions();
 }
 
+bool BattlegroundNA::PreUpdateImpl(uint32 diff)
+{
+    if (doordelete)
+    {
+        if (doordelete <= diff)
+        {
+            for (uint32 i = BG_NA_OBJECT_DOOR_1; i <= BG_NA_OBJECT_DOOR_2; ++i)
+                DelObject(i);
+            doordelete = 0;
+        }
+        else
+            doordelete -= diff;
+    }
+    return true;
+}
+
 void BattlegroundNA::HandleKillPlayer(Player* player, Player* killer)
 {
     if (GetStatus() != STATUS_IN_PROGRESS)
@@ -81,7 +107,7 @@ void BattlegroundNA::HandleKillPlayer(Player* player, Player* killer)
 
     if (!killer)
     {
-        TC_LOG_ERROR("bg.battleground", "BattlegroundNA: Killer player not found");
+        sLog->outError(LOG_FILTER_BATTLEGROUND, "BattlegroundNA: Killer player not found");
         return;
     }
 
@@ -89,6 +115,12 @@ void BattlegroundNA::HandleKillPlayer(Player* player, Player* killer)
 
     UpdateArenaWorldState();
     CheckArenaWinConditions();
+}
+
+bool BattlegroundNA::HandlePlayerUnderMap(Player* player)
+{
+    player->TeleportTo(GetMapId(), 4055.504395f, 2919.660645f, 13.611241f, player->GetOrientation());
+    return true;
 }
 
 void BattlegroundNA::HandleAreaTrigger(Player* player, uint32 trigger)
@@ -107,9 +139,9 @@ void BattlegroundNA::HandleAreaTrigger(Player* player, uint32 trigger)
     }
 }
 
-void BattlegroundNA::FillInitialWorldStates(WorldStateBuilder &builder)
+void BattlegroundNA::FillInitialWorldStates(WorldPacket &data)
 {
-    builder.AppendState(0xa11, 1);           // 9
+    data << uint32(0xa11) << uint32(1);           // 9
     UpdateArenaWorldState();
 }
 
@@ -130,8 +162,15 @@ bool BattlegroundNA::SetupBattleground()
         || !AddObject(BG_NA_OBJECT_BUFF_1, BG_NA_OBJECT_TYPE_BUFF_1, 4009.189941f, 2895.250000f, 13.052700f, -1.448624f, 0, 0, 0.6626201f, -0.7489557f, 120)
         || !AddObject(BG_NA_OBJECT_BUFF_2, BG_NA_OBJECT_TYPE_BUFF_2, 4103.330078f, 2946.350098f, 13.051300f, -0.06981307f, 0, 0, 0.03489945f, -0.9993908f, 120))
     {
-        TC_LOG_ERROR("sql.sql", "BatteGroundNA: Failed to spawn some object!");
+        sLog->outError(LOG_FILTER_SQL, "BatteGroundNA: Failed to spawn some object!");
         return false;
+    }
+
+    // readymarkers
+    if (sWorld->getBoolConfig(CONFIG_ARENA_READYMARK_ENABLED))
+    {
+        AddObject(BG_NA_OBJECT_READYMARKER_1, BG_NA_OBJECT_READYMARKER, 4090.634766f, 2875.984863f, 12.173015f, 3.6f, 0, 0, 0, 0, RESPAWN_IMMEDIATELY);
+        AddObject(BG_NA_OBJECT_READYMARKER_2, BG_NA_OBJECT_READYMARKER, 4022.504395f, 2965.815918f, 12.197223f, 0.5f, 0, 0, 0, 0, RESPAWN_IMMEDIATELY);
     }
 
     return true;

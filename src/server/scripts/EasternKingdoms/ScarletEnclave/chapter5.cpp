@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -232,7 +230,7 @@ void UpdateWorldState(Map* map, uint32 id, uint32 state)
     {
         for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
         {
-            if (Player* player = itr->GetSource())
+            if (Player* player = itr->getSource())
                 player->SendUpdateWorldState(id, state);
         }
     }
@@ -277,7 +275,7 @@ class npc_highlord_darion_mograine : public CreatureScript
 public:
     npc_highlord_darion_mograine() : CreatureScript("npc_highlord_darion_mograine") { }
 
-    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
+    bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action)
     {
         player->PlayerTalkClass->ClearMenus();
         switch (action)
@@ -291,7 +289,7 @@ public:
         return true;
     }
 
-    bool OnGossipHello(Player* player, Creature* creature) override
+    bool OnGossipHello(Player* player, Creature* creature)
     {
         if (creature->IsQuestGiver())
             player->PrepareQuestMenu(creature->GetGUID());
@@ -304,7 +302,7 @@ public:
         return true;
     }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
         return new npc_highlord_darion_mograineAI(creature);
     }
@@ -312,27 +310,9 @@ public:
     struct npc_highlord_darion_mograineAI : public npc_escortAI
     {
         npc_highlord_darion_mograineAI(Creature* creature) : npc_escortAI(creature)
-        {
-            uiTirionGUID = 0;
-            uiKorfaxGUID = 0;
-            uiMaxwellGUID = 0;
-            uiEligorGUID = 0;
-            uiRayneGUID = 0;
-            uiKoltiraGUID = 0;
-            uiOrbazGUID = 0;
-            uiThassarianGUID = 0;
-            uiLichKingGUID = 0;
+        {}
 
-            memset(uiDefenderGUID, 0, sizeof(uiDefenderGUID));
-            memset(uiEarthshatterGUID, 0, sizeof(uiEarthshatterGUID));
-            memset(uiAbominationGUID, 0, sizeof(uiAbominationGUID));
-            memset(uiBehemothGUID, 0, sizeof(uiBehemothGUID));
-            memset(uiGhoulGUID, 0, sizeof(uiGhoulGUID));
-            memset(uiWarriorGUID, 0, sizeof(uiWarriorGUID));
-
-            Reset();
-        }
-
+        bool first46;
         bool bIsBattle;
         uint32 uiStep;
         uint32 uiPhase_timer;
@@ -372,10 +352,11 @@ public:
         uint64 uiGhoulGUID[ENCOUNTER_GHOUL_NUMBER];
         uint64 uiWarriorGUID[ENCOUNTER_WARRIOR_NUMBER];
 
-        void Reset() override
+        void Reset()
         {
             if (!HasEscortState(STATE_ESCORT_ESCORTING))
             {
+                first46 = true;
                 bIsBattle = false;
                 uiStep = 0;
                 uiPhase_timer = 3000;
@@ -445,6 +426,9 @@ public:
                 uiOrbazGUID = 0;
                 uiThassarianGUID = 0;
                 uiLichKingGUID = 0;
+
+                SetDespawnAtFar(false);
+
                 for (uint8 i = 0; i < ENCOUNTER_ABOMINATION_NUMBER; ++i)
                 {
                     if (Creature* temp = Unit::GetCreature(*me, uiAbominationGUID[i]))
@@ -472,7 +456,7 @@ public:
             }
         }
 
-        void AttackStart(Unit* who) override
+        void AttackStart(Unit* who)
         {
             if (!who)
                 return;
@@ -489,8 +473,7 @@ public:
             }
         }
 
-        void MoveInLineOfSight(Unit* who) override
-
+        void MoveInLineOfSight(Unit* who)
         {
             if (!who)
                 return;
@@ -505,7 +488,7 @@ public:
             SetEscortPaused(bOnHold);
         }
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId)
         {
             switch (waypointId)
             {
@@ -571,7 +554,7 @@ public:
                     if (Creature* temp = Unit::GetCreature(*me, uiKorfaxGUID))
                     {
                         temp->SetWalk(true);
-                        temp->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_STATE_READY2H);
+                        temp->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_READY2H);
                         temp->GetMotionMaster()->MovePoint(0, LightofDawnLoc[10].x, LightofDawnLoc[10].y, LightofDawnLoc[10].z);
                     }
                     if (Creature* temp = Unit::GetCreature(*me, uiMaxwellGUID))
@@ -611,7 +594,7 @@ public:
                     JumpToNextStep(2000);
                     break;
                 case 8:
-                    me->SetUInt32Value(UNIT_FIELD_VIRTUAL_ITEM_ID + 0, uint32(EQUIP_UNEQUIP));
+                    me->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, uint32(EQUIP_UNEQUIP));
                     if (Creature* temp = Unit::GetCreature(*me, uiTirionGUID))
                         me->CastSpell(temp, SPELL_ASHBRINGER, true);
                     Talk(EMOTE_LIGHT_OF_DAWN14);
@@ -620,13 +603,13 @@ public:
             }
         }
 
-        void EnterEvadeMode() override
+        void EnterEvadeMode()
         {
             if (!bIsBattle)//do not reset self if we are in battle
                 npc_escortAI::EnterEvadeMode();
         }
 
-        void UpdateAI(uint32 diff) override
+        void UpdateAI(const uint32 diff)
         {
             npc_escortAI::UpdateAI(diff);
 
@@ -645,7 +628,7 @@ public:
                             //UpdateWorldState(me->GetMap(), WORLD_STATE_REMAINS, 1);
                             UpdateWorldState(me->GetMap(), WORLD_STATE_COUNTDOWN, 0);
                             UpdateWorldState(me->GetMap(), WORLD_STATE_EVENT_BEGIN, 1);
-                            me->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
+                            me->RemoveFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_GOSSIP);
                             JumpToNextStep(3000);
                             break;
 
@@ -949,9 +932,20 @@ public:
                             // doesn't make it looks well, so workarounds, Darion charges, looks better
                             me->SetSpeed(MOVE_RUN, 3.0f);
                             me->SetWalk(false);
-                            SetHoldState(false);
-                            JumpToNextStep(0);
+                            /*********/
+                            // workaround for waypoint 6 not trigger movementinform() -> waypointreached()
+                       //     SetHoldState(false);
+                            me->GetMotionMaster()->MoveCharge(2281.46f, -5263.01f, 81.164f);    // charge to lich king
+                            /********/
+                            JumpToNextStep(2000);
                             break;
+                            /*********/
+                            // workaround for waypoint 6 not trigger movementinform() -> waypointreached()
+                        case 34:
+                            me->HandleEmoteCommand(EMOTE_ONESHOT_SPECIALATTACK1H);
+                            JumpToNextStep(1000);
+                            break;
+                            /*********/
 
                         case 35: // Lich king counterattacks
                             if (Creature* temp = Unit::GetCreature(*me, uiLichKingGUID))
@@ -959,11 +953,22 @@ public:
                                 temp->HandleEmoteCommand(EMOTE_ONESHOT_KICK);
                                 temp->AI()->Talk(SAY_LIGHT_OF_DAWN46);
                             }
+                            sLog->outError(LOG_FILTER_UNITS, "charge counter");
                             me->SetSpeed(MOVE_RUN, 6.0f);
                             me->SetStandState(UNIT_STAND_STATE_DEAD);
-                            SetHoldState(false); // Darion got kicked by lich king
+                            /*********/
+                            // workaround for waypoint 7 not trigger movementinform() -> waypointreached()
+                      //      SetHoldState(false); // Darion got kicked by lich king
+                            me->GetMotionMaster()->MoveJump(2257.48f, -5296.7f, 82.165f, 30.0f, 30.0f);    // being kicked by Lich King
+                            /********/
                             JumpToNextStep(0);
                             break;
+                            /*********/
+                            // workaround for waypoint 7 not trigger movementinform() -> waypointreached()
+                        case 36:
+                            JumpToNextStep(3000);
+                            break;
+                            /*********/
 
                         case 37: // Lich king counterattacks
                             me->SetStandState(UNIT_STAND_STATE_KNEEL);
@@ -1019,7 +1024,7 @@ public:
                                 if (fLichPositionX && fLichPositionY)
                                 {
                                     Unit* temp = me->SummonCreature(NPC_DEFENDER_OF_THE_LIGHT, LightofDawnLoc[0].x+rand()%10, LightofDawnLoc[0].y+rand()%10, LightofDawnLoc[0].z, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 10000);
-                                    temp->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_STATE_ATTACK_UNARMED);
+                                    temp->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_ATTACK_UNARMED);
                                     temp->SetWalk(false);
                                     temp->SetSpeed(MOVE_RUN, 2.0f);
                                     temp->setFaction(me->getFaction());
@@ -1027,7 +1032,7 @@ public:
                                     uiDefenderGUID[0] = temp->GetGUID();
 
                                     temp = me->SummonCreature(NPC_RIMBLAT_EARTHSHATTER, LightofDawnLoc[0].x+rand()%10, LightofDawnLoc[0].y+rand()%10, LightofDawnLoc[0].z, 0, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 10000);
-                                    temp->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_STATE_ATTACK_UNARMED);
+                                    temp->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_ATTACK_UNARMED);
                                     temp->SetWalk(false);
                                     temp->SetSpeed(MOVE_RUN, 2.0f);
                                     temp->setFaction(me->getFaction());
@@ -1036,7 +1041,7 @@ public:
                                 }
                                 if (Creature* temp = Unit::GetCreature(*me, uiMaxwellGUID))
                                 {
-                                    temp->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_STATE_ATTACK_UNARMED);
+                                    temp->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_ATTACK_UNARMED);
                                     temp->SetWalk(false);
                                     temp->SetSpeed(MOVE_RUN, 2.0f);
                                     temp->GetMotionMaster()->MovePoint(0, fLichPositionX, fLichPositionY, fLichPositionZ);
@@ -1044,7 +1049,7 @@ public:
                                 }
                                 if (Creature* temp = Unit::GetCreature(*me, uiKorfaxGUID))
                                 {
-                                    temp->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_STATE_ATTACK_UNARMED);
+                                    temp->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_ATTACK_UNARMED);
                                     temp->SetWalk(false);
                                     temp->SetSpeed(MOVE_RUN, 2.0f);
                                     temp->HandleEmoteCommand(EMOTE_STATE_ATTACK_UNARMED);
@@ -1052,7 +1057,7 @@ public:
                                 }
                                 if (Creature* temp = Unit::GetCreature(*me, uiEligorGUID))
                                 {
-                                    temp->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_STATE_ATTACK_UNARMED);
+                                    temp->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_ATTACK_UNARMED);
                                     temp->SetWalk(false);
                                     temp->SetSpeed(MOVE_RUN, 2.0f);
                                     temp->GetMotionMaster()->MovePoint(0, fLichPositionX, fLichPositionY, fLichPositionZ);
@@ -1067,21 +1072,21 @@ public:
 
                             if (Creature* temp = Unit::GetCreature(*me, uiMaxwellGUID))
                             {
-                                temp->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE);
+                                temp->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE);
                                 temp->SetSpeed(MOVE_RUN, 6.0f);
                                 temp->SetStandState(UNIT_STAND_STATE_DEAD);
                                 temp->GetMotionMaster()->MovePoint(0, LightofDawnLoc[14].x, LightofDawnLoc[14].y, LightofDawnLoc[14].z);
                             }
                             if (Creature* temp = Unit::GetCreature(*me, uiKorfaxGUID))
                             {
-                                temp->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE);
+                                temp->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE);
                                 temp->SetSpeed(MOVE_RUN, 6.0f);
                                 temp->SetStandState(UNIT_STAND_STATE_DEAD);
                                 temp->GetMotionMaster()->MovePoint(0, LightofDawnLoc[11].x, LightofDawnLoc[11].y, LightofDawnLoc[11].z);
                             }
                             if (Creature* temp = Unit::GetCreature(*me, uiEligorGUID))
                             {
-                                temp->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE);
+                                temp->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE);
                                 temp->SetSpeed(MOVE_RUN, 6.0f);
                                 temp->SetStandState(UNIT_STAND_STATE_DEAD);
                                 temp->GetMotionMaster()->MovePoint(0, LightofDawnLoc[17].x, LightofDawnLoc[17].y, LightofDawnLoc[17].z);
@@ -1121,8 +1126,23 @@ public:
                             me->SetWalk(true);
                             me->SetStandState(UNIT_STAND_STATE_STAND);
                             Talk(SAY_LIGHT_OF_DAWN53);
-                            SetHoldState(false); // Darion throws sword
-                            JumpToNextStep(7000);
+
+                            //SetHoldState(false); // Darion throws sword
+                            if (first46)
+                            {
+                                me->GetMotionMaster()->MovePoint(100, 2261.24f, -5294.98f, 82.167f);
+                                first46 = false;
+                                uiPhase_timer = 5000;
+                            }
+                            else
+                            {
+                                me->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, uint32(EQUIP_UNEQUIP));
+                                if (Creature* temp = Unit::GetCreature(*me, uiTirionGUID))
+                                    me->CastSpell(temp, SPELL_ASHBRINGER, true);
+                                Talk(EMOTE_LIGHT_OF_DAWN14);
+                                JumpToNextStep(2000);
+                            }
+
                             break;
 
                         case 47: // Ashbringer rebirth
@@ -1131,7 +1151,7 @@ public:
                             if (Creature* temp = Unit::GetCreature(*me, uiTirionGUID))
                             {
                                 temp->SetStandState(UNIT_STAND_STATE_STAND);
-                                temp->SetUInt32Value(UNIT_FIELD_VIRTUAL_ITEM_ID + 0, uint32(EQUIP_HIGHLORD_TIRION_FORDRING));
+                                temp->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, uint32(EQUIP_HIGHLORD_TIRION_FORDRING));
                                 temp->CastSpell(temp, SPELL_REBIRTH_OF_THE_ASHBRINGER, false);
                             }
                             JumpToNextStep(1000);
@@ -1176,7 +1196,7 @@ public:
                             {
                                 temp->AI()->Talk(EMOTE_LIGHT_OF_DAWN16);
                                 temp->CastSpell(temp, SPELL_TIRION_CHARGE, false); // jumping charge
-                                temp->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_STATE_READY2H);
+                                temp->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_STATE_READY2H);
                                 temp->SetSpeed(MOVE_RUN, 3.0f); // workarounds, make Tirion still running
                                 temp->SetWalk(false);
                                 temp->GetMotionMaster()->MovePoint(0, LightofDawnLoc[2].x, LightofDawnLoc[2].y, LightofDawnLoc[2].z);
@@ -1231,7 +1251,7 @@ public:
                                 temp->CastSpell(temp, SPELL_TELEPORT_VISUAL, false);
                             if (Creature* temp = Unit::GetCreature(*me, uiTirionGUID)) // Tirion runs to Darion
                             {
-                                temp->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE);
+                                temp->SetUInt32Value(UNIT_NPC_EMOTESTATE, EMOTE_ONESHOT_NONE);
                                 temp->SetSpeed(MOVE_RUN, 1.0f);
                                 temp->GetMotionMaster()->MovePoint(0, LightofDawnLoc[6].x, LightofDawnLoc[6].y, LightofDawnLoc[6].z);
                             }
@@ -1322,8 +1342,8 @@ public:
                                 if (!PlayerList.isEmpty())
                                 {
                                     for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
-                                        if (i->GetSource()->IsAlive() && me->IsWithinDistInMap(i->GetSource(), 50))
-                                            i->GetSource()->CastSpell(i->GetSource(), SPELL_THE_LIGHT_OF_DAWN_Q, false);
+                                        if (i->getSource()->isAlive() && me->IsWithinDistInMap(i->getSource(), 300))
+                                            i->getSource()->CastSpell(i->getSource(), SPELL_THE_LIGHT_OF_DAWN_Q, false);
                                 }
                             }
                             me->SetVisible(false); // respawns another Darion for quest turn in
@@ -1423,7 +1443,7 @@ public:
                         if (Creature* temp = me->SummonCreature(NPC_HIGHLORD_TIRION_FORDRING, LightofDawnLoc[0].x, LightofDawnLoc[0].y, LightofDawnLoc[0].z, 1.528f, TEMPSUMMON_TIMED_OR_CORPSE_DESPAWN, 600000))
                         {
                             temp->setFaction(me->getFaction());
-                            temp->SetUInt32Value(UNIT_FIELD_VIRTUAL_ITEM_ID + 0, uint32(EQUIP_UNEQUIP));
+                            temp->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, uint32(EQUIP_UNEQUIP));
                             temp->AI()->Talk(SAY_LIGHT_OF_DAWN25);
                             uiTirionGUID = temp->GetGUID();
                         }
@@ -1535,9 +1555,9 @@ public:
         void NPCChangeTarget(uint64 ui_GUID)
         {
             if (Creature* temp = Unit::GetCreature(*me, ui_GUID))
-                if (temp->IsAlive())
+                if (temp->isAlive())
                     if (Unit* pTarger = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                        if (pTarger->IsAlive())
+                        if (pTarger->isAlive())
                         {
                             // temp->DeleteThreatList();
                             temp->AddThreat(pTarger, 0.0f);
@@ -1654,7 +1674,7 @@ public:
         void DespawnNPC(uint64 pGUID)
         {
             if (Creature* temp = Unit::GetCreature(*me, pGUID))
-                if (temp->IsAlive())
+                if (temp->isAlive())
                 {
                     temp->SetVisible(false);
                     temp->Kill(temp);
@@ -1672,18 +1692,18 @@ class npc_the_lich_king_tirion_dawn : public CreatureScript
 public:
     npc_the_lich_king_tirion_dawn() : CreatureScript("npc_the_lich_king_tirion_dawn") { }
 
-    CreatureAI* GetAI(Creature* creature) const override
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new npc_the_lich_king_tirion_dawnAI(creature);
+        return new npc_the_lich_king_tirion_dawnAI (creature);
     }
 
     struct npc_the_lich_king_tirion_dawnAI : public ScriptedAI
     {
         npc_the_lich_king_tirion_dawnAI(Creature* creature) : ScriptedAI(creature) { Reset(); }
-        void Reset() override { }
-        void AttackStart(Unit* /*who*/) { } // very sample, just don't make them aggreesive override
-        void UpdateAI(uint32 /*diff*/) override { }
-        void JustDied(Unit* /*killer*/) override { }
+        void Reset() {}
+        void AttackStart(Unit* /*who*/) {} // very sample, just don't make them aggreesive
+        void UpdateAI(const uint32 /*diff*/) {}
+        void JustDied(Unit* /*killer*/) {}
     };
 
 };

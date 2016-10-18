@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -52,7 +51,7 @@ class instance_sunken_temple : public InstanceMapScript
 public:
     instance_sunken_temple() : InstanceMapScript("instance_sunken_temple", 109) { }
 
-    InstanceScript* GetInstanceScript(InstanceMap* map) const override
+    InstanceScript* GetInstanceScript(InstanceMap* map) const
     {
         return new instance_sunken_temple_InstanceMapScript(map);
     }
@@ -80,7 +79,7 @@ public:
         bool s5;
         bool s6;
 
-        void Initialize() override
+        void Initialize()
         {
             GOAtalaiStatue1 = 0;
             GOAtalaiStatue2 = 0;
@@ -100,7 +99,7 @@ public:
             s6 = false;
         }
 
-        void OnGameObjectCreate(GameObject* go) override
+        void OnGameObjectCreate(GameObject* go)
         {
             switch (go->GetEntry())
             {
@@ -178,7 +177,7 @@ public:
         void UseStatue(GameObject* go)
         {
             go->SummonGameObject(GO_ATALAI_LIGHT1, go->GetPositionX(), go->GetPositionY(), go->GetPositionZ(), 0, 0, 0, 0, 0, 0);
-            go->SetUInt32Value(GAMEOBJECT_FIELD_FLAGS, 4);
+            go->SetUInt32Value(GAMEOBJECT_FLAGS, 4);
         }
 
          /*
@@ -194,13 +193,13 @@ public:
          }
          */
 
-         void SetData(uint32 type, uint32 data) override
+         void SetData(uint32 type, uint32 data)
          {
             if (type == EVENT_STATE)
                 State = data;
          }
 
-         uint32 GetData(uint32 type) const override
+         uint32 GetData(uint32 type) const
          {
             if (type == EVENT_STATE)
                 return State;

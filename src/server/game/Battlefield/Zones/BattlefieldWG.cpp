@@ -1,10 +1,9 @@
 /*
- * Copyright (C) 2008-2015 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2014 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 3 of the License, or (at your
+ * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
@@ -16,9 +15,9 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/// @todo Implement proper support for vehicle+player teleportation
-/// @todo Use spell victory/defeat in wg instead of RewardMarkOfHonor() && RewardHonor
-/// @todo Add proper implement of achievement
+// TODO: Implement proper support for vehicle+player teleportation
+// TODO: Use spell victory/defeat in wg instead of RewardMarkOfHonor() && RewardHonor
+// TODO: Add proper implement of achievement
 
 #include "BattlefieldWG.h"
 #include "AchievementMgr.h"
@@ -52,10 +51,10 @@ bool BattlefieldWG::SetupBattlefield()
 {
     InitStalker(BATTLEFIELD_WG_NPC_STALKER, WintergraspStalkerPos[0], WintergraspStalkerPos[1], WintergraspStalkerPos[2], WintergraspStalkerPos[3]);
 
-    m_TypeId = BATTLEFIELD_WG;                              // See enum BattlefieldTypes
-    m_BattleId = BATTLEFIELD_BATTLEID_WG;
-    m_ZoneId = BATTLEFIELD_WG_ZONEID;
-    m_MapId = BATTLEFIELD_WG_MAPID;
+	m_TypeId = BATTLEFIELD_WG;                              // See enum BattlefieldTypes
+	m_BattleId = BATTLEFIELD_BATTLEID_WG;
+	m_ZoneId = BATTLEFIELD_WG_ZONEID;
+	m_MapId = BATTLEFIELD_WG_MAPID;
     m_Map = sMapMgr->FindMap(m_MapId, 0);
 
     m_MaxPlayer = sWorld->getIntConfig(CONFIG_WINTERGRASP_PLR_MAX);
@@ -167,7 +166,7 @@ bool BattlefieldWG::SetupBattlefield()
     {
         Position towerCannonPos;
         WGTurret[i].GetPosition(&towerCannonPos);
-        if (Creature* creature = SpawnCreature(NPC_WINTERGRASP_TOWER_CANNON, towerCannonPos, TEAM_ALLIANCE))
+        if (Creature* creature = SpawnCreature(NPC_TOWER_CANNON, towerCannonPos, TEAM_ALLIANCE))
         {
             CanonList.insert(creature->GetGUID());
             HideNpc(creature);
@@ -193,7 +192,7 @@ bool BattlefieldWG::SetupBattlefield()
         if (GameObject* go = SpawnGameObject(WGPortalDefenderData[i].entry, WGPortalDefenderData[i].x, WGPortalDefenderData[i].y, WGPortalDefenderData[i].z, WGPortalDefenderData[i].o))
         {
             DefenderPortalList.insert(go->GetGUID());
-            go->SetUInt32Value(GAMEOBJECT_FIELD_FACTION_TEMPLATE, WintergraspFaction[GetDefenderTeam()]);
+            go->SetUInt32Value(GAMEOBJECT_FACTION, WintergraspFaction[GetDefenderTeam()]);
         }
     }
 
@@ -223,13 +222,13 @@ void BattlefieldWG::OnBattleStart()
     if (GameObject* relic = SpawnGameObject(GO_WINTERGRASP_TITAN_S_RELIC, 5440.0f, 2840.8f, 430.43f, 0))
     {
         // Update faction of relic, only attacker can click on
-        relic->SetUInt32Value(GAMEOBJECT_FIELD_FACTION_TEMPLATE, WintergraspFaction[GetAttackerTeam()]);
+        relic->SetUInt32Value(GAMEOBJECT_FACTION, WintergraspFaction[GetAttackerTeam()]);
         // Set in use (not allow to click on before last door is broken)
-        relic->SetFlag(GAMEOBJECT_FIELD_FLAGS, GO_FLAG_IN_USE);
+        relic->SetFlag(GAMEOBJECT_FLAGS, GO_FLAG_IN_USE);
         m_titansRelicGUID = relic->GetGUID();
     }
     else
-        TC_LOG_ERROR("bg.battlefield", "WG: Failed to spawn titan relic.");
+        sLog->outError(LOG_FILTER_BATTLEFIELD, "WG: Failed to spawn titan relic.");
 
 
     // Update tower visibility and update faction
@@ -361,7 +360,7 @@ void BattlefieldWG::OnBattleEnd(bool endByTimer)
     // Update portal defender faction
     for (GuidSet::const_iterator itr = DefenderPortalList.begin(); itr != DefenderPortalList.end(); ++itr)
         if (GameObject* portal = GetGameObject(*itr))
-            portal->SetUInt32Value(GAMEOBJECT_FIELD_FACTION_TEMPLATE, WintergraspFaction[GetDefenderTeam()]);
+            portal->SetUInt32Value(GAMEOBJECT_FACTION, WintergraspFaction[GetDefenderTeam()]);
 
     // Saving data
     for (GameObjectBuilding::const_iterator itr = BuildingsInZone.begin(); itr != BuildingsInZone.end(); ++itr)
@@ -474,7 +473,7 @@ uint8 BattlefieldWG::GetSpiritGraveyardId(uint32 areaId) const
         case AREA_THE_CHILLED_QUAGMIRE:
             return BATTLEFIELD_WG_GY_HORDE;
         default:
-            TC_LOG_ERROR("bg.battlefield", "BattlefieldWG::GetSpiritGraveyardId: Unexpected Area Id %u", areaId);
+            sLog->outError(LOG_FILTER_BATTLEFIELD, "BattlefieldWG::GetSpiritGraveyardId: Unexpected Area Id %u", areaId);
             break;
     }
 
@@ -659,7 +658,7 @@ void BattlefieldWG::HandleKill(Player* killer, Unit* victim)
             }
         }
     }
-    /// @todoRecent PvP activity worldstate
+    // TODO:Recent PvP activity worldstate
 }
 
 bool BattlefieldWG::FindAndRemoveVehicleFromList(Unit* vehicle)
@@ -765,7 +764,7 @@ void BattlefieldWG::OnPlayerJoinWar(Player* player)
 
 void BattlefieldWG::OnPlayerLeaveWar(Player* player)
 {
-    // Remove all aura from WG /// @todo false we can go out of this zone on retail and keep Rank buff, remove on end of WG
+    // Remove all aura from WG // TODO: false we can go out of this zone on retail and keep Rank buff, remove on end of WG
     if (!player->GetSession()->PlayerLogout())
     {
         if (Creature* vehicle = player->GetVehicleCreatureBase())   // Remove vehicle of player if he go out.
@@ -820,34 +819,41 @@ uint32 BattlefieldWG::GetData(uint32 data) const
 }
 
 
-void BattlefieldWG::FillInitialWorldStates(WorldStateBuilder& builder)
+void BattlefieldWG::FillInitialWorldStates(WorldPacket& data)
 {
-    builder.AppendState(BATTLEFIELD_WG_WORLD_STATE_ATTACKER, GetAttackerTeam());
-    builder.AppendState(BATTLEFIELD_WG_WORLD_STATE_DEFENDER, GetDefenderTeam());
-    builder.AppendState(BATTLEFIELD_WG_WORLD_STATE_ACTIVE, IsWarTime() ? 0 : 1); // Note: cleanup these two, their names look awkward
-    builder.AppendState(BATTLEFIELD_WG_WORLD_STATE_SHOW_WORLDSTATE, IsWarTime() ? 1 : 0);
+    data << uint32(BATTLEFIELD_WG_WORLD_STATE_ATTACKER) << uint32(GetAttackerTeam());
+    data << uint32(BATTLEFIELD_WG_WORLD_STATE_DEFENDER) << uint32(GetDefenderTeam());
+    data << uint32(BATTLEFIELD_WG_WORLD_STATE_ACTIVE) << uint32(IsWarTime() ? 0 : 1); // Note: cleanup these two, their names look awkward
+	data << uint32(BATTLEFIELD_WG_WORLD_STATE_SHOW_WORLDSTATE) << uint32(IsWarTime() ? 1 : 0);
 
     for (uint32 i = 0; i < 2; ++i)
-        builder.AppendState(ClockWorldState[i], uint32(time(NULL) + (m_Timer / 1000)));
+        data << ClockWorldState[i] << uint32(time(NULL) + (m_Timer / 1000));
 
-    builder.AppendState(BATTLEFIELD_WG_WORLD_STATE_VEHICLE_H, GetData(BATTLEFIELD_WG_DATA_VEHICLE_H));
-    builder.AppendState(BATTLEFIELD_WG_WORLD_STATE_MAX_VEHICLE_H, GetData(BATTLEFIELD_WG_DATA_MAX_VEHICLE_H));
-    builder.AppendState(BATTLEFIELD_WG_WORLD_STATE_VEHICLE_A, GetData(BATTLEFIELD_WG_DATA_VEHICLE_A));
-    builder.AppendState(BATTLEFIELD_WG_WORLD_STATE_MAX_VEHICLE_A, GetData(BATTLEFIELD_WG_DATA_MAX_VEHICLE_A));
+    data << uint32(BATTLEFIELD_WG_WORLD_STATE_VEHICLE_H) << uint32(GetData(BATTLEFIELD_WG_DATA_VEHICLE_H));
+    data << uint32(BATTLEFIELD_WG_WORLD_STATE_MAX_VEHICLE_H) << GetData(BATTLEFIELD_WG_DATA_MAX_VEHICLE_H);
+    data << uint32(BATTLEFIELD_WG_WORLD_STATE_VEHICLE_A) << uint32(GetData(BATTLEFIELD_WG_DATA_VEHICLE_A));
+    data << uint32(BATTLEFIELD_WG_WORLD_STATE_MAX_VEHICLE_A) << GetData(BATTLEFIELD_WG_DATA_MAX_VEHICLE_A);
 
     for (GameObjectBuilding::const_iterator itr = BuildingsInZone.begin(); itr != BuildingsInZone.end(); ++itr)
-        builder.AppendState((*itr)->m_WorldState, (*itr)->m_State);
+        data << (*itr)->m_WorldState << (*itr)->m_State;
 
     for (Workshop::const_iterator itr = WorkshopsList.begin(); itr != WorkshopsList.end(); ++itr)
         if (*itr)
-            builder.AppendState(WorkshopsData[(*itr)->workshopId].worldstate, (*itr)->state);
+            data << WorkshopsData[(*itr)->workshopId].worldstate << (*itr)->state;
 }
 
 void BattlefieldWG::SendInitWorldStatesTo(Player* player)
 {
-    WorldStateBuilder builder(m_MapId, 0, m_ZoneId);
-    FillInitialWorldStates(builder);
-    builder.SendPacket(player->GetSession());
+    WorldPacket data(SMSG_INIT_WORLD_STATES, (4 + 4 + 4 + 2 + (BuildingsInZone.size() * 8) + (WorkshopsList.size() * 8)));
+
+    data << uint32(m_MapId);
+    data << uint32(m_ZoneId);
+    data << uint32(0);
+    data << uint16(10 + BuildingsInZone.size() + WorkshopsList.size()); // Number of fields
+
+    FillInitialWorldStates(data);
+
+    player->GetSession()->SendPacket(&data);
 }
 
 void BattlefieldWG::SendInitWorldStatesToAll()

@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
- * Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+ * Copyright (C) 2008-2013 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -57,13 +56,13 @@ enum Events
 class boss_gatewatcher_iron_hand : public CreatureScript
 {
     public:
-        boss_gatewatcher_iron_hand(): CreatureScript("boss_gatewatcher_iron_hand") { }
+        boss_gatewatcher_iron_hand(): CreatureScript("boss_gatewatcher_iron_hand") {}
 
         struct boss_gatewatcher_iron_handAI : public BossAI
         {
-            boss_gatewatcher_iron_handAI(Creature* creature) : BossAI(creature, DATA_GATEWATCHER_IRON_HAND) { }
+            boss_gatewatcher_iron_handAI(Creature* creature) : BossAI(creature, DATA_GATEWATCHER_IRON_HAND) {}
 
-            void EnterCombat(Unit* /*who*/) override
+            void EnterCombat(Unit* /*who*/)
             {
                 _EnterCombat();
                 events.ScheduleEvent(EVENT_STREAM_OF_MACHINE_FLUID, 55000);
@@ -72,19 +71,19 @@ class boss_gatewatcher_iron_hand : public CreatureScript
                 Talk(SAY_AGGRO);
             }
 
-            void KilledUnit(Unit* /*victim*/) override
+            void KilledUnit(Unit* /*victim*/)
             {
                 if (roll_chance_i(50))
                     Talk(SAY_SLAY);
             }
 
-            void JustDied(Unit* /*killer*/) override
+            void JustDied(Unit* /*killer*/)
             {
                 _JustDied();
                 Talk(SAY_DEATH);
             }
 
-            void UpdateAI(uint32 diff) override
+            void UpdateAI(uint32 const diff)
             {
                 if (!UpdateVictim())
                     return;
@@ -104,7 +103,7 @@ class boss_gatewatcher_iron_hand : public CreatureScript
                             break;
                         case EVENT_JACKHAMMER:
                             Talk(EMOTE_HAMMER);
-                            /// @todo expect cast this about 5 times in a row (?), announce it by emote only once
+                            //TODO: expect cast this about 5 times in a row (?), announce it by emote only once
                             DoCastVictim(SPELL_JACKHAMMER, true);
                             if (roll_chance_i(50))
                                 Talk(SAY_HAMMER);
@@ -123,7 +122,7 @@ class boss_gatewatcher_iron_hand : public CreatureScript
             }
         };
 
-        CreatureAI* GetAI(Creature* creature) const override
+        CreatureAI* GetAI(Creature* creature) const
         {
             return new boss_gatewatcher_iron_handAI(creature);
         }
