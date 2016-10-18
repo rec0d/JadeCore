@@ -23,6 +23,12 @@
 #include "Errors.h" // for ASSERT
 #include <boost/thread/tss.hpp>
 
+#if COMPILER == COMPILER_GNU
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#endif
+
 static boost::thread_specific_ptr<SFMTRand> sfmtRand;
 
 static SFMTRand* GetRng()
