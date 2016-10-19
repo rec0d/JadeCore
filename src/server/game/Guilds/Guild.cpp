@@ -2236,8 +2236,7 @@ void Guild::HandleUpdateRank(WorldSession* session, uint32 GuildID, bool RankId)
         if (!RankInfo1 || !RankInfo2)
             return;
 
-        RankInfo tmp = NULL;
-        tmp = *RankInfo2;
+        RankInfo tmp = *RankInfo2;
         RankInfo2->SetName(RankInfo1->GetName());
         RankInfo2->SetRights(RankInfo1->GetRights());
         RankInfo1->SetName(tmp.GetName());

@@ -1448,29 +1448,29 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                 if (!caster)
                     break;
                 // Devouring Plague
-                if (GetSpellInfo()->SpellFamilyFlags[0] & 0x02000000 && GetEffect(0))
+                if (GetSpellInfo()->SpellFamilyFlags[0] & 0x02000000 && GetEffect(EFFECT_0))
                 {
                     // Improved Devouring Plague
-                    if (AuraEffect const* aurEff = caster->GetDummyAuraEffect(SPELLFAMILY_PRIEST, 3790, 0))
+                    if (AuraEffect const* aurEff = caster->GetDummyAuraEffect(SPELLFAMILY_PRIEST, 3790, EFFECT_0))
                     {
-						uint32 damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), GetEffect(0)->GetAmount(), DOT, NULL);
-                        damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), damage, DOT, NULL);
-                        int32 basepoints0 = aurEff->GetAmount() * GetEffect(0)->GetTotalTicks() * int32(damage) / 100;
+						uint32 damage = caster->SpellDamageBonusDone(target, GetSpellInfo(), GetEffect(EFFECT_0)->GetAmount(), DOT, EFFECT_0);
+                        damage = target->SpellDamageBonusTaken(caster, GetSpellInfo(), damage, DOT, EFFECT_0);
+                        int32 basepoints0 = aurEff->GetAmount() * GetEffect(EFFECT_0)->GetTotalTicks() * int32(damage) / 100;
                         int32 heal = int32(CalculatePct(basepoints0, 15));
 
-                        caster->CastCustomSpell(target, 63675, &basepoints0, NULL, NULL, true, NULL, GetEffect(0));
-                        caster->CastCustomSpell(caster, 75999, &heal, NULL, NULL, true, NULL, GetEffect(0));
+                        caster->CastCustomSpell(target, 63675, &basepoints0, NULL, NULL, true, NULL, GetEffect(EFFECT_0));
+                        caster->CastCustomSpell(caster, 75999, &heal, NULL, NULL, true, NULL, GetEffect(EFFECT_0));
                     }
                 }
                 // Power Word: Shield
-                else if (m_spellInfo->SpellFamilyFlags[0] & 0x1 && m_spellInfo->SpellFamilyFlags[2] & 0x400 && GetEffect(0))
+                else if (m_spellInfo->SpellFamilyFlags[0] & 0x1 && m_spellInfo->SpellFamilyFlags[2] & 0x400 && GetEffect(EFFECT_0))
                 {
                     // Glyph of Power Word: Shield
                     if (AuraEffect* glyph = caster->GetAuraEffect(55672, 0))
                     {
                         // instantly heal m_amount% of the absorb-value
-                        int32 heal = glyph->GetAmount() * GetEffect(0)->GetAmount()/100;
-                        caster->CastCustomSpell(GetUnitOwner(), 56160, &heal, NULL, NULL, true, 0, GetEffect(0));
+                        int32 heal = glyph->GetAmount() * GetEffect(EFFECT_0)->GetAmount()/100;
+                        caster->CastCustomSpell(GetUnitOwner(), 56160, &heal, NULL, NULL, true, 0, GetEffect(EFFECT_0));
                     }
                 }
                 break;
@@ -1555,7 +1555,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                     case 72369:
                         if (caster)
                         {
-                            if (AuraEffect* aurEff = GetEffect(0))
+                            if (AuraEffect* aurEff = GetEffect(EFFECT_0))
                             {
                                 int32 remainingDamage = aurEff->GetAmount() * (aurEff->GetTotalTicks() - aurEff->GetTickNumber());
                                 if (remainingDamage > 0)
@@ -1626,7 +1626,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                 // Blood Rites
                 if (GetSpellInfo()->Id == 56835 || GetSpellInfo()->Id == 54637)
                 {
-                    if (!GetEffect(0) || GetEffect(0)->GetAuraType() != SPELL_AURA_PERIODIC_DUMMY)
+                    if (!GetEffect(EFFECT_0) || GetEffect(EFFECT_0)->GetAuraType() != SPELL_AURA_PERIODIC_DUMMY)
                         break;
                     if (target->GetTypeId() != TYPEID_PLAYER)
                         break;
@@ -1781,7 +1781,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                         if (owner->HasAura(34692))
                         {
                             if (apply)
-                                owner->CastSpell(owner, 34471, true, 0, GetEffect(0));
+                                owner->CastSpell(owner, 34471, true, 0, GetEffect(EFFECT_0));
                             else
                                 owner->RemoveAurasDueToSpell(34471);
                         }
