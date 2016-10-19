@@ -30,6 +30,12 @@ EndScriptData */
 #include "Player.h"
 #include "ScriptMgr.h"
 
+#if COMPILER == COMPILER_GNU
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#endif
+
 class account_commandscript : public CommandScript
 {
 public:
