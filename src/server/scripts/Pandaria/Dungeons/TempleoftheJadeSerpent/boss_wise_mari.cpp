@@ -352,10 +352,10 @@ public:
 
 					me->RemoveAurasDueToSpell(SPELL_WATER_BUBBLE);
 					float facing = me->GetOrientation();
-					facing += M_PI / 48;
+					facing += float(M_PI) / 48;
 
-					if (facing > M_PI * 2)
-						facing -= M_PI * 2;
+					if (facing > float(M_PI) * 2)
+						facing -= float(M_PI) * 2;
 
 					//me->UpdatePosition(me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), facing);
 					me->SetOrientation(facing);
@@ -371,10 +371,10 @@ public:
 						break;
 
 					float facing = me->GetOrientation();
-					facing += M_PI / 48;
+					facing += float(M_PI) / 48;
 
-					if (facing > M_PI * 2)
-						facing -= M_PI * 2;
+					if (facing > float(M_PI) * 2)
+						facing -= float(M_PI) * 2;
 
 					me->SetOrientation(facing);
 					me->SetFacingTo(facing);

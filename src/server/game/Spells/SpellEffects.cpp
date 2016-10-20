@@ -496,7 +496,7 @@ void Spell::EffectSchoolDMG(SpellEffIndex effIndex)
                             break;
 
                         damage += int32(0.49f * m_caster->SpellBaseDamageBonusDone(SpellSchoolMask(m_spellInfo->SchoolMask)));
-                        damage = m_caster->SpellDamageBonusDone(unitTarget, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE, 1, false);
+                        damage = m_caster->SpellDamageBonusDone(unitTarget, m_spellInfo, (uint32)damage, SPELL_DIRECT_DAMAGE, 1);
 
                         int32 holyPower = m_caster->GetPower(POWER_HOLY_POWER) + 1;
 

@@ -285,7 +285,7 @@ public:
 
 	bool operator()(WorldObject* target)
 	{
-		return target->GetEntry() != 59481 || !_caster->isInFront(target, M_PI / 5) || target->GetGUID() == _caster->GetGUID();
+		return target->GetEntry() != 59481 || !_caster->isInFront(target, float(M_PI) / 5) || target->GetGUID() == _caster->GetGUID();
 	}
 
 private:

@@ -166,7 +166,7 @@ class boss_striker_gadok : public CreatureScript
 
             TempSummon* SummonKrikThik(uint32 creatureId)
             {
-                float angle = frand(0, 2*M_PI);
+                float angle = frand(0, 2 * float(M_PI));
                 float x = CenterPos.GetPositionX() + (RADIUS_CIRCLE * std::cos(angle));
                 float y = CenterPos.GetPositionY() + (RADIUS_CIRCLE * std::sin(angle));
 
@@ -453,9 +453,9 @@ struct npc_krikthik : public ScriptedAI
     void SelectNextWaypoint(float& x, float& y)
     {
         if (direction)
-            actualAngle -= M_PI / 8;
+            actualAngle -= float(M_PI) / 8;
         else
-            actualAngle += M_PI / 8;
+            actualAngle += float(M_PI) / 8;
 
         x = CenterPos.GetPositionX() + (me->GetObjectSize() + RADIUS_CIRCLE) * std::cos(actualAngle);
         y = CenterPos.GetPositionY() + (me->GetObjectSize() + RADIUS_CIRCLE) * std::sin(actualAngle);

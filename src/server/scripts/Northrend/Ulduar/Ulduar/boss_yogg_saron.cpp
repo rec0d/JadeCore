@@ -842,7 +842,7 @@ class boss_sara : public CreatureScript
                         {
                             Position pos;
                             float radius = frand(25.0f, 50.0f);
-                            float angle = frand(0.0f, 2.0f * M_PI);
+                            float angle = frand(0.0f, 2.0f * float(M_PI));
                             pos.m_positionX = YoggSaronSpawnPos.GetPositionX() + radius * cosf(angle);
                             pos.m_positionY = YoggSaronSpawnPos.GetPositionY() + radius * sinf(angle);
                             pos.m_positionZ = me->GetMap()->GetHeight(me->GetPhaseMask(), pos.GetPositionX(), pos.GetPositionY(), YoggSaronSpawnPos.GetPositionZ() + 5.0f);

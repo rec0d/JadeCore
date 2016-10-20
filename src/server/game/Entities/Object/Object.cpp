@@ -1352,7 +1352,7 @@ bool Position::operator==(Position const &a)
 
 bool Position::HasInLine(WorldObject const* target, float width) const
 {
-    if (!HasInArc(M_PI, target))
+    if (!HasInArc(float(M_PI), target))
         return false;
     width += target->GetObjectSize();
     float angle = GetRelativeAngle(target);
@@ -1831,7 +1831,7 @@ bool Position::HasInArc(float arc, const Position* obj, float border) const
     // move angle to range -pi ... +pi
     angle = NormalizeOrientation(angle);
     if (angle > M_PI)
-        angle -= 2.0f*M_PI;
+        angle -= 2.0f * float(M_PI);
 
     float lborder = -1 * (arc/border);                        // in range -pi..0
     float rborder = (arc/border);                             // in range 0..pi
@@ -2201,7 +2201,7 @@ bool WorldObject::CanDetectStealthOf(WorldObject const* obj) const
     if (distance < combatReach)
         return true;
 
-    if (!HasInArc(M_PI, obj))
+    if (!HasInArc(float(M_PI), obj))
         return false;
 
     GameObject const* go = ToGameObject();

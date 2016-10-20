@@ -202,7 +202,7 @@ public:
 				break;
 			case NPC_EXPLOSION_BUNNY_S_M:
 			case NPC_EXPLOSION_BUNNY_S_P:
-				orientation = M_PI;
+				orientation = float(M_PI);
 				break;
 			case NPC_EXPLOSION_BUNNY_E_M:
 			case NPC_EXPLOSION_BUNNY_E_P:

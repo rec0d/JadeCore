@@ -2274,7 +2274,7 @@ class spell_monk_chi_torpedo : public SpellScriptLoader
 
                         for (auto itr : tempUnitMap)
                         {
-                            if (!itr->isInFront(_player, M_PI / 3) && itr->GetGUID() != _player->GetGUID())
+                            if (!itr->isInFront(_player, float(M_PI) / 3) && itr->GetGUID() != _player->GetGUID())
                                 continue;
 
                             uint32 spell = _player->IsValidAttackTarget(itr) ? SPELL_MONK_CHI_TORPEDO_DAMAGE : SPELL_MONK_CHI_TORPEDO_HEAL;

@@ -329,8 +329,8 @@ public:
 						Position pos;
 						plr->GetPosition(&pos);
 
-						if ((plr->GetDistance(roomCenter) < 20.00f && roomCenter.HasInArc(M_PI, &pos))
-							|| (!roomCenter.HasInArc(M_PI, &pos) && plr->GetDistance(roomCenter) < 14.00f))
+						if ((plr->GetDistance(roomCenter) < 20.00f && roomCenter.HasInArc(float(M_PI), &pos))
+							|| (!roomCenter.HasInArc(float(M_PI), &pos) && plr->GetDistance(roomCenter) < 14.00f))
 						{
 							if (plr->GetPositionZ() > 174.05f && plr->GetPositionZ() < 174.23f)
 								plr->CastSpell(plr, SPELL_CORRUPTED_WATERS, true);

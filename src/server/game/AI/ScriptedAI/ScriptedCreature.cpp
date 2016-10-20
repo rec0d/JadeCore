@@ -702,7 +702,7 @@ void GetPositionWithDistInOrientation(Unit* pUnit, float dist, float orientation
 }
 void GetRandPosFromCenterInDist(float centerX, float centerY, float dist, float& x, float& y)
 {
-    float randOrientation = frand(0, 2*M_PI);
+    float randOrientation = frand(0, 2 * float(M_PI));
     x = centerX + (dist * cos(randOrientation));
     y = centerY + (dist * sin(randOrientation));
 }

@@ -621,7 +621,7 @@ public:
 				Creature* mu_shiba = me->GetMap()->GetCreature(pet_guid);
 				if (mu_shiba && mu_shiba->IsAlive())
 				{
-					mu_shiba->GetMotionMaster()->MoveFollow(me, 2.0f, M_PI / 4);
+					mu_shiba->GetMotionMaster()->MoveFollow(me, 2.0f, float(M_PI) / 4);
 					if (mu_shiba->GetAI())
 						mu_shiba->GetAI()->DoAction(ACTION_ATTACK_STOP);
 				}
