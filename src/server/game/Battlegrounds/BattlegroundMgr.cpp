@@ -37,8 +37,6 @@
 #include "BattlegroundIC.h"
 #include "BattlegroundTP.h"
 #include "BattlegroundBFG.h"
-#include "BattlegroundDG.h"
-#include "BattlegroundSM.h"
 #include "BattlegroundTOK.h"
 #include "Chat.h"
 #include "Map.h"
@@ -842,12 +840,6 @@ Battleground* BattlegroundMgr::CreateNewBattleground(BattlegroundTypeId original
         case BATTLEGROUND_TOK:
             bg = new BattlegroundTOK(*(BattlegroundTOK*)bg_template);
             break;
-        case BATTLEGROUND_DG:
-            bg = new BattlegroundDG(*(BattlegroundDG*)bg_template);
-            break;
-        case BATTLEGROUND_SM:
-            bg = new BattlegroundSM(*(BattlegroundSM*)bg_template);
-            break;
         case BATTLEGROUND_RB:
         case BATTLEGROUND_AA:
         case BATTLEGROUND_RATED_10_VS_10:
@@ -951,12 +943,6 @@ bool BattlegroundMgr::CreateBattleground(CreateBattlegroundData& data)
             break;
         case BATTLEGROUND_TOK:
             bg = new BattlegroundTOK;
-            break;
-        case BATTLEGROUND_DG:
-            bg = new BattlegroundDG;
-            break;
-        case BATTLEGROUND_SM:
-            bg = new BattlegroundSM;
             break;
         default:
             return false;
