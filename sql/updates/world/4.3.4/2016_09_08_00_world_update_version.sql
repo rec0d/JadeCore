@@ -18,4 +18,4 @@ CREATE TABLE `version` (
 -- ----------------------------
 -- Records of version
 -- ----------------------------
-INSERT INTO `version` VALUES ('JadeCore rev. 07-09-2016 19:24:00 +4.3.4 (Arquivado) (Win32, Release)', 'Arquivado', 'DC-DB 434.13', '1');
+INSERT INTO `version` VALUES ('JadeCore rev. 07-09-2016 19:24:00 +4.3.4 (Arquivado) (Win32, Release)', 'Arquivado', 'JCDB 434.13', '1');
