@@ -778,21 +778,12 @@ void Aura::Update(uint32 diff, Unit* caster)
                         if (int32(caster->GetHealth()) > manaPerSecond)
                             caster->ModifyHealth(-manaPerSecond);
                         else
-                        {
                             Remove();
-                            return;
-                        }
                     }
+                    else if (int32(caster->GetPower(powertype)) >= manaPerSecond)
+                        caster->ModifyPower(powertype, -manaPerSecond);
                     else
-                    {
-                        if (int32(caster->GetPower(powertype)) >= manaPerSecond)
-                            caster->ModifyPower(powertype, -manaPerSecond);
-                        else
-                        {
-                            Remove();
-                            return;
-                        }
-                    }
+                        Remove();
                 }
             }
         }
@@ -828,11 +819,9 @@ int32 Aura::CalcMaxDuration(Unit* caster) const
 void Aura::SetDuration(int32 duration, bool withMods)
 {
     if (withMods)
-    {
         if (Unit* caster = GetCaster())
             if (Player* modOwner = caster->GetSpellModOwner())
                 modOwner->ApplySpellMod(GetId(), SPELLMOD_DURATION, duration);
-    }
     m_duration = duration;
     SetNeedClientUpdateForTargets();
 }
