@@ -112,7 +112,7 @@ set(scripts_STAT_SRCS
   Pandaria/Raids/SiegeOfOrgrimmar/boss_Immerseus.cpp
   Pandaria/Raids/SiegeOfOrgrimmar/boss_Galakras.cpp
   Pandaria/Raids/SiegeOfOrgrimmar/boss_GeneralNazgrim.cpp
-  Pandaria/Raids/SiegeOfOrgrimmar/boss_KorKron.cpp
+  Pandaria/Raids/SiegeOfOrgrimmar/boss_dark_shamans.cpp
   Pandaria/Raids/SiegeOfOrgrimmar/boss_IronJuggernaut.cpp
   Pandaria/Raids/SiegeOfOrgrimmar/boss_Norushen.cpp
   Pandaria/Raids/SiegeOfOrgrimmar/boss_Malkorok.cpp
@@ -123,8 +123,8 @@ set(scripts_STAT_SRCS
   Pandaria/Raids/SiegeOfOrgrimmar/boss_TheFallenProtectors.cpp
   Pandaria/Raids/SiegeOfOrgrimmar/boss_Thok.cpp
   Pandaria/Raids/SiegeOfOrgrimmar/boss_GarroshHellscream.cpp
-  Pandaria/Raids/SiegeOfOrgrimmar/instance_SiegeOfOrgrimmar.cpp
-  Pandaria/Raids/SiegeOfOrgrimmar/SiegeOfOrgrimmar.h
+  Pandaria/Raids/SiegeOfOrgrimmar/instance_siege_of_orgrimmar.cpp
+  Pandaria/Raids/SiegeOfOrgrimmar/siege_of_orgrimmar.h
 
   # Timeless Island
   Pandaria/TimelessIsle/zone_timeless_isle.cpp
