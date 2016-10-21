@@ -33,6 +33,7 @@
 #include "WorldSession.h"
 #include "ObjectMgr.h"
 
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -901,7 +902,8 @@ enum PlayerDelayedOperations
 
 // Player summoning auto-decline time (in secs)
 #define MAX_PLAYER_SUMMON_DELAY                   (2*MINUTE)
-#define MAX_MONEY_AMOUNT               (UI64LIT(9999999999)) // TODO: Move this restriction to worldserver.conf, default to this value, hardcap at uint64.max
+// Maximum money amount : 2^31 - 1
+auto constexpr MAX_MONEY_AMOUNT(static_cast<uint32>(std::numeric_limits<int32>::max()));
 
 struct InstancePlayerBind
 {

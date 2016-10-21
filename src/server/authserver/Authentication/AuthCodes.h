@@ -115,6 +115,6 @@ namespace AuthHelper
     bool IsAcceptedClientBuild(int build);
     bool IsPostBCAcceptedClientBuild(int build);
     bool IsPreBCAcceptedClientBuild(int build);
-};
+}
 
 #endif

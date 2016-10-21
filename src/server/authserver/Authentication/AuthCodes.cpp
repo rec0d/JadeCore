@@ -94,4 +94,4 @@ namespace AuthHelper
 
         return NULL;
     }
-};
+}
