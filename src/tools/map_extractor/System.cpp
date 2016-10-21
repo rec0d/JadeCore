@@ -141,10 +141,7 @@ TCHAR const* LocalesT[] =
 void CreateDir(std::string const& path)
 {
     if (chdir(path.c_str()) == 0)
-    {
             chdir("../");
-            return;
-    }
 
 #ifdef _WIN32
     _mkdir(path.c_str());
