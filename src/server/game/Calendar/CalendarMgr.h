@@ -139,15 +139,15 @@ struct CalendarInvitePacketInfo
 struct CalendarInvite
 {
     public:
-        CalendarInvite(CalendarInvite const& calendarInvite, uint64 inviteId, uint64 eventId)
+        CalendarInvite(CalendarInvite const& calendarInvite, uint64 inviteId, uint64 eventId, uint64 creatorGuid)
         {
             _inviteId = inviteId;
             _eventId = eventId;
             _invitee = calendarInvite.GetInviteeGUID();
-            _senderGUID = calendarInvite.GetSenderGUID();
-            _statusTime = calendarInvite.GetStatusTime();
-            _status = calendarInvite.GetStatus();
-            _rank = calendarInvite.GetRank();
+            _senderGUID = creatorGuid;
+            _statusTime = 946684800;
+            _status = creatorGuid == calendarInvite.GetInviteeGUID() ? CALENDAR_STATUS_CONFIRMED : CALENDAR_STATUS_INVITED;
+            _rank = creatorGuid == calendarInvite.GetInviteeGUID() ? CALENDAR_RANK_OWNER : (calendarInvite.GetRank() == CALENDAR_RANK_OWNER ? CALENDAR_RANK_MODERATOR : calendarInvite.GetRank());
             _text = calendarInvite.GetText();
         }
 
@@ -199,10 +199,10 @@ struct CalendarInvite
 struct CalendarEvent
 {
     public:
-        CalendarEvent(CalendarEvent const& calendarEvent, uint64 eventId)
+        CalendarEvent(CalendarEvent const& calendarEvent, uint64 eventId, uint64 newCreatorGuid)
         {
             _eventId = eventId;
-            _creatorGUID = calendarEvent.GetCreatorGUID();
+            _creatorGUID = newCreatorGuid;
             _guildId = calendarEvent.GetGuildId();
             _type = calendarEvent.GetType();
             _dungeonId = calendarEvent.GetDungeonId();
@@ -299,9 +299,9 @@ class CalendarMgr
         CalendarInviteStore const& GetEventInvites(uint64 eventId);
         CalendarInviteStore GetPlayerInvites(uint64 guid);
 
-        void FreeEventId(uint64 id);
+        void FreeEventId(uint64);
         uint64 GetFreeEventId();
-        void FreeInviteId(uint64 id);
+        void FreeInviteId(uint64);
         uint64 GetFreeInviteId();
 
         uint32 GetPlayerNumPending(uint64 guid);
@@ -325,7 +325,7 @@ class CalendarMgr
         void SendCalendarEventUpdateAlert(CalendarEvent const& calendarEvent, time_t oldEventTime);
         void SendCalendarEventStatus(CalendarEvent const& calendarEvent, CalendarInvite const& invite);
         void SendCalendarEventRemovedAlert(CalendarEvent const& calendarEvent);
-        void SendCalendarEventModeratorStatusAlert(CalendarEvent const& calendarEvent, CalendarInvite const& invite);
+        void SendCalendarEventModeratorStatus(CalendarEvent const& calendarEvent, CalendarInvite const& invite);
         void SendCalendarClearPendingAction(uint64 guid);
         void SendCalendarCommandResult(uint64 guid, CalendarError err, char const* param = NULL);
 

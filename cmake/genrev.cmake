@@ -1,6 +1,8 @@
 # Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
 # Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
 # Copyright (C) 2011-2016 Project SkyFire <http://www.projectskyfire.org/>
+# Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+# Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -20,6 +22,8 @@
 
 if(NOT BUILDDIR)
   # Workaround for funny MSVC behaviour - this segment is only used when using cmake gui
+  set(NO_GIT ${WITHOUT_GIT})
+  set(GIT_EXEC ${GIT_EXECUTABLE})
   set(BUILDDIR ${CMAKE_BINARY_DIR})
 endif()
 
@@ -31,7 +35,7 @@ else()
   if(GIT_EXECUTABLE)
     # Create a revision-string that we can use
     execute_process(
-      COMMAND "${GIT_EXECUTABLE}" describe --long --match init --dirty=+ --abbrev=12
+      COMMAND "${GIT_EXECUTABLE}" describe --long --match init --dirty=+ --abbrev=12 --always
       WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
       OUTPUT_VARIABLE rev_info
       OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -74,7 +78,7 @@ else()
 endif()
 
 # Create the actual revision.h file from the above params
-if(NOT "${rev_hash_cached}" MATCHES "${rev_hash}" OR NOT "${rev_branch_cached}" MATCHES "${rev_branch}" OR NOT EXISTS "${BUILDDIR}/revision_data.h")
+if(NOT "${rev_hash_cached}" MATCHES "${rev_hash}" OR NOT "${rev_branch_cached}" MATCHES "${rev_branch}" OR NOT EXISTS "${BUILDDIR}/revision.h")
   configure_file(
     "${CMAKE_SOURCE_DIR}/revision_data.h.in.cmake"
     "${BUILDDIR}/revision_data.h"

@@ -84,10 +84,10 @@ enum DeathKnightSpells
     DK_SPELL_GEIST_FORM                         = 121916,
     DK_SPELL_SOUL_REAPER_BUFF                   = 114868,
     DK_SPELL_ANTIMAGIC_SHELL_SELF               = 48707,
-	DK_GLYPH_OF_REGENERATIVE_MAGIC              = 146648,
-	SPELL_DK_DANCING_RUNE_WEAPON                = 49028,
-	SPELL_DK_DEATH_COIL_DAMAGE                  = 47632,
-	SPELL_DK_DEATH_COIL_HEAL                    = 47633,
+    DK_GLYPH_OF_REGENERATIVE_MAGIC              = 146648,
+    SPELL_DK_DANCING_RUNE_WEAPON                = 49028,
+    SPELL_DK_DEATH_COIL_DAMAGE                  = 47632,
+    SPELL_DK_DEATH_COIL_HEAL                    = 47633,
 
 };
 
@@ -406,6 +406,41 @@ class spell_dk_dark_transformation_form : public SpellScriptLoader
         SpellScript* GetSpellScript() const
         {
             return new spell_dk_dark_transformation_form_SpellScript();
+        }
+};
+
+// Shadow Infusion - 91342
+class spell_dk_shadow_infusion : public SpellScriptLoader
+{
+    public:
+        spell_dk_shadow_infusion() : SpellScriptLoader("spell_dk_shadow_infusion") { }
+
+        class spell_dk_shadow_infusion_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_dk_shadow_infusion_AuraScript);
+
+            enum
+            {
+                SPELL_DK_DARK_TRANS_DRIVER = 93426
+            };
+
+            void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+            {
+                if (GetCaster()->GetTypeId() != TYPEID_UNIT)
+                    return;
+
+                GetCaster()->GetCharmerOrOwnerOrSelf()->RemoveAurasDueToSpell(SPELL_DK_DARK_TRANS_DRIVER);
+            }
+
+            void Register()
+            {
+                OnEffectRemove += AuraEffectRemoveFn(spell_dk_shadow_infusion_AuraScript::OnRemove, EFFECT_0, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE, AURA_EFFECT_HANDLE_REAL);
+            }
+        };
+
+        AuraScript* GetAuraScript() const
+        {
+            return new spell_dk_shadow_infusion_AuraScript();
         }
 };
 
@@ -2385,6 +2420,7 @@ void AddSC_deathknight_spell_scripts()
 //  new spell_dk_glyph_of_the_geist();
     new spell_dk_presences();
     new spell_dk_conversion_heal_aura();
-	new spell_dk_dancing_rune_weapon();
-	new spell_dk_dancing_rune_weapon_visual();
+    new spell_dk_dancing_rune_weapon();
+    new spell_dk_dancing_rune_weapon_visual();
+    new spell_dk_shadow_infusion();
 }
