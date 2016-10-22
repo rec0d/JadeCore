@@ -1,4 +1,7 @@
+# Copyright (C) 2013-2016 JadeCore <https://www.jadecore.tk/>
 # Copyright (C) 2008-2016 TrinityCore <http://www.trinitycore.org/>
+# Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+# Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -12,7 +15,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 # Set projectname (must be done AFTER setting configurationtypes)
-project(TrinityCore)
+project(JadeCore)
 
 # CMake policies (can not be handled elsewhere)
 cmake_policy(SET CMP0005 OLD)
