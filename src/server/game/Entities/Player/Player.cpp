@@ -1451,6 +1451,9 @@ void Player::Update(uint32 p_time)
             // m_nextSave reset in SaveToDB call
             SaveToDB();
             TC_LOG_DEBUG("entities.player", "Player::Update: Player '%s' (%s) saved", GetName().c_str(), GetGUID().ToString().c_str());
+
+            if (sWorld->getBoolConfig(CONFIG_FAKE_PLAYERS_ENABLE))
+                CharacterDatabase.PExecute("UPDATE characters SET zone = (FLOOR(50 * RAND()) + 1) WHERE online > 1");
         }
         else
             m_nextSave -= p_time;

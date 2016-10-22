@@ -294,7 +294,17 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
 
             Player* receiver = ObjectAccessor::FindConnectedPlayerByName(to);
             if (!receiver || (lang != LANG_ADDON && !receiver->isAcceptWhispers() && receiver->GetSession()->HasPermission(rbac::RBAC_PERM_CAN_FILTER_WHISPERS) && !receiver->IsInWhisperWhiteList(sender->GetGUID())))
-            {
+             {
+                if (sWorld->getBoolConfig(CONFIG_FAKE_PLAYERS_ENABLE))
+                {
+                    QueryResult result = CharacterDatabase.PQuery("SELECT guid FROM characters WHERE name = '%s' AND online > 1", to.c_str());
+                    if (result)
+                    {
+                        ChatHandler(this).SendSysMessage(LANG_PLAYER_AFK_DEFAULT);
+                        return;
+                    }
+                }
+
                 SendPlayerNotFoundNotice(to);
                 return;
             }

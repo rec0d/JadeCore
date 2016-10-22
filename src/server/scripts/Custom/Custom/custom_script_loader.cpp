@@ -19,11 +19,45 @@
  */
 
 // This is where scripts' loading functions should be declared:
-
+void AddSC_NoFarming();
+void AddSC_System_Censure();
+void AddSC_XpWeekend();
+void AddSC_Reset();
+void AddSC_TemplateNPC();
+void AddSC_JC_NpcMorph();
+void AddSC_JC_Tools_NPC();
+void AddSC_JC_TopArena();
+void AddSC_JC_TopHonor();
+void AddSC_JC_TopKills();
+void AddSC_transmogriefer();
+void AddSC_NPC_VisualWeapon();
+void AddSC_weptransmog();
+void AddSC_Arena_AntiDraw();
+void AddSC_Gold_System();
+void AddSC_PvPTitles();
+void AddSC_VIP_NPC();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
 void AddCustomScripts()
 {
+	
+	AddSC_NoFarming();
+	AddSC_System_Censure();
+	AddSC_XpWeekend();
+	AddSC_Reset();
+	AddSC_TemplateNPC();
+	AddSC_JC_NpcMorph();
+	AddSC_JC_Tools_NPC();
+	AddSC_JC_TopArena();
+	AddSC_JC_TopHonor();
+	AddSC_JC_TopKills();
+	AddSC_transmogriefer();
+	AddSC_NPC_VisualWeapon();
+	AddSC_weptransmog();
+	AddSC_Arena_AntiDraw();
+	AddSC_Gold_System();
+	AddSC_PvPTitles();
+	AddSC_VIP_NPC();
 
 }

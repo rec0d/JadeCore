@@ -355,6 +355,42 @@ void WorldSession::HandleWhoOpcode(WorldPacket& recvData)
 
         ++displaycount;
     }
+ 
+    if (sWorld->getBoolConfig(CONFIG_FAKE_PLAYERS_ENABLE) && matchcount < 49)
+    {
+        QueryResult result = CharacterDatabase.Query("SELECT guid, name, race, class, level, zone, gender FROM characters WHERE online > 1");
+        if (result)
+        {
+            do
+            {
+                Field* fields = result->Fetch();
+
+                std::string pname = fields[1].GetString();    // player name
+                std::string gname;                            // guild name
+                uint32 lvl = fields[4].GetUInt32();           // player level
+                uint32 class_ = fields[3].GetUInt32();        // player class
+                uint32 race = fields[2].GetUInt32();          // player race
+                uint32 pzoneid = fields[5].GetUInt32();       // player zone id
+                uint8 gender = fields[6].GetUInt8();          // player gender
+
+                if (Player::TeamForRace(uint8(race)) != team && !HasPermission(rbac::RBAC_PERM_TWO_SIDE_WHO_LIST))
+                    continue;
+
+                if (displaycount < 49)
+                {
+                    ++displaycount;
+                    data << pname;            // player name
+                    data << gname;            // guild name
+                    data << uint32(lvl);      // player level
+                    data << uint32(class_);   // player class
+                    data << uint32(race);     // player race
+                    data << uint8(gender);    // player gender
+                    data << uint32(pzoneid);  // player zone id
+                }
+                ++matchcount;
+            } while (result->NextRow());
+        }
+    }
 
     data.put(0, displaycount);                            // insert right count, count displayed
     data.put(4, matchcount);                              // insert right count, count of matches
