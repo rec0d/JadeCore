@@ -853,7 +853,7 @@ CastUnstuck = 1
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-Instance.IgnoreLevel = 1
+Instance.IgnoreLevel = 0
 
 #
 #    Instance.IgnoreRaid
@@ -861,7 +861,7 @@ Instance.IgnoreLevel = 1
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-Instance.IgnoreRaid = 1
+Instance.IgnoreRaid = 0
 
 #
 #    Instance.ResetTimeHour
@@ -1404,10 +1404,10 @@ Rate.Corpse.Decay.Looted = 0.5
 #
 
 Rate.Creature.Normal.Damage          = 1
-Rate.Creature.Elite.Elite.Damage     = 0.2
-Rate.Creature.Elite.RARE.Damage      = 0.2
-Rate.Creature.Elite.RAREELITE.Damage = 0.2
-Rate.Creature.Elite.WORLDBOSS.Damage = 0.2
+Rate.Creature.Elite.Elite.Damage     = 1
+Rate.Creature.Elite.RARE.Damage      = 1
+Rate.Creature.Elite.RAREELITE.Damage = 1
+Rate.Creature.Elite.WORLDBOSS.Damage = 1
 
 #
 #    Rate.Creature.Normal.SpellDamage
@@ -1423,10 +1423,10 @@ Rate.Creature.Elite.WORLDBOSS.Damage = 0.2
 #                     1 - (Rate.Creature.Elite.WORLDBOSS.SpellDamage)
 
 Rate.Creature.Normal.SpellDamage          = 1
-Rate.Creature.Elite.Elite.SpellDamage     = 0.2
-Rate.Creature.Elite.RARE.SpellDamage      = 0.2
-Rate.Creature.Elite.RAREELITE.SpellDamage = 0.2
-Rate.Creature.Elite.WORLDBOSS.SpellDamage = 0.2
+Rate.Creature.Elite.Elite.SpellDamage     = 1
+Rate.Creature.Elite.RARE.SpellDamage      = 1
+Rate.Creature.Elite.RAREELITE.SpellDamage = 1
+Rate.Creature.Elite.WORLDBOSS.SpellDamage = 1
 
 #
 #    Rate.Creature.Normal.HP
@@ -1442,10 +1442,10 @@ Rate.Creature.Elite.WORLDBOSS.SpellDamage = 0.2
 #                     1 - (Rate.Creature.Elite.WORLDBOSS.HP)
 
 Rate.Creature.Normal.HP          = 1
-Rate.Creature.Elite.Elite.HP     = 0.2
-Rate.Creature.Elite.RARE.HP      = 0.2
-Rate.Creature.Elite.RAREELITE.HP = 0.2
-Rate.Creature.Elite.WORLDBOSS.HP = 0.2
+Rate.Creature.Elite.Elite.HP     = 1
+Rate.Creature.Elite.RARE.HP      = 1
+Rate.Creature.Elite.RAREELITE.HP = 1
+Rate.Creature.Elite.WORLDBOSS.HP = 1
 
 #
 #    ListenRange.Say
